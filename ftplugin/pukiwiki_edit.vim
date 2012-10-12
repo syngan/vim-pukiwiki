@@ -1,5 +1,26 @@
-" vim: set ts=4 sts=4 sw=4 noet ai fdm=marker:
-" $Id: pukiwiki_edit.vim 12 2008-07-27 10:00:03Z ishii $
+"=============================================================================
+" @AUTHOR: syngan
+" @License: MIT license  {{{
+"     Permission is hereby granted, free of charge, to any person obtaining
+"     a copy of this software and associated documentation files (the
+"     "Software"), to deal in the Software without restriction, including
+"     without limitation the rights to use, copy, modify, merge, publish,
+"     distribute, sublicense, and/or sell copies of the Software, and to
+"     permit persons to whom the Software is furnished to do so, subject to
+"     the following conditions:
+"
+"     The above copyright notice and this permission notice shall be included
+"     in all copies or substantial portions of the Software.
+"
+"     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+"     OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+"     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+"     IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+"     CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+"     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+"     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+" }}}
+"=============================================================================
 
 scriptencoding euc-jp
 
@@ -15,6 +36,7 @@ let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 if !exists('*s:PW_move')"{{{
 function! s:PW_move()
 	if line('.') < 4
+		" ヘッダ部分
 		let cur = AL_matchstr_undercursor('\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]')
 	else
 		let cur = AL_matchstr_undercursor(s:bracket_name)
@@ -37,31 +59,27 @@ function! s:PW_move()
 	let cur = substitute(cur, '\[\[\(.*\)\]\]', '\1', '')
 	if line('.') < 4
 		if cur == 'トップ'
-			let g:pukiwiki_current_site_top = b:top
+"			let g:pukiwiki_current_site_top = b:top
 			call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:top)
-		endif
-		if cur == 'リロード'
-			let g:pukiwiki_current_site_top = b:top
+		elseif cur == 'リロード'
+"			let g:pukiwiki_current_site_top = b:top
 			call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:page)
-		endif
-		if cur == '新規'
+		elseif cur == '新規'
 			let page = input('新規ページ名: ')
 			if page == ''
 				return
 			endif
 			call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, page)
-		endif
-		if cur == '一覧'
+		elseif cur == '一覧'
 			call s:PW_show_page_list()
-		endif
-		if cur == '単語検索'
+		elseif cur == '単語検索'
 			call s:PW_show_search()
-		endif
-		if cur == '最終更新'
-			call s:PW_show_recent()
-		endif
-		if cur == 'ヘルプ'
-			call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, 'ヘルプ')
+		elseif cur == '最終更新'
+"			call s:PW_show_recent()
+			let page = 'RecentChanges'
+			call PW_get_source_page(b:site_name, b:url, b:enc, b:top, page)
+		elseif cur == 'ヘルプ'
+			call PW_get_source_page(b:site_name, b:url, b:enc, b:top, 'FormattingRules')
 		endif
 		return
 	endif
@@ -77,8 +95,8 @@ function! s:PW_move()
 	endif
 
 	echo cur
-	let g:pukiwiki_current_site_name = b:site_name
-	let g:pukiwiki_current_site_top = b:top
+"	let g:pukiwiki_current_site_name = b:site_name
+"	let g:pukiwiki_current_site_top = b:top
 	call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, cur)
 endfunction
 endif"}}}
@@ -104,7 +122,7 @@ if !exists('*s:PW_show_page_list')"{{{
 function! s:PW_show_page_list()
 	let url = b:url . '?cmd=list'
 	let result = tempname()
-	let cmd = 'curl -s -o ' . result . ' ' . url
+	let cmd = 'curl -s -o ' . result . ' "' . url . '"'
 	call AL_system(cmd)
 
 	let site_name = b:site_name
@@ -113,18 +131,42 @@ function! s:PW_show_page_list()
 	let top       = b:top
 	let page      = 'cmd=list'
 
+	if ! filereadable(result)
+		echo "cannot obtain the list: " . cmd
+		return 
+	endif
+
 	execute ":e ++enc=" . b:enc . " " . result
 	execute ":set filetype=pukiwiki_edit"
+
+	if g:pukiwiki_debug
+		let file = g:pukiwiki_datadir . '/pukiwiki.9.list-1'
+		call AL_write(file)
+		call AL_echo(file)
+	endif
+
+
 	runtime! ftplugin/pukiwiki_edit.vim
 	let status_line = page . ' ' . site_name
-	execute ":f " . escape(status_line, ' ')
-	execute "normal! 1GdG"
+	silent! execute ":f " . escape(status_line, ' ')
 	let body = PW_fileread(result)
 	let body = iconv(body, enc, &enc)
 	let body = substitute(body, '^.*<div id="body">\(.*\)<hr class="full_hr" />.*$', '\1', '')
 	let body = substitute(body, '<a id\_.\{-}<strong>\(\_.\{-}\)<\/strong><\/a>', '\[\[\1\]\]', 'g')
+"	let body = substitute(body, '<li><a href=".\{-}">\(\_.\{-}\)<\/a><small>(.*)</small></li>', '\[\[\1\]\]', 'g')
+
+	execute "normal! ggdG"
 	execute ":setlocal noai"
+	execute ":setlocal paste"
 	execute "normal! i" . body
+
+	if g:pukiwiki_debug
+		let file = g:pukiwiki_datadir . '/pukiwiki.9.list-2'
+		call AL_write(file)
+		call AL_echo(file)
+	endif
+
+	" がんばって加工
 	silent! %g/^$/d
 	silent! %g/<div/d
 	silent! %g/<\/div/d
@@ -133,7 +175,15 @@ function! s:PW_show_page_list()
 	silent! %g/^\s*<\/li/d
 	silent! %s/^.*<li><a.*>\(.*\)<\/a><small>\(.*\)<\/small>.*$/\t\[\[\1\]\] \2/
 	silent! %g/^\[/d
+	silent! %g/<br \/.*/d
 	silent! %s/\s*<li>\[\[\(.*\)\]\]$/\1/
+
+
+	if g:pukiwiki_debug
+		let file = g:pukiwiki_datadir . '/pukiwiki.9.list-3'
+		call AL_write(file)
+		call AL_echo(file)
+	endif
 
 	let b:site_name = site_name
 	let b:url       = url
@@ -143,6 +193,7 @@ function! s:PW_show_page_list()
 
 	execute ":setlocal noai"
 	execute "normal! gg0i" . b:site_name . " " . b:page . s:pukivim_ro_menu
+	execute "normal! gg"
 
 	call AL_decode_entityreference_with_range('%')
 	execute ":set nomodified"
@@ -165,8 +216,8 @@ function! s:PW_show_search()
 	endif
 
 	let result = tempname()
-	let cmd = 'curl -s -o ' . result . ' -d encode_hint=' . AL_urlencode('ぷ')
-	let cmd = cmd . ' -d word=' . AL_urlencode(word)
+	let cmd = 'curl -s -o ' . result . ' -d encode_hint=' . PW_urlencode('ぷ')
+	let cmd = cmd . ' -d word=' . PW_urlencode(word)
 	let cmd = cmd . ' -d type=' . type . ' -d cmd=search ' . b:url
 	call AL_system(cmd)
 
@@ -180,8 +231,8 @@ function! s:PW_show_search()
 	execute ":set filetype=pukiwiki_edit"
 	runtime! ftplugin/pukiwiki_edit.vim
 	let status_line = page . ' ' . site_name
-	execute ":f " . escape(status_line, ' ')
-	execute "normal! 1GdG"
+	silent! execute ":f " . escape(status_line, ' ')
+	execute "normal! ggdG"
 	let body = PW_fileread(result)
 	let body = iconv(body, enc, &enc)
 	let body = substitute(body, '^.*<div id="body">\(.*\)<hr class="full_hr" />.*$', '\1', '')
@@ -203,8 +254,11 @@ function! s:PW_show_search()
 	let b:top       = top
 	let b:page      = 'cmd=search'
 
-	execute "normal! GddggPi" . b:site_name . " " . b:page . s:pukivim_ro_menu
+	" 最終行に [... 10 ページ見つかりました] メッセージ
+	" それを最初にだす
+	execute "normal! GddggP0i" . b:site_name . " " . b:page . s:pukivim_ro_menu
 
+	execute "normal! gg"
 	execute ":set nomodified"
 	execute ":setlocal nomodifiable"
 	execute ":setlocal readonly"
@@ -229,7 +283,7 @@ function! s:PW_show_recent()
 	execute ":set filetype=pukiwiki_edit"
 	runtime! ftplugin/pukiwiki_edit.vim
 	let status_line = page . ' ' . site_name
-	execute ":f " . escape(status_line, ' ')
+	silent! execute ":f " . escape(status_line, ' ')
 	execute "normal! 1GdG"
 	let body = PW_fileread(result)
 	let body = iconv(body, enc, &enc)
