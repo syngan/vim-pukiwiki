@@ -1,0 +1,15 @@
+このページは PukiVim のブックマークです。貴方が編集したいサイトを記入してお
+くことが出来ます。書式はタブ区切りでサイト名、URL、PukiWikiのエンコードと
+なっています。
+
+URLにはそのサイトのトップページのページ名を付加してください。
+(必ずしも FrontPage とは限らないため)
+なお、凍結されているページをトップページに指定すると閲覧できません。
+
+<TAB> で移動してサイト名にカーソルを合わせて <CR> を押すことで対象となる
+PukiWikiを閲覧、編集することが出来ます。
+
+VimWiki			http://vimwiki.net/?FrontPage				euc-jp
+PukiWiki-official	http://pukiwiki.sourceforge.jp/index.php?雑談			utf-8
+PukiWiki.dev	http://pukiwiki.sourceforge.jp/dev/index.php?雑談		euc-jp
+
