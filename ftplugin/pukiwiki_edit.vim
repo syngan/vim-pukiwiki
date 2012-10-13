@@ -28,7 +28,7 @@ nnoremap <silent> <buffer> <CR>    :call <SID>PW_move()<CR>
 nnoremap <silent> <buffer> <TAB>   :call <SID>PW_bracket_move()<CR>
 nnoremap <silent> <buffer> <S-TAB> :call <SID>PW_bracket_move_rev()<CR>
 
-let s:pukivim_ro_menu = "\n[[トップ]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]\n------------------------------------------------------------------------------\n"
+let s:pukivim_ro_menu = "\n[[トップ]] [[添付]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]\n------------------------------------------------------------------------------\n"
 "let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 "let s:bracket_name = '\[\[\_.\{-}\]\]'
@@ -74,6 +74,8 @@ function! s:PW_move()
 			call s:PW_show_page_list()
 		elseif cur == '単語検索'
 			call s:PW_show_search()
+		elseif cur == '添付'
+			call s:PW_show_attach(b:site_name, b:url, b:enc, b:top, b:page)
 		elseif cur == '最終更新'
 "			call s:PW_show_recent()
 			let page = 'RecentChanges'
@@ -117,6 +119,49 @@ function! s:PW_bracket_move_rev()"{{{
 	execute "normal! ll"
 	let @/ = tmp
 endfunction"}}}
+
+
+"----------------------------------------------
+" 添付ファイル用の画面を表示する.
+" 表示せずにコマンドだけ・・・のほうがいいのかな
+"----------------------------------------------
+function! s:PW_show_attach(site_name, url, enc, top, page) "{{{
+	" 添付ファイルの一覧
+	let enc_page = iconv(a:page, &enc, a:enc)
+	let enc_page = PW_urlencode(enc_page)
+	let url = a:url . '?plugin=attach&pcmd=list&refer=' . enc_page
+	
+	let tmp = tempname()
+	let cmd = "curl -s -o " . tmp .' "'. url . '"'
+	echo cmd
+	let result = system(cmd)
+
+	let body = PW_fileread(tmp)
+	let body = iconv(body, a:enc, &enc)
+	let body = substitute(body, '^.*\(<div id="body">.*<hr class="full_hr" />\).*$', '\1', '')
+	let body = substitute(body, '^.*<div id="body">.*<ul>\(.*\)</ul>.*<hr class="full_hr" />.*$', '\1', '')
+	let body = substitute(body, '<span class="small">.\{-}</span>\n', '', 'g')
+	let body = substitute(body, ' </li>\n', '', 'g')
+	let body = substitute(body, ' <li><a.\{-} title="\(.\{-}\)">\(.\{-}\)</a>', '\2\t(\1)', 'g')
+	" index.php?plugin=attach&pcmd=list&refer=$page
+
+	execute "normal! ggdG"
+	execute ":setlocal indentexpr="
+	execute ":setlocal noautoindent"
+	execute ":setlocal paste"
+	execute "normal! i" . a:site_name . " " . b:page . s:pukivim_ro_menu 
+
+	execute "normal! i添付ファイル一覧 [[" . b:page . "]]\n"
+	execute "normal! i" . body
+	execute "normal! gg"
+
+
+	execute ":set nomodified"
+	execute ":setlocal nomodifiable"
+	execute ":setlocal readonly"
+	execute ":setlocal noswapfile"
+
+endfunction "}}}
 
 if !exists('*s:PW_show_page_list')"{{{
 function! s:PW_show_page_list()
@@ -309,3 +354,50 @@ function! s:PW_show_recent()
 
 endfunction
 endif"}}}
+
+
+function! PW_fileupload() range "{{{
+
+	let pass = input('パスワード: ')
+
+	let enc_page = iconv(b:page, &enc, b:enc)
+	let enc_page = PW_urlencode(enc_page)
+	let url = b:url . '?plugin=attach&pcmd=list&refer=' . enc_page
+
+	let tmpfile = tempname()
+	let cmd = 'curl -s -o ' . tmpfile . ' -F encode_hint=' . PW_urlencode('ぷ')
+	let cmd = cmd . ' -F plugin=attach'
+	let cmd = cmd . ' -F pcmd=post'
+	let cmd = cmd . ' -F refer=' . enc_page
+	let cmd = cmd . ' -F pass=' . pass 
+
+    for linenum in range(a:firstline, a:lastline)
+        "Replace loose ampersands (as in DeAmperfy())...
+        let curr_line   = getline(linenum)
+		let fcmd = cmd . ' -F "attach_file=@' . curr_line . '"'
+	
+		let fcmd = fcmd . ' "' . b:url . '"'
+		let result = system(fcmd)
+		let errcode = v:shell_error 
+		if errcode != 0
+			let msg = ''
+			if errcode == 26 
+				let msg = 'file not found'
+			endif
+
+			let msg = "\tcurl error (" . errcode . ':' . msg . ')'
+
+			call setline(linenum, curr_line . msg)
+			continue
+		endif
+
+		let body = PW_fileread(tmpfile)
+		let body = iconv(body, b:enc, &enc)
+		let body = substitute(body, '^.*<h1 class="title">\(.*\)</h1>.*$', '\1', '')
+		let body = substitute(body, '<a href=".*">\(.*\)</a>', '[[\1]]', '')
+		call setline(linenum, curr_line . "\t" . body)
+    endfor
+
+endfunction "}}}
+
+

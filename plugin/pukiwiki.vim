@@ -305,7 +305,7 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd)"{{{
 	execute ":setlocal noai"
 	execute ":setlocal paste"
 	silent! execute "normal! i" . a:site_name . " " . a:page . "\n"
-				\ . "[[トップ]] [[リロード]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]\n"
+				\ . "[[トップ]] [[添付]] [[リロード]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]\n"
 				\ . "------------------------------------------------------------------------------\n"
 	silent! execute "normal! i" . msg
 
@@ -499,7 +499,7 @@ function! PW_write()"{{{
 	endif
 
 	let notimestamp = ''
-
+	let lineno = line('.')
 
 	if g:pukiwiki_timestamp_update == 1
 	  let notimestamp = ''
@@ -617,6 +617,9 @@ function! PW_write()"{{{
 	endif
 
 	call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:page)
+
+	" 元いた行に移動
+	execute "normal! " . lineno . "G"
 	if g:pukiwiki_debug
 		" 毎回うっとーしいので debug 用に
 		call AL_echo('更新成功！')
@@ -671,11 +674,11 @@ endif"}}}
 
 
 
+function! PW_urlencode(str) "{{{
 " 1) [._-] はそのまま
 " 2) [A-Za-z0-9] もそのまま。
 " 3) 0x20[ ] ==> 0x2B[+]
 "    以上の3つの規則に当てはまらない文字は、 全て、 "%16進数表記"に変換する。
-function! PW_urlencode(str)
   " Return URL encoded string
 
   let result = ''
@@ -693,5 +696,7 @@ function! PW_urlencode(str)
     endif
   endwhile
   return result
-endfunction
+endfunction "}}}
+
+
 
