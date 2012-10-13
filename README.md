@@ -34,7 +34,6 @@ vim-pukiwiki ? A vim client for the PukiWiki 1.4.7 for Japanese.
 
 TODO:
   - 凍結/凍結解除機能
-  - (複数ファイルの)添付
   - ドキュメント
   - autoload 化
 
