@@ -29,6 +29,7 @@ vim-pukiwiki ? A vim client for the PukiWiki 1.4.7 for Japanese.
         BracketNameのエイリアス
   だけです。InterWikiNameや外部URLには現在対応していません。
 
+  @ curl が必要
 
 ==============================================================================
 
@@ -36,6 +37,7 @@ TODO:
   - 凍結/凍結解除機能
   - ドキュメント
   - autoload 化
+  - vitalize
 
 オリジナル
   http://vimwiki.net/?scripts%2F10
