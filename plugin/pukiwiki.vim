@@ -23,6 +23,9 @@
 "=============================================================================
 " http://pukiwiki.sourceforge.jp/?PukiWiki%2F%E3%83%97%E3%83%A9%E3%82%B0%E3%82%A4%E3%83%B3%2F1.4
 
+
+
+" option {{{
 if exists('plugin_pukiwiki_disable')
 	finish
 endif
@@ -75,9 +78,12 @@ let g:pukivim_dir = substitute(expand('<sfile>:p:h'), '[/\\]plugin$', '', '')
 let s:version_serial = 20080727
 let s:version_url = 'http://vimwiki.net/pukivim_version'
 
+
+"}}}
+
 command! -nargs=* PukiVim :call PukiWiki(<f-args>)
 
-function! PW_buf_vars()"{{{
+function! PW_buf_vars() "{{{
 	" デバッグ用
 	call AL_echokv('site_name' , b:site_name)
 	call AL_echokv('url'       , b:url)
@@ -86,9 +92,9 @@ function! PW_buf_vars()"{{{
 	call AL_echokv('page'      , b:page)
 	call AL_echokv('digest'    , b:digest)
 	call AL_echokv('original'  , b:original)
-endfunction"}}}
+endfunction "}}}
 
-function! PukiWiki(...)"{{{
+function! PukiWiki(...) "{{{
 	if !s:PW_init_check()
 		echohl ErrorMsg 
 		echo '起動に失敗しました。'
@@ -116,22 +122,21 @@ function! PukiWiki(...)"{{{
 			call AL_echo('')
 		endif
 	endif
-endfunction"}}}
+endfunction "}}}
 
-function! s:PW_read_pukiwiki_list()"{{{
+function! s:PW_read_pukiwiki_list() "{{{
 	if !filereadable(s:pukiwiki_list)
 		return 0
 	endif
 
-
 	execute ":e " . s:pukiwiki_list
 	execute "set filetype=pukiwiki_list"
-	runtime! ftplugin/pukiwiki_list.vim
+"	runtime! ftplugin/pukiwiki_list.vim
 	return 1
-endfunction"}}}
+endfunction "}}}
 
 " PukiVim [ SiteName [ PageName ]]
-function! s:PW_read_pukiwiki_list_witharg(...)"{{{
+function! s:PW_read_pukiwiki_list_witharg(...) "{{{
 
 	let site_name = a:1
 
@@ -163,10 +168,10 @@ function! s:PW_read_pukiwiki_list_witharg(...)"{{{
 	echo 'site "' . site_name . '" not found.'
 	echohl None
 	return 0
-endfunction"}}}
+endfunction "}}}
 
 
-function! s:PW_init_check()"{{{
+function! s:PW_init_check() "{{{
 	" alice.vimのロードを確実にする
 	if !exists('*AL_version')
 		runtime! plugin/alice.vim
@@ -206,9 +211,9 @@ function! s:PW_init_check()"{{{
 	endif
 
 	return 1
-endfunction"}}}
+endfunction "}}}
 
-function! s:PW_is_exist_new()"{{{
+function! s:PW_is_exist_new() "{{{
 	" 最新のスナップショットが有るのかチェック
 	" snapshot とは... pukivim のバージョン番号のこと
 	let cmd = 'curl -s ' . AL_quote(s:version_url)
@@ -217,21 +222,21 @@ function! s:PW_is_exist_new()"{{{
 		return 1
 	endif
 	return 0
-endfunction"}}}
+endfunction "}}}
 
 
 " edit ページを開く
-function! PW_get_edit_page(site_name, url, enc, top, page)"{{{
+function! PW_get_edit_page(site_name, url, enc, top, page) "{{{
 	return PW_get_page(a:site_name, a:url, a:enc, a:top, a:page, "edit")
-endfunction"}}}
+endfunction "}}}
 
-function! PW_get_source_page(site_name, url, enc, top, page)"{{{
+function! PW_get_source_page(site_name, url, enc, top, page) "{{{
 	return PW_get_page(a:site_name, a:url, a:enc, a:top, a:page, "source")
-endfunction"}}}
+endfunction "}}}
 
 " ページを開く
 " pwcmd = "edit" or "source"
-function! PW_get_page(site_name, url, enc, top, page, pwcmd)"{{{
+function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 	let start = localtime()
 	let enc_page = iconv(a:page, &enc, a:enc)
 	let enc_page = PW_urlencode(enc_page)
@@ -322,7 +327,7 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd)"{{{
 	endif
 	execute ':setlocal nobuflisted'
 	execute ":set filetype=pukiwiki_edit"
-	runtime! ftplugin/pukiwiki_edit.vim
+"	runtime! ftplugin/pukiwiki_edit.vim
 	let b:site_name = a:site_name
 	let b:url       = a:url
 	let b:enc       = a:enc
@@ -359,14 +364,14 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd)"{{{
 		execute ":setlocal nopaste"
 	endif
 
-endfunction"}}}
+endfunction "}}}
 
 
 
 
 " ページを開く
 " pwcmd = "edit" or "source"
-function! PW_get_page2(site_name, url, enc, top, page, pwcmd)"{{{
+function! PW_get_page2(site_name, url, enc, top, page, pwcmd) "{{{
 	let start = localtime()
 	let enc_page = iconv(a:page, &enc, a:enc)
 	let enc_page = PW_urlencode(enc_page)
@@ -454,7 +459,7 @@ function! PW_get_page2(site_name, url, enc, top, page, pwcmd)"{{{
 	execute ":bdelete " . prev_bufnr
 	execute ':setlocal nobuflisted'
 	execute ":set filetype=pukiwiki_edit"
-	runtime! ftplugin/pukiwiki_edit.vim
+"	runtime! ftplugin/pukiwiki_edit.vim
 	let b:site_name = a:site_name
 	let b:url       = a:url
 	let b:enc       = a:enc
@@ -490,9 +495,9 @@ function! PW_get_page2(site_name, url, enc, top, page, pwcmd)"{{{
 		execute ":setlocal nopaste"
 	endif
 
-endfunction"}}}
+endfunction "}}}
 
-function! PW_write()"{{{
+function! PW_write() "{{{
 
 	if ! &modified
 		return
@@ -625,19 +630,18 @@ function! PW_write()"{{{
 		call AL_echo('更新成功！')
 	endif
 
-endfunction"}}}
+endfunction "}}}
 
-function! PW_fileread(filename)"{{{
+function! PW_fileread(filename) "{{{
 	if has('win32')
 		let filename=substitute(a:filename,"/","\\","g")
 	else
 		let filename=a:filename
 	endif
 	return AL_fileread(filename)
-endfunction"}}}
+endfunction "}}}
 
-if !exists('*AL_filecopy')"{{{
-function! AL_filecopy(from, to)
+function! AL_filecopy(from, to) "{{{
 	if isdirectory(a:from) || !filereadable(a:from)
 		return 0
 	endif
@@ -669,8 +673,7 @@ function! AL_filecopy(from, to)
 	endif
 
 	return 1
-endfunction
-endif"}}}
+endfunction "}}}
 
 
 

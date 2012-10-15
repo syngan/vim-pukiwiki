@@ -33,8 +33,7 @@ let s:pukivim_ro_menu = "\n[[トップ]] [[添付]] [[新規]] [[一覧]] [[単語検索]] [[
 let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 "let s:bracket_name = '\[\[\_.\{-}\]\]'
 
-if !exists('*s:PW_move')"{{{
-function! s:PW_move()
+function! s:PW_move()  "{{{
 	if line('.') < 4
 		" ヘッダ部分
 		let cur = AL_matchstr_undercursor('\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]')
@@ -101,24 +100,23 @@ function! s:PW_move()
 "	let g:pukiwiki_current_site_top = b:top
 	call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, cur)
 endfunction
-endif"}}}
 
-function! s:PW_bracket_move()"{{{
+function! s:PW_bracket_move() "{{{
 	let tmp = @/
 	let @/ = s:bracket_name
 	silent! execute "normal! n"
 	execute "normal! ll"
 	let @/ = tmp
-endfunction"}}}
+endfunction "}}}
 
-function! s:PW_bracket_move_rev()"{{{
+function! s:PW_bracket_move_rev() "{{{
 	let tmp = @/
 	let @/ = s:bracket_name
 	execute "normal! hhh"
 	silent! execute "normal! N"
 	execute "normal! ll"
 	let @/ = tmp
-endfunction"}}}
+endfunction "}}}
 
 
 "----------------------------------------------
@@ -133,7 +131,6 @@ function! s:PW_show_attach(site_name, url, enc, top, page) "{{{
 	
 	let tmp = tempname()
 	let cmd = "curl -s -o " . tmp .' "'. url . '"'
-	echo cmd
 	let result = system(cmd)
 
 	let body = PW_fileread(tmp)
@@ -163,7 +160,6 @@ function! s:PW_show_attach(site_name, url, enc, top, page) "{{{
 
 endfunction "}}}
 
-if !exists('*s:PW_show_page_list')"{{{
 function! s:PW_show_page_list()
 	let url = b:url . '?cmd=list'
 	let result = tempname()
@@ -191,7 +187,7 @@ function! s:PW_show_page_list()
 	endif
 
 
-	runtime! ftplugin/pukiwiki_edit.vim
+"	runtime! ftplugin/pukiwiki_edit.vim
 	let status_line = page . ' ' . site_name
 	silent! execute ":f " . escape(status_line, ' ')
 	let body = PW_fileread(result)
@@ -245,11 +241,9 @@ function! s:PW_show_page_list()
 	execute ":setlocal nomodifiable"
 	execute ":setlocal readonly"
 	execute ":setlocal noswapfile"
-endfunction
-endif"}}}
+endfunction "}}}
 
-if !exists('*s:PW_show_search')"{{{
-function! s:PW_show_search()
+function! s:PW_show_search() "{{{
 	let word = input('キーワード: ')
 	if word == ''
 		return
@@ -274,7 +268,7 @@ function! s:PW_show_search()
 
 	execute ":e ++enc=" . b:enc . " " . result
 	execute ":set filetype=pukiwiki_edit"
-	runtime! ftplugin/pukiwiki_edit.vim
+"	runtime! ftplugin/pukiwiki_edit.vim
 	let status_line = page . ' ' . site_name
 	silent! execute ":f " . escape(status_line, ' ')
 	execute "normal! ggdG"
@@ -308,11 +302,9 @@ function! s:PW_show_search()
 	execute ":setlocal nomodifiable"
 	execute ":setlocal readonly"
 	execute ":setlocal noswapfile"
-endfunction
-endif"}}}
+endfunction "}}}
 
-if !exists('*s:PW_show_recent')"{{{
-function! s:PW_show_recent()
+function! s:PW_show_recent() "{{{
 	let url = b:url . '?RecentChanges'
 	let result = tempname()
 	let cmd = 'curl -s -o ' . result . ' ' . url
@@ -326,7 +318,7 @@ function! s:PW_show_recent()
 
 	execute ":e ++enc=" . b:enc . " " . result
 	execute ":set filetype=pukiwiki_edit"
-	runtime! ftplugin/pukiwiki_edit.vim
+"	runtime! ftplugin/pukiwiki_edit.vim
 	let status_line = page . ' ' . site_name
 	silent! execute ":f " . escape(status_line, ' ')
 	execute "normal! 1GdG"
@@ -352,8 +344,7 @@ function! s:PW_show_recent()
 	execute ":setlocal readonly"
 	execute ":setlocal noswapfile"
 
-endfunction
-endif"}}}
+endfunction "}}}
 
 
 function! PW_fileupload() range "{{{
@@ -362,7 +353,6 @@ function! PW_fileupload() range "{{{
 
 	let enc_page = iconv(b:page, &enc, b:enc)
 	let enc_page = PW_urlencode(enc_page)
-	let url = b:url . '?plugin=attach&pcmd=list&refer=' . enc_page
 
 	let tmpfile = tempname()
 	let cmd = 'curl -s -o ' . tmpfile . ' -F encode_hint=' . PW_urlencode('ぷ')
