@@ -21,18 +21,20 @@
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
-
 scriptencoding euc-jp
 
+" nnoremap {{{
 nnoremap <silent> <buffer> <CR>    :call <SID>PW_move()<CR>
 nnoremap <silent> <buffer> <TAB>   :call <SID>PW_bracket_move()<CR>
 nnoremap <silent> <buffer> <S-TAB> :call <SID>PW_bracket_move_rev()<CR>
+" }}}
 
 let s:pukivim_ro_menu = "\n[[トップ]] [[添付]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]\n------------------------------------------------------------------------------\n"
 "let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 "let s:bracket_name = '\[\[\_.\{-}\]\]'
 
+try
 function! s:PW_move()  "{{{
 	if line('.') < 4
 		" ヘッダ部分
@@ -62,7 +64,11 @@ function! s:PW_move()  "{{{
 			call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:top)
 		elseif cur == 'リロード'
 "			let g:pukiwiki_current_site_top = b:top
-			call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:page)
+			if b:page == 'FormattingRules' || b:page == 'RecentChanges'
+				call PW_get_source_page(b:site_name, b:url, b:enc, b:top, b:page)
+			else
+				call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:page)
+			endif
 		elseif cur == '新規'
 			let page = input('新規ページ名: ')
 			if page == ''
@@ -76,7 +82,6 @@ function! s:PW_move()  "{{{
 		elseif cur == '添付'
 			call s:PW_show_attach(b:site_name, b:url, b:enc, b:top, b:page)
 		elseif cur == '最終更新'
-"			call s:PW_show_recent()
 			let page = 'RecentChanges'
 			call PW_get_source_page(b:site_name, b:url, b:enc, b:top, page)
 		elseif cur == 'ヘルプ'
@@ -95,11 +100,13 @@ function! s:PW_move()  "{{{
 		return
 	endif
 
-	echo cur
+"	echo cur
 "	let g:pukiwiki_current_site_name = b:site_name
 "	let g:pukiwiki_current_site_top = b:top
 	call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, cur)
-endfunction
+endfunction "}}}
+catch /^Vim\%((\a\+)\)\?:E127/
+endtry
 
 function! s:PW_bracket_move() "{{{
 	let tmp = @/
@@ -118,18 +125,19 @@ function! s:PW_bracket_move_rev() "{{{
 	let @/ = tmp
 endfunction "}}}
 
-
+try
+function! s:PW_show_attach(site_name, url, enc, top, page) "{{{
 "----------------------------------------------
 " 添付ファイル用の画面を表示する.
 " 表示せずにコマンドだけ・・・のほうがいいのかな
 "----------------------------------------------
-function! s:PW_show_attach(site_name, url, enc, top, page) "{{{
 	" 添付ファイルの一覧
 	let enc_page = iconv(a:page, &enc, a:enc)
 	let enc_page = PW_urlencode(enc_page)
 	let url = a:url . '?plugin=attach&pcmd=list&refer=' . enc_page
 	
 	let tmp = tempname()
+	
 	let cmd = "curl -s -o " . tmp .' "'. url . '"'
 	let result = system(cmd)
 
@@ -142,25 +150,27 @@ function! s:PW_show_attach(site_name, url, enc, top, page) "{{{
 	let body = substitute(body, ' <li><a.\{-} title="\(.\{-}\)">\(.\{-}\)</a>', '\2\t(\1)', 'g')
 	" index.php?plugin=attach&pcmd=list&refer=$page
 
-	execute "normal! ggdG"
-	execute ":setlocal indentexpr="
-	execute ":setlocal noautoindent"
-	execute ":setlocal paste"
-	execute "normal! i" . a:site_name . " " . b:page . s:pukivim_ro_menu 
+	" [添付ファイルがありません] 対応
+	let body = substitute(body, '<.\{-}>', '', 'g')
+	let body = substitute(body, '\n\n*', '\n', 'g')
 
+	call PW_newpage(a:site_name, a:url, a:enc, a:top, a:page)
+"	execute ":e! ++enc=" . a:enc
+	let status_line = b:page . ' ' . b:site_name
+	let status_line = escape(status_line, ' ')
+	silent! execute ":f " . status_line
+
+	execute "normal! i" . a:site_name . " " . b:page . s:pukivim_ro_menu 
 	execute "normal! i添付ファイル一覧 [[" . b:page . "]]\n"
 	execute "normal! i" . body
-	execute "normal! gg"
 
-
-	execute ":set nomodified"
-	execute ":setlocal nomodifiable"
-	execute ":setlocal readonly"
-	execute ":setlocal noswapfile"
-
+	call PW_endpage(a:site_name, a:url, a:enc, a:top, a:page, 1)
 endfunction "}}}
+catch /^Vim\%((\a\+)\)\?:E127/
+endtry
 
-function! s:PW_show_page_list()
+try
+function! s:PW_show_page_list() "{{{
 	let url = b:url . '?cmd=list'
 	let result = tempname()
 	let cmd = 'curl -s -o ' . result . ' "' . url . '"'
@@ -234,15 +244,15 @@ function! s:PW_show_page_list()
 
 	execute ":setlocal noai"
 	execute "normal! gg0i" . b:site_name . " " . b:page . s:pukivim_ro_menu
-	execute "normal! gg"
 
 	call AL_decode_entityreference_with_range('%')
-	execute ":set nomodified"
-	execute ":setlocal nomodifiable"
-	execute ":setlocal readonly"
-	execute ":setlocal noswapfile"
-endfunction "}}}
 
+	call PW_endpage(site_name, url, enc, top, page, 1)
+endfunction "}}}
+catch /^Vim\%((\a\+)\)\?:E127/
+endtry
+
+try
 function! s:PW_show_search() "{{{
 	let word = input('キーワード: ')
 	if word == ''
@@ -297,56 +307,12 @@ function! s:PW_show_search() "{{{
 	" それを最初にだす
 	execute "normal! GddggP0i" . b:site_name . " " . b:page . s:pukivim_ro_menu
 
-	execute "normal! gg"
-	execute ":set nomodified"
-	execute ":setlocal nomodifiable"
-	execute ":setlocal readonly"
-	execute ":setlocal noswapfile"
+	call PW_endpage(site_name, url, enc, top, b:page, 1)
 endfunction "}}}
+catch /^Vim\%((\a\+)\)\?:E127/
+endtry
 
-function! s:PW_show_recent() "{{{
-	let url = b:url . '?RecentChanges'
-	let result = tempname()
-	let cmd = 'curl -s -o ' . result . ' ' . url
-	call AL_system(cmd)
-
-	let site_name = b:site_name
-	let url       = b:url
-	let enc       = b:enc
-	let top       = b:top
-	let page      = 'RecentChanges'
-
-	execute ":e ++enc=" . b:enc . " " . result
-	execute ":set filetype=pukiwiki_edit"
-"	runtime! ftplugin/pukiwiki_edit.vim
-	let status_line = page . ' ' . site_name
-	silent! execute ":f " . escape(status_line, ' ')
-	execute "normal! 1GdG"
-	let body = PW_fileread(result)
-	let body = iconv(body, enc, &enc)
-	let body = substitute(body, '^.*<div id="body">\(.*\)<hr class="full_hr" />.*$', '\1', '')
-	execute ":setlocal noai"
-	execute "normal! i" . body
-	silent! %s/^.*<li>//
-	silent! %g!/a href/d
-	silent! %s/<a href.*>\(.*\)<\/a>.*$/\[\[\1\]\]/
-
-	let b:site_name = site_name
-	let b:url       = url
-	let b:enc       = enc
-	let b:top       = top
-	let b:page      = 'RecentChanges'
-
-	execute ":setlocal noai"
-	execute "normal! ggi" . b:site_name . " " . b:page . s:pukivim_ro_menu
-	execute ":set nomodified"
-	execute ":setlocal nomodifiable"
-	execute ":setlocal readonly"
-	execute ":setlocal noswapfile"
-
-endfunction "}}}
-
-
+try
 function! PW_fileupload() range "{{{
 
 	let pass = input('パスワード: ')
@@ -364,8 +330,11 @@ function! PW_fileupload() range "{{{
     for linenum in range(a:firstline, a:lastline)
         "Replace loose ampersands (as in DeAmperfy())...
         let curr_line   = getline(linenum)
+
+		" いくつか自分でチェックするか.
+		" file が読めるか. directory でないか.
+
 		let fcmd = cmd . ' -F "attach_file=@' . curr_line . '"'
-	
 		let fcmd = fcmd . ' "' . b:url . '"'
 		let result = system(fcmd)
 		let errcode = v:shell_error 
@@ -389,5 +358,6 @@ function! PW_fileupload() range "{{{
     endfor
 
 endfunction "}}}
-
+catch /^Vim\%((\a\+)\)\?:E127/
+endtry
 
