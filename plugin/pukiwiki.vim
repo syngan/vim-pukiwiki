@@ -21,9 +21,6 @@
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
-" http://pukiwiki.sourceforge.jp/?PukiWiki%2F%E3%83%97%E3%83%A9%E3%82%B0%E3%82%A4%E3%83%B3%2F1.4
-
-
 
 " option {{{
 if exists('plugin_pukiwiki_disable')
@@ -83,6 +80,35 @@ let s:version_url = 'http://vimwiki.net/pukivim_version'
 
 command! -nargs=* PukiVim :call PukiWiki(<f-args>)
 
+function! PW_newpage(site_name, url, enc, top, page) "{{{
+
+	execute ":e! ++enc=" . a:enc
+	execute ":setlocal modifiable"
+	execute ":setlocal indentexpr="
+	execute ":setlocal noautoindent"
+	execute ":setlocal paste"
+	execute ':setlocal nobuflisted'
+	execute ":setlocal filetype=pukiwiki_edit"
+
+	let b:site_name = a:site_name
+	let b:url       = a:url
+	let b:enc       = a:enc
+	let b:top       = a:top
+	let b:page      = a:page
+
+endfunction "}}}
+
+function! PW_endpage(site_name, url, enc, top, page, readonly) "{{{
+	execute "normal! gg"
+	execute ':setlocal nobuflisted'
+	execute ":set nomodified"
+	if a:readonly
+		execute ":setlocal nomodifiable"
+		execute ":setlocal readonly"
+	endif
+	execute ":setlocal noswapfile"
+endfunction "}}}
+
 function! PW_buf_vars() "{{{
 	" デバッグ用
 	call AL_echokv('site_name' , b:site_name)
@@ -125,6 +151,7 @@ function! PukiWiki(...) "{{{
 endfunction "}}}
 
 function! s:PW_read_pukiwiki_list() "{{{
+" bookmark
 	if !filereadable(s:pukiwiki_list)
 		return 0
 	endif
@@ -135,8 +162,9 @@ function! s:PW_read_pukiwiki_list() "{{{
 	return 1
 endfunction "}}}
 
-" PukiVim [ SiteName [ PageName ]]
 function! s:PW_read_pukiwiki_list_witharg(...) "{{{
+" bookmark
+" PukiVim [ SiteName [ PageName ]]
 
 	let site_name = a:1
 
@@ -169,7 +197,6 @@ function! s:PW_read_pukiwiki_list_witharg(...) "{{{
 	echohl None
 	return 0
 endfunction "}}}
-
 
 function! s:PW_init_check() "{{{
 	" alice.vimのロードを確実にする
@@ -224,9 +251,8 @@ function! s:PW_is_exist_new() "{{{
 	return 0
 endfunction "}}}
 
-
-" edit ページを開く
 function! PW_get_edit_page(site_name, url, enc, top, page) "{{{
+" edit ページを開く
 	return PW_get_page(a:site_name, a:url, a:enc, a:top, a:page, "edit")
 endfunction "}}}
 
@@ -234,9 +260,9 @@ function! PW_get_source_page(site_name, url, enc, top, page) "{{{
 	return PW_get_page(a:site_name, a:url, a:enc, a:top, a:page, "source")
 endfunction "}}}
 
+function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 " ページを開く
 " pwcmd = "edit" or "source"
-function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 	let start = localtime()
 	let enc_page = iconv(a:page, &enc, a:enc)
 	let enc_page = PW_urlencode(enc_page)
@@ -275,7 +301,6 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 		return
 	endif
 
-
 	let phase1 = localtime()
 
 	if a:pwcmd == 'edit' 
@@ -292,7 +317,7 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 		let msg = substitute(result, '.*<textarea\_.\{-}>\(\_.\{-}\)</textarea>.*', '\1', '')
 	else
 		" cmd='source'
-		execute ":e! ++enc=" . a:enc . ' ' . tmp
+		" execute ":e! ++enc=" . a:enc . ' ' . tmp
 		let digest = ''
 		let msg = substitute(result, '.*<pre id="source">\(\_.\{-}\)</pre>.*', '\1', '')
 	endif
@@ -301,14 +326,12 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 	let phase2 = localtime()
 
 	" 全消去
-	execute "normal! ggdG"
+	call PW_newpage(a:site_name, a:url, a:enc, a:top, a:page)
+"	execute "normal! ggdG"
+"	execute ":setlocal indentexpr="
+"	execute ":setlocal noai"
+"	execute ":setlocal paste"
 
-	" ヘッダの行数を変更する場合には, 
-	" PW_write にも影響する
-	let pp = &paste
-	execute ":setlocal indentexpr="
-	execute ":setlocal noai"
-	execute ":setlocal paste"
 	silent! execute "normal! i" . a:site_name . " " . a:page . "\n"
 				\ . "[[トップ]] [[添付]] [[リロード]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]\n"
 				\ . "------------------------------------------------------------------------------\n"
@@ -322,11 +345,11 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 
 	let prev_bufnr = bufnr('%')
 	execute ":e ++enc=" . a:enc . ' ' . edit_form
+	execute ":set filetype=pukiwiki_edit"
 	if bufexists(prev_bufnr)
 		execute ":bdelete " . prev_bufnr
 	endif
-	execute ':setlocal nobuflisted'
-	execute ":set filetype=pukiwiki_edit"
+"	execute ':setlocal nobuflisted'
 "	runtime! ftplugin/pukiwiki_edit.vim
 	let b:site_name = a:site_name
 	let b:url       = a:url
@@ -340,17 +363,19 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 	let status_line = escape(status_line, ' ')
 	silent! execute ":f " . status_line
 	call delete(edit_form)
-	execute ":setlocal noswapfile"
-	silent! execute ":redraws!"
+"	execute ":setlocal noswapfile"
 	if a:pwcmd == 'edit'
 		augroup PukiWikiEdit
 			execute "autocmd! BufWriteCmd " . status_line . " call PW_write()"
 		augroup END
+		call PW_endpage(a:site_name, a:url, a:enc, a:top, a:page, 0)
 	endif
 	if a:pwcmd == 'source'
-		execute ':setlocal readonly'
-		execute ":setlocal nomodifiable"
+"		execute ':setlocal readonly'
+"		execute ":setlocal nomodifiable"
+		call PW_endpage(a:site_name, a:url, a:enc, a:top, a:page, 1)
 	endif
+	silent! execute ":redraws!"
 
 	if g:pukiwiki_debug
 		let phase4 = localtime()
@@ -358,141 +383,6 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 		echo 'phase1 - phase2 = ' . (phase2 - phase1)
 		echo 'phase2 - phase3 = ' . (phase3 - phase2)
 		echo 'phase3 - phase4 = ' . (phase4 - phase3)
-	endif
-
-	if ! pp
-		execute ":setlocal nopaste"
-	endif
-
-endfunction "}}}
-
-
-
-
-" ページを開く
-" pwcmd = "edit" or "source"
-function! PW_get_page2(site_name, url, enc, top, page, pwcmd) "{{{
-	let start = localtime()
-	let enc_page = iconv(a:page, &enc, a:enc)
-	let enc_page = PW_urlencode(enc_page)
-	let cmd = a:url . "?cmd=" . a:pwcmd . "&page=" . enc_page
-	let tmp = tempname()
-	let cmd = "curl -s -o " . tmp .' '. AL_quote(cmd)
-
-	let result = system(cmd)
-	let result = PW_fileread(tmp)
-	let result = iconv(result, a:enc, &enc)
-
-
-	let phase1 = localtime()
-
-	if a:pwcmd == 'edit' 
-		if result !~ '<textarea\_.\{-}>\_.\{-}</textarea>\_.\{-}<textarea'
-			if g:pukiwiki_debug
-				call AL_echo('ページの読み込みに失敗しました。凍結されているか、認証が必要です。' . cmd, 'WarningMsg')
-			else
-				call AL_echo('ページの読み込みに失敗しました。凍結されているか、認証が必要です。', 'WarningMsg')
-			endif
-			call delete(tmp)
-			return
-		endif
-
-
-		" digest 部分を grep 
-		execute ":e! ++enc=" . a:enc . ' ' . tmp
-		let stmp = @/
-		let @/ = '<input type="hidden" name="digest" value="'
-		silent! execute "normal! n"
-		let @/ = stmp
-		let digest_line = getline('.')
-		call delete(tmp)
-
-		let digest = substitute(digest_line, '.*name="digest" value="\([0-9a-z]\{-}\)" />.*', '\1', '')
-		let msg = substitute(result, '.*<textarea\_.\{-}>\(\_.\{-}\)</textarea>.*', '\1', '')
-
-	elseif a:pwcmd == 'source'
-		if result !~ '<pre id="source">'
-			if g:pukiwiki_debug
-				call AL_echo('ページの読み込みに失敗しました。凍結されているか、認証が必要です。' . cmd, 'WarningMsg')
-			else
-				call AL_echo('ページの読み込みに失敗しました。凍結されているか、認証が必要です。', 'WarningMsg')
-			endif
-			call delete(tmp)
-			return
-		endif
-
-		call delete(tmp)
-
-		let digest = ''
-		let msg = substitute(result, '.*<pre id="source">\(\_.\{-}\)</pre>.*', '\1', '')
-
-	else
-		call AL_echo('unknown command: ' . a:pwcmd, 'WarningMsg')
-		call delete(tmp)
-		return
-	endif
-
-	let phase2 = localtime()
-
-	" 全消去
-	execute "normal! ggdG"
-
-	" ヘッダの行数を変更する場合には, 
-	" PW_write にも影響する
-	let pp = &paste
-	execute ":setlocal indentexpr="
-	execute ":setlocal noautoindent"
-	execute ":setlocal paste"
-	silent! execute "normal! i" . a:site_name . " " . a:page . "\n"
-				\ . "[[トップ]] [[リロード]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]\n"
-				\ . "------------------------------------------------------------------------------\n"
-	silent! execute "normal! i" . msg
-
-	call AL_decode_entityreference_with_range('%')
-	silent! execute ":set nomodified"
-	let edit_form = tempname()
-	call AL_write(edit_form)
-	let phase3 = localtime()
-
-	let prev_bufnr = bufnr('%')
-	execute ":e ++enc=" . a:enc . ' ' . edit_form
-	execute ":bdelete " . prev_bufnr
-	execute ':setlocal nobuflisted'
-	execute ":set filetype=pukiwiki_edit"
-"	runtime! ftplugin/pukiwiki_edit.vim
-	let b:site_name = a:site_name
-	let b:url       = a:url
-	let b:enc       = a:enc
-	let b:top       = a:top
-	let b:page      = a:page
-	let b:digest    = digest
-	let b:original  = msg
-
-	let status_line = b:page . ' ' . b:site_name
-	let status_line = escape(status_line, ' ')
-	silent! execute ":f " . status_line
-	call delete(edit_form)
-	execute ":setlocal noswapfile"
-	if a:pwcmd == 'source'
-		execute ':setlocal readonly'
-	endif
-	silent! execute ":redraws!"
-	if a:pwcmd == 'edit'
-		augroup PukiWikiEdit
-			execute "autocmd! BufWriteCmd " . status_line . " call PW_write()"
-		augroup END
-	endif
-
-	let phase4 = localtime()
-	if g:pukiwiki_debug
-		echo 'start - phase1  = ' . (phase1 - start)
-		echo 'phase1 - phase2 = ' . (phase2 - phase1)
-		echo 'phase2 - phase3 = ' . (phase3 - phase2)
-		echo 'phase3 - phase4 = ' . (phase4 - phase3)
-	endif
-
-	if ! pp
-		execute ":setlocal nopaste"
 	endif
 
 endfunction "}}}
@@ -556,7 +446,6 @@ function! PW_write() "{{{
 	let cmd = cmd . "&original="
 	let cmd = cmd . "&msg="
 	call AL_execute(cmd)
-
 
 	if g:pukiwiki_debug
 		let file = g:pukiwiki_datadir . '/pukiwiki.3'
@@ -675,8 +564,6 @@ function! AL_filecopy(from, to) "{{{
 	return 1
 endfunction "}}}
 
-
-
 function! PW_urlencode(str) "{{{
 " 1) [._-] はそのまま
 " 2) [A-Za-z0-9] もそのまま。
@@ -700,6 +587,4 @@ function! PW_urlencode(str) "{{{
   endwhile
   return result
 endfunction "}}}
-
-
 

@@ -39,6 +39,7 @@ TODO:
   - ドキュメント
   - autoload 化
   - vitalize
+  - 前画面削除で "ggdG" とやっているせいでレジスタが壊れる
 
 オリジナル
   http://vimwiki.net/?scripts%2F10
