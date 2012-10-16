@@ -36,13 +36,6 @@ if !exists('g:pukiwiki_debug')
 	let g:pukiwiki_debug = 0
 endif
 
-" http://vimwiki.net/pukivim_version を取得して
-" スナップショットが更新されているかチェックする。
-" デフォルトは 0 に変更
-if !exists('g:pukiwiki_check_snapshot')
-	let g:pukiwiki_check_snapshot = 0
-endif
-
 " ブックマークを保存する場所
 " マルチユーザ設定
 if !exists('g:pukiwiki_multiuser')
@@ -69,19 +62,11 @@ if !exists('g:pukiwiki_timestamp_update')
 	let g:pukiwiki_timestamp_update = -1
 endif
 
-
-let g:pukivim_dir = substitute(expand('<sfile>:p:h'), '[/\\]plugin$', '', '')
-
-let s:version_serial = 20080727
-let s:version_url = 'http://vimwiki.net/pukivim_version'
-
-
 "}}}
 
 command! -nargs=* PukiVim :call PukiWiki(<f-args>)
 
 function! PW_newpage(site_name, url, enc, top, page) "{{{
-
 	execute ":e! ++enc=" . a:enc
 	execute ":setlocal modifiable"
 	execute ":setlocal indentexpr="
@@ -95,7 +80,6 @@ function! PW_newpage(site_name, url, enc, top, page) "{{{
 	let b:enc       = a:enc
 	let b:top       = a:top
 	let b:page      = a:page
-
 endfunction "}}}
 
 function! PW_endpage(site_name, url, enc, top, page, readonly) "{{{
@@ -109,6 +93,13 @@ function! PW_endpage(site_name, url, enc, top, page, readonly) "{{{
 	execute ":setlocal noswapfile"
 endfunction "}}}
 
+function! PW_set_statusline(site_name, page) "{{{
+	let status_line = a:page . ' ' . a:site_name
+	let status_line = escape(status_line, ' ')
+	silent! execute ":f " . status_line
+	return status_line
+endfunction "}}}
+
 function! PW_buf_vars() "{{{
 	" デバッグ用
 	call AL_echokv('site_name' , b:site_name)
@@ -118,6 +109,13 @@ function! PW_buf_vars() "{{{
 	call AL_echokv('page'      , b:page)
 	call AL_echokv('digest'    , b:digest)
 	call AL_echokv('original'  , b:original)
+endfunction "}}}
+
+function! s:PW_get_digest(str) "{{{
+	" [[編集]] 画面から digest を取得する
+	let s = matchstr(a:str,
+	\     '<input type="hidden" name="digest" value="\zs.\{-}\ze" />')
+	return s
 endfunction "}}}
 
 function! PukiWiki(...) "{{{
@@ -140,14 +138,6 @@ function! PukiWiki(...) "{{{
 		endif
 	endif
 
-
-	" 最新版のチェック
-	if g:pukiwiki_check_snapshot
-		if s:PW_is_exist_new()
-			call AL_echo('PukiVim のスナップショットが更新されています。', 'WarningMsg')
-			call AL_echo('')
-		endif
-	endif
 endfunction "}}}
 
 function! s:PW_read_pukiwiki_list() "{{{
@@ -156,9 +146,9 @@ function! s:PW_read_pukiwiki_list() "{{{
 		return 0
 	endif
 
+	" ブックマークを開く
 	execute ":e " . s:pukiwiki_list
 	execute "set filetype=pukiwiki_list"
-"	runtime! ftplugin/pukiwiki_list.vim
 	return 1
 endfunction "}}}
 
@@ -185,9 +175,9 @@ function! s:PW_read_pukiwiki_list_witharg(...) "{{{
 			let page  = top
 		endif
 		let url       = substitute(url  , '^\(.*\)?.*'             , '\1' , '')
-"		if &modified
-"			execute ":w"
-"		endif
+
+		" 最初に一度だけ空ファイルを開く
+		execute ":e! ++enc=" . enc . " " . tempname()
 		call PW_get_edit_page(site_name, url, enc, top, page)
 		return 1
 	endfor
@@ -229,7 +219,8 @@ function! s:PW_init_check() "{{{
 
 	" BookMark 最初は無いからスクリプトに付属の物をユーザー用にコピーする。
 	let s:pukiwiki_list = g:pukiwiki_datadir . '/pukiwiki.list'
-	let s:pukiwiki_list_dist = g:pukivim_dir . '/pukiwiki.list-dist'
+	let pukivim_dir = substitute(expand('<sfile>:p:h'), '[/\\]plugin$', '', '')
+	let s:pukiwiki_list_dist = pukivim_dir . '/pukiwiki.list-dist'
 	if !filereadable(s:pukiwiki_list)
 		if !AL_filecopy(s:pukiwiki_list_dist, s:pukiwiki_list)
 			call AL_echo('pukiwiki.list-dist のコピーに失敗しました。', 'ErrorMsg')
@@ -238,17 +229,6 @@ function! s:PW_init_check() "{{{
 	endif
 
 	return 1
-endfunction "}}}
-
-function! s:PW_is_exist_new() "{{{
-	" 最新のスナップショットが有るのかチェック
-	" snapshot とは... pukivim のバージョン番号のこと
-	let cmd = 'curl -s ' . AL_quote(s:version_url)
-	let result = system(cmd)
-	if result > s:version_serial
-		return 1
-	endif
-	return 0
 endfunction "}}}
 
 function! PW_get_edit_page(site_name, url, enc, top, page) "{{{
@@ -304,22 +284,12 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 	let phase1 = localtime()
 
 	if a:pwcmd == 'edit' 
-		" digest 部分を grep 
-		execute ":e! ++enc=" . a:enc . ' ' . tmp
-		let stmp = @/
-		let @/ = '<input type="hidden" name="digest" value="'
-		silent! execute "normal! n"
-		let @/ = stmp
-		let digest_line = getline('.')
-
-		let digest = substitute(digest_line, '.*name="digest" value="\([0-9a-z]\{-}\)" />.*', '\1', '')
-
-		let msg = substitute(result, '.*<textarea\_.\{-}>\(\_.\{-}\)</textarea>.*', '\1', '')
+		let digest = s:PW_get_digest(result)
+		let msg = matchstr(result, '.*<textarea\_.\{-}>\zs\_.\{-}\ze</textarea>.*')
 	else
 		" cmd='source'
-		" execute ":e! ++enc=" . a:enc . ' ' . tmp
 		let digest = ''
-		let msg = substitute(result, '.*<pre id="source">\(\_.\{-}\)</pre>.*', '\1', '')
+		let msg = matchstr(result, '.*<pre id="source">\zs\_.\{-}\ze</pre>.*')
 	endif
 
 	call delete(tmp)
@@ -327,10 +297,6 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 
 	" 全消去
 	call PW_newpage(a:site_name, a:url, a:enc, a:top, a:page)
-"	execute "normal! ggdG"
-"	execute ":setlocal indentexpr="
-"	execute ":setlocal noai"
-"	execute ":setlocal paste"
 
 	silent! execute "normal! i" . a:site_name . " " . a:page . "\n"
 				\ . "[[トップ]] [[添付]] [[リロード]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]\n"
@@ -338,32 +304,12 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 	silent! execute "normal! i" . msg
 
 	call AL_decode_entityreference_with_range('%')
-	silent! execute ":set nomodified"
-	let edit_form = tempname()
-	call AL_write(edit_form)
 	let phase3 = localtime()
 
-	let prev_bufnr = bufnr('%')
-	execute ":e ++enc=" . a:enc . ' ' . edit_form
-	execute ":set filetype=pukiwiki_edit"
-	if bufexists(prev_bufnr)
-		execute ":bdelete " . prev_bufnr
-	endif
-"	execute ':setlocal nobuflisted'
-"	runtime! ftplugin/pukiwiki_edit.vim
-	let b:site_name = a:site_name
-	let b:url       = a:url
-	let b:enc       = a:enc
-	let b:top       = a:top
-	let b:page      = a:page
 	let b:digest    = digest
 	let b:original  = msg
 
-	let status_line = b:page . ' ' . b:site_name
-	let status_line = escape(status_line, ' ')
-	silent! execute ":f " . status_line
-	call delete(edit_form)
-"	execute ":setlocal noswapfile"
+	let status_line = PW_set_statusline(b:site_name, b:page)
 	if a:pwcmd == 'edit'
 		augroup PukiWikiEdit
 			execute "autocmd! BufWriteCmd " . status_line . " call PW_write()"
@@ -371,8 +317,6 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 		call PW_endpage(a:site_name, a:url, a:enc, a:top, a:page, 0)
 	endif
 	if a:pwcmd == 'source'
-"		execute ':setlocal readonly'
-"		execute ":setlocal nomodifiable"
 		call PW_endpage(a:site_name, a:url, a:enc, a:top, a:page, 1)
 	endif
 	silent! execute ":redraws!"
@@ -415,7 +359,7 @@ function! PW_write() "{{{
 
 	" ヘッダの削除. ユーザがヘッダを修正すると
 	" 書き込みが壊れるだめな仕様
-	silent! execute "normal! 1G3D"
+	silent! execute "normal! gg3D"
 	let cl = 1
 	execute ":setlocal fenc="
 	while cl <= line('$')
@@ -490,8 +434,7 @@ function! PW_write() "{{{
 
 		" 書き込みしようとしたバッファの名前の前に'ローカル'を付けて
 		" 現在のサーバー上の内容を取得して'diffthis'を実行する。
-		let status_line = 'ローカル ' . page . ' ' . site_name
-		execute ":f " . escape(status_line, ' ')
+		call PW_set_statusline(a:site_name, 'ローカル ' . a:page)
 		execute ":diffthis"
 		execute ":new"
 

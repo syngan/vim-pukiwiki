@@ -29,7 +29,9 @@ nnoremap <silent> <buffer> <TAB>   :call <SID>PW_bracket_move()<CR>
 nnoremap <silent> <buffer> <S-TAB> :call <SID>PW_bracket_move_rev()<CR>
 " }}}
 
-let s:pukivim_ro_menu = "\n[[トップ]] [[添付]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]\n------------------------------------------------------------------------------\n"
+let s:pukivim_ro_menu = "\n"
+	\ . "[[トップ]] [[添付]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]\n"
+	\ . "------------------------------------------------------------------------------\n"
 "let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 "let s:bracket_name = '\[\[\_.\{-}\]\]'
@@ -60,10 +62,8 @@ function! s:PW_move()  "{{{
 	let cur = substitute(cur, '\[\[\(.*\)\]\]', '\1', '')
 	if line('.') < 4
 		if cur == 'トップ'
-"			let g:pukiwiki_current_site_top = b:top
 			call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:top)
 		elseif cur == 'リロード'
-"			let g:pukiwiki_current_site_top = b:top
 			if b:page == 'FormattingRules' || b:page == 'RecentChanges'
 				call PW_get_source_page(b:site_name, b:url, b:enc, b:top, b:page)
 			else
@@ -100,9 +100,6 @@ function! s:PW_move()  "{{{
 		return
 	endif
 
-"	echo cur
-"	let g:pukiwiki_current_site_name = b:site_name
-"	let g:pukiwiki_current_site_top = b:top
 	call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, cur)
 endfunction "}}}
 catch /^Vim\%((\a\+)\)\?:E127/
@@ -148,17 +145,13 @@ function! s:PW_show_attach(site_name, url, enc, top, page) "{{{
 	let body = substitute(body, '<span class="small">.\{-}</span>\n', '', 'g')
 	let body = substitute(body, ' </li>\n', '', 'g')
 	let body = substitute(body, ' <li><a.\{-} title="\(.\{-}\)">\(.\{-}\)</a>', '\2\t(\1)', 'g')
-	" index.php?plugin=attach&pcmd=list&refer=$page
 
 	" [添付ファイルがありません] 対応
 	let body = substitute(body, '<.\{-}>', '', 'g')
 	let body = substitute(body, '\n\n*', '\n', 'g')
 
 	call PW_newpage(a:site_name, a:url, a:enc, a:top, a:page)
-"	execute ":e! ++enc=" . a:enc
-	let status_line = b:page . ' ' . b:site_name
-	let status_line = escape(status_line, ' ')
-	silent! execute ":f " . status_line
+	call PW_set_statusline(a:site_name, a:page)
 
 	execute "normal! i" . a:site_name . " " . b:page . s:pukivim_ro_menu 
 	execute "normal! i添付ファイル一覧 [[" . b:page . "]]\n"
@@ -176,39 +169,20 @@ function! s:PW_show_page_list() "{{{
 	let cmd = 'curl -s -o ' . result . ' "' . url . '"'
 	call AL_system(cmd)
 
-	let site_name = b:site_name
-	let url       = b:url
-	let enc       = b:enc
-	let top       = b:top
-	let page      = 'cmd=list'
-
 	if ! filereadable(result)
 		echo "cannot obtain the list: " . cmd
 		return 
 	endif
 
-	execute ":e ++enc=" . b:enc . " " . result
-	execute ":set filetype=pukiwiki_edit"
+	call PW_newpage(b:site_name, b:url, b:enc, b:top, 'cmd=list')
+	call PW_set_statusline(b:site_name, b:page)
 
-	if g:pukiwiki_debug
-		let file = g:pukiwiki_datadir . '/pukiwiki.9.list-1'
-		call AL_write(file)
-		call AL_echo(file)
-	endif
-
-
-"	runtime! ftplugin/pukiwiki_edit.vim
-	let status_line = page . ' ' . site_name
-	silent! execute ":f " . escape(status_line, ' ')
 	let body = PW_fileread(result)
-	let body = iconv(body, enc, &enc)
+	let body = iconv(body, b:enc, &enc)
 	let body = substitute(body, '^.*<div id="body">\(.*\)<hr class="full_hr" />.*$', '\1', '')
 	let body = substitute(body, '<a id\_.\{-}<strong>\(\_.\{-}\)<\/strong><\/a>', '\[\[\1\]\]', 'g')
 "	let body = substitute(body, '<li><a href=".\{-}">\(\_.\{-}\)<\/a><small>(.*)</small></li>', '\[\[\1\]\]', 'g')
 
-	execute "normal! ggdG"
-	execute ":setlocal noai"
-	execute ":setlocal paste"
 	execute "normal! i" . body
 
 	if g:pukiwiki_debug
@@ -229,25 +203,18 @@ function! s:PW_show_page_list() "{{{
 	silent! %g/<br \/.*/d
 	silent! %s/\s*<li>\[\[\(.*\)\]\]$/\1/
 
-
 	if g:pukiwiki_debug
 		let file = g:pukiwiki_datadir . '/pukiwiki.9.list-3'
 		call AL_write(file)
 		call AL_echo(file)
 	endif
 
-	let b:site_name = site_name
-	let b:url       = url
-	let b:enc       = enc
-	let b:top       = top
-	let b:page      = 'cmd=list'
-
 	execute ":setlocal noai"
 	execute "normal! gg0i" . b:site_name . " " . b:page . s:pukivim_ro_menu
 
 	call AL_decode_entityreference_with_range('%')
 
-	call PW_endpage(site_name, url, enc, top, page, 1)
+	call PW_endpage(b:site_name, b:url, b:enc, b:top, b:page, 1)
 endfunction "}}}
 catch /^Vim\%((\a\+)\)\?:E127/
 endtry
@@ -270,25 +237,18 @@ function! s:PW_show_search() "{{{
 	let cmd = cmd . ' -d type=' . type . ' -d cmd=search ' . b:url
 	call AL_system(cmd)
 
-	let site_name = b:site_name
-	let url       = b:url
-	let enc       = b:enc
-	let top       = b:top
-	let page      = 'cmd=search'
+	call PW_newpage(b:site_name, b:url, b:enc, b:top, 'cmd=search')
+	call PW_set_statusline(b:site_name, b:page)
 
-	execute ":e ++enc=" . b:enc . " " . result
-	execute ":set filetype=pukiwiki_edit"
-"	runtime! ftplugin/pukiwiki_edit.vim
-	let status_line = page . ' ' . site_name
-	silent! execute ":f " . escape(status_line, ' ')
-	execute "normal! ggdG"
 	let body = PW_fileread(result)
-	let body = iconv(body, enc, &enc)
+	let body = iconv(body, b:enc, &enc)
 	let body = substitute(body, '^.*<div id="body">\(.*\)<hr class="full_hr" />.*$', '\1', '')
 	let body = substitute(body, '\(.*\)<form action.*', '\1', '')
-	execute ":setlocal noai"
+"	let body = substitute(body, '^<div class=[^\n]\{-}$', '', '')
+"	let body = matchdelete(body, '<div')
 	execute "normal! i" . body
 
+	" がんばって加工
 	silent! %g/<div/d
 	silent! %g/<ul/d
 	silent! %g/<\/ul/d
@@ -297,17 +257,11 @@ function! s:PW_show_search() "{{{
 	silent! %s/<strong>//g
 	silent! %s/^.*<li><a.*>\(.*\)<\/a>\(.*\)<\/li>$/\t\[\[\1\]\] \2/
 
-	let b:site_name = site_name
-	let b:url       = url
-	let b:enc       = enc
-	let b:top       = top
-	let b:page      = 'cmd=search'
-
 	" 最終行に [... 10 ページ見つかりました] メッセージ
 	" それを最初にだす
 	execute "normal! GddggP0i" . b:site_name . " " . b:page . s:pukivim_ro_menu
 
-	call PW_endpage(site_name, url, enc, top, b:page, 1)
+	call PW_endpage(b:site_name, b:url, b:enc, b:top, b:page, 1)
 endfunction "}}}
 catch /^Vim\%((\a\+)\)\?:E127/
 endtry
@@ -333,6 +287,17 @@ function! PW_fileupload() range "{{{
 
 		" いくつか自分でチェックするか.
 		" file が読めるか. directory でないか.
+		if isdirectory(curr_line)
+			let msg = "\tdirectory"
+			call setline(linenum, curr_line . msg)
+			continue
+		endif
+
+		if !filereadable(curr_line)
+			let msg = "\tcannot read"
+			call setline(linenum, curr_line . msg)
+			continue
+		endif
 
 		let fcmd = cmd . ' -F "attach_file=@' . curr_line . '"'
 		let fcmd = fcmd . ' "' . b:url . '"'
@@ -345,7 +310,6 @@ function! PW_fileupload() range "{{{
 			endif
 
 			let msg = "\tcurl error (" . errcode . ':' . msg . ')'
-
 			call setline(linenum, curr_line . msg)
 			continue
 		endif
