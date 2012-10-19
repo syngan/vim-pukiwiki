@@ -36,6 +36,7 @@ vim-pukiwiki ? A vim client for the PukiWiki 1.4.7 for Japanese.
   - ヘッダ部（上から3行）部分を変更すると書き込み時の結果がおかしくなることがあります．
   - Ubuntu + vim 7.2 でのみ動作確認
 
+  option)
   g:pukiwiki_multiuser = {0/1} [unix=1,otherwise=0]
   g:pukiwiki_datadir   = directory
   g:pukiwiki_timestamp_update = {0/1/otherwise}  [-1]
@@ -48,6 +49,10 @@ TODO:
   - autoload 化
   - vitalize
   - 全画面削除で "ggdG" とやっているせいでレジスタが壊れる
+
+
+HELP!:
+  - PW_setfiletype() でエラーになるのはなぜ
 
 オリジナル
   http://vimwiki.net/?scripts%2F10

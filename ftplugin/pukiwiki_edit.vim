@@ -136,7 +136,7 @@ function! s:PW_show_attach(site_name, url, enc, top, page) "{{{
 	let tmp = tempname()
 	
 	let cmd = "curl -s -o " . tmp .' "'. url . '"'
-	let result = system(cmd)
+	let result = AL_system(cmd)
 
 	let body = PW_fileread(tmp)
 	let body = iconv(body, a:enc, &enc)
@@ -178,6 +178,8 @@ function! s:PW_show_page_list() "{{{
 	call PW_set_statusline(b:site_name, b:page)
 
 	let body = PW_fileread(result)
+	call delete(result)
+
 	let body = iconv(body, b:enc, &enc)
 	let body = substitute(body, '^.*<div id="body">\(.*\)<hr class="full_hr" />.*$', '\1', '')
 	let body = substitute(body, '<a id\_.\{-}<strong>\(\_.\{-}\)<\/strong><\/a>', '\[\[\1\]\]', 'g')
@@ -241,14 +243,16 @@ function! s:PW_show_search() "{{{
 	call PW_set_statusline(b:site_name, b:page)
 
 	let body = PW_fileread(result)
+	call delete(result)
+
 	let body = iconv(body, b:enc, &enc)
 	let body = substitute(body, '^.*<div id="body">\(.*\)<hr class="full_hr" />.*$', '\1', '')
 	let body = substitute(body, '\(.*\)<form action.*', '\1', '')
 "	let body = substitute(body, '^<div class=[^\n]\{-}$', '', '')
-"	let body = matchdelete(body, '<div')
 	execute "normal! i" . body
 
 	" がんばって加工
+	" このへんでレジスタを壊すのが嫌い
 	silent! %g/<div/d
 	silent! %g/<ul/d
 	silent! %g/<\/ul/d
@@ -301,7 +305,7 @@ function! PW_fileupload() range "{{{
 
 		let fcmd = cmd . ' -F "attach_file=@' . curr_line . '"'
 		let fcmd = fcmd . ' "' . b:url . '"'
-		let result = system(fcmd)
+		let result = AL_system(fcmd)
 		let errcode = v:shell_error 
 		if errcode != 0
 			let msg = ''
@@ -325,3 +329,9 @@ endfunction "}}}
 catch /^Vim\%((\a\+)\)\?:E127/
 endtry
 
+" これはエラーにならなる
+function! PW_setfiletype()
+	execute ":setlocal filetype=pukiwiki_edit"
+endfunction
+
+" vim:set foldmethod=marker:
