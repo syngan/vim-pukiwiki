@@ -26,8 +26,6 @@ function! s:PW_read()
 		execute ":w"
 	endif
 
-	" 最初に一度だけ空ファイルを開く
-	execute ":e! ++enc=" . enc . " " . tempname()
 	call PW_get_edit_page(site_name, url, enc, top, page)
 endfunction
 

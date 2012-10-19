@@ -67,7 +67,7 @@ endif
 command! -nargs=* PukiVim :call PukiWiki(<f-args>)
 
 function! PW_newpage(site_name, url, enc, top, page) "{{{
-	execute ":e! ++enc=" . a:enc
+	execute ":e! ++enc=" . a:enc . " " . tempname()
 	execute ":setlocal modifiable"
 	execute ":setlocal indentexpr="
 	execute ":setlocal noautoindent"
@@ -91,10 +91,12 @@ function! PW_endpage(site_name, url, enc, top, page, readonly) "{{{
 		execute ":setlocal readonly"
 	endif
 	execute ":setlocal noswapfile"
+	silent! execute ":redraws!"
 endfunction "}}}
 
 function! PW_set_statusline(site_name, page) "{{{
-	let status_line = a:page . ' ' . a:site_name
+"	let status_line = a:page . ' ' . a:site_name
+	let status_line = a:page
 	let status_line = escape(status_line, ' ')
 	silent! execute ":f " . status_line
 	return status_line
@@ -177,7 +179,6 @@ function! s:PW_read_pukiwiki_list_witharg(...) "{{{
 		let url       = substitute(url  , '^\(.*\)?.*'             , '\1' , '')
 
 		" 最初に一度だけ空ファイルを開く
-		execute ":e! ++enc=" . enc . " " . tempname()
 		call PW_get_edit_page(site_name, url, enc, top, page)
 		return 1
 	endfor
@@ -233,14 +234,14 @@ endfunction "}}}
 
 function! PW_get_edit_page(site_name, url, enc, top, page) "{{{
 " edit ページを開く
-	return PW_get_page(a:site_name, a:url, a:enc, a:top, a:page, "edit")
+	return s:PW_get_page(a:site_name, a:url, a:enc, a:top, a:page, "edit")
 endfunction "}}}
 
 function! PW_get_source_page(site_name, url, enc, top, page) "{{{
-	return PW_get_page(a:site_name, a:url, a:enc, a:top, a:page, "source")
+	return s:PW_get_page(a:site_name, a:url, a:enc, a:top, a:page, "source")
 endfunction "}}}
 
-function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
+function! s:PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 " ページを開く
 " pwcmd = "edit" or "source"
 	let start = localtime()
@@ -250,34 +251,25 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 	let tmp = tempname()
 	let cmd = "curl -s -o " . tmp .' '. AL_quote(cmd)
 
-	let result = system(cmd)
+	let result = AL_system(cmd)
+
 	let result = PW_fileread(tmp)
+	call delete(tmp)
 	let result = iconv(result, a:enc, &enc)
 
 	if a:pwcmd == 'edit' 
 		if result !~ '<textarea\_.\{-}>\_.\{-}</textarea>\_.\{-}<textarea'
-			if g:pukiwiki_debug
-				call AL_echo('ページの読み込みに失敗しました。凍結されているか、認証が必要です。' . cmd, 'WarningMsg')
-			else
-				call AL_echo('ページの読み込みに失敗しました。凍結されているか、認証が必要です。', 'WarningMsg')
-			endif
-			call delete(tmp)
+			call AL_echo('ページの読み込みに失敗しました。凍結されているか、認証が必要です。', 'WarningMsg')
 			return
 		endif
 	elseif a:pwcmd == 'source'
 		if result !~ '<pre id="source">'
-			if g:pukiwiki_debug
-				call AL_echo('ページの読み込みに失敗しました。認証が必要です。' . cmd, 'WarningMsg')
-			else
-				call AL_echo('ページの読み込みに失敗しました。認証が必要です。', 'WarningMsg')
-			endif
-			call delete(tmp)
+			call AL_echo('ページの読み込みに失敗しました。認証が必要です。', 'WarningMsg')
 			return
 		endif
 
 	else
 		call AL_echo('unknown command: ' . a:pwcmd, 'WarningMsg')
-		call delete(tmp)
 		return
 	endif
 
@@ -292,7 +284,6 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 		let msg = matchstr(result, '.*<pre id="source">\zs\_.\{-}\ze</pre>.*')
 	endif
 
-	call delete(tmp)
 	let phase2 = localtime()
 
 	" 全消去
@@ -312,14 +303,13 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 	let status_line = PW_set_statusline(b:site_name, b:page)
 	if a:pwcmd == 'edit'
 		augroup PukiWikiEdit
-			execute "autocmd! BufWriteCmd " . status_line . " call PW_write()"
+			execute "autocmd! BufWriteCmd " . status_line . " call s:PW_write()"
 		augroup END
 		call PW_endpage(a:site_name, a:url, a:enc, a:top, a:page, 0)
 	endif
 	if a:pwcmd == 'source'
 		call PW_endpage(a:site_name, a:url, a:enc, a:top, a:page, 1)
 	endif
-	silent! execute ":redraws!"
 
 	if g:pukiwiki_debug
 		let phase4 = localtime()
@@ -331,7 +321,7 @@ function! PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 
 endfunction "}}}
 
-function! PW_write() "{{{
+function! s:PW_write() "{{{
 
 	if ! &modified
 		return
@@ -434,7 +424,7 @@ function! PW_write() "{{{
 
 		" 書き込みしようとしたバッファの名前の前に'ローカル'を付けて
 		" 現在のサーバー上の内容を取得して'diffthis'を実行する。
-		call PW_set_statusline(a:site_name, 'ローカル ' . a:page)
+		call PW_set_statusline(b:site_name, 'ローカル ' . b:page)
 		execute ":diffthis"
 		execute ":new"
 
@@ -531,3 +521,10 @@ function! PW_urlencode(str) "{{{
   return result
 endfunction "}}}
 
+
+" これはエラーにならない
+function! PW_setfiletype_ok()
+	execute ":setlocal filetype=pukiwiki_edit"
+endfunction
+
+" vim:set foldmethod=marker:
