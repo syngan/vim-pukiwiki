@@ -66,13 +66,20 @@ endif
 
 command! -nargs=* PukiVim :call PukiWiki(<f-args>)
 
+" variables {{{
+let s:pukiwiki_history = []
+" }}}
+
 function! PW_newpage(site_name, url, enc, top, page) "{{{
+
+
 	execute ":e! ++enc=" . a:enc . " " . tempname()
 	execute ":setlocal modifiable"
 	execute ":setlocal indentexpr="
 	execute ":setlocal noautoindent"
 	execute ":setlocal paste"
 	execute ':setlocal nobuflisted'
+
 	execute ":setlocal filetype=pukiwiki_edit"
 
 	let b:site_name = a:site_name
@@ -292,6 +299,12 @@ function! s:PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 	silent! execute "normal! i" . a:site_name . " " . a:page . "\n"
 				\ . "[[トップ]] [[添付]] [[リロード]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]\n"
 				\ . "------------------------------------------------------------------------------\n"
+
+"	silent! execute "normal! ihistory>>>>>" . len(s:pukiwiki_history) . "\n" 
+"	for elm in s:pukiwiki_history
+"		silent! execute "normal! i" . elm[4] . "\n"
+"	endfor
+"	silent! execute "normal! ihistory<<<<<" . len(s:pukiwiki_history) . "\n" 
 	silent! execute "normal! i" . msg
 
 	call AL_decode_entityreference_with_range('%')
@@ -311,6 +324,10 @@ function! s:PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 		call PW_endpage(a:site_name, a:url, a:enc, a:top, a:page, 1)
 	endif
 
+	if len(s:pukiwiki_history) == 0 || s:pukiwiki_history[-1] != [a:site_name, a:url, a:enc, a:top, a:page, a:pwcmd]
+		call add(s:pukiwiki_history, [a:site_name, a:url, a:enc, a:top, a:page, a:pwcmd])
+	endif
+
 	if g:pukiwiki_debug
 		let phase4 = localtime()
 		echo 'start - phase1  = ' . (phase1 - start)
@@ -319,6 +336,18 @@ function! s:PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 		echo 'phase3 - phase4 = ' . (phase4 - phase3)
 	endif
 
+endfunction "}}}
+
+function! PW_get_back_page() "{{{
+	if (len(s:pukiwiki_history) > 0) 
+		let last = remove(s:pukiwiki_history, -1)
+		if last[4] == b:page && len(s:pukiwiki_history) > 0
+			let last = remove(s:pukiwiki_history, -1)
+		else
+			return 
+		endif
+		call s:PW_get_page(last[0], last[1], last[2], last[3], last[4], last[5]) 
+	endif
 endfunction "}}}
 
 function! s:PW_write() "{{{
@@ -447,10 +476,12 @@ function! s:PW_write() "{{{
 
 	" 元いた行に移動
 	execute "normal! " . lineno . "G"
+"	silent! echo 'update ' . b:page
 	if g:pukiwiki_debug
 		" 毎回うっとーしいので debug 用に
 		call AL_echo('更新成功！')
 	endif
+
 
 endfunction "}}}
 
@@ -520,7 +551,6 @@ function! PW_urlencode(str) "{{{
   endwhile
   return result
 endfunction "}}}
-
 
 " これはエラーにならない
 function! PW_setfiletype_ok()
