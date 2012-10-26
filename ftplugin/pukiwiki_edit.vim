@@ -27,14 +27,17 @@ scriptencoding euc-jp
 nnoremap <silent> <buffer> <CR>    :call <SID>PW_move()<CR>
 nnoremap <silent> <buffer> <TAB>   :call <SID>PW_bracket_move()<CR>
 nnoremap <silent> <buffer> <S-TAB> :call <SID>PW_bracket_move_rev()<CR>
+"nnoremap <silent> <buffer> B       :call PW_get_last_page()<CR>
 " }}}
 
+" variables {{{
 let s:pukivim_ro_menu = "\n"
 	\ . "[[トップ]] [[添付]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]\n"
 	\ . "------------------------------------------------------------------------------\n"
 "let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 "let s:bracket_name = '\[\[\_.\{-}\]\]'
+"}}}
 
 try
 function! s:PW_move()  "{{{

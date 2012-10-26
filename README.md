@@ -7,6 +7,7 @@ vim-pukiwiki ? A vim client for the PukiWiki 1.4.7 for Japanese.
 オリジナルのライセンスがわからない.
 改変版はファイルが落とせなかったので機能の参考に.
 
+- メニュー等日本語でべたに書いているので日本語仕える人専用です.
 - 初心者の最初の作品なので生温かい目で見守ってください.
 
 ==============================================================================
@@ -37,9 +38,10 @@ vim-pukiwiki ? A vim client for the PukiWiki 1.4.7 for Japanese.
   - Ubuntu + vim 7.2 でのみ動作確認
 
   option)
-  g:pukiwiki_multiuser = {0/1} [unix=1,otherwise=0]
+  g:pukiwiki_multiuser = {0/1} [default:unix=1,otherwise=0]
+     (使ったことがない)
   g:pukiwiki_datadir   = directory
-  g:pukiwiki_timestamp_update = {0/1/otherwise}  [-1]
+  g:pukiwiki_timestamp_update = {0/1/otherwise}  [default:-1]
  
 ==============================================================================
 
@@ -49,10 +51,20 @@ TODO:
   - autoload 化
   - vitalize
   - 全画面削除で "ggdG" とやっているせいでレジスタが壊れる
+  - undo 連続しても空まで戻らないようにしたい
+  - 履歴, ブックマーク
 
 
 HELP!:
   - PW_setfiletype() でエラーになるのはなぜ
+
+BUGS:
+  - 1) 適当にページを開く
+    2) 編集する
+    3) C-W s でウィンドウを分割する
+    4) :w で保存する
+
+
 
 オリジナル
   http://vimwiki.net/?scripts%2F10
