@@ -302,7 +302,9 @@ function! s:PW_get_page(site_name, url, enc, top, page, pwcmd, opennew) "{{{
 		call PW_newpage(a:site_name, a:url, a:enc, a:top, a:page)
 	else
 		" @REG
+		let regbak = @"
 		execute 'normal! ggdG'
+		let @" = regbak
 	endif
 
 	silent! execute "normal! i" . a:site_name . " " . a:page . "\n"
@@ -355,7 +357,7 @@ function! PW_get_back_page() "{{{
 		else
 			return 
 		endif
-		call s:PW_get_page(last[0], last[1], last[2], last[3], last[4], last[5]) 
+		call s:PW_get_page(last[0], last[1], last[2], last[3], last[4], last[5], 1) 
 	endif
 endfunction "}}}
 
@@ -388,7 +390,9 @@ function! s:PW_write() "{{{
 	" ヘッダの削除. ユーザがヘッダを修正すると
 	" 書き込みが壊れるだめな仕様
 	" @REG
+	let regbak = @"
 	silent! execute "normal! gg3D"
+	let @" = regbak
 	let cl = 1
 	execute ":setlocal fenc="
 	while cl <= line('$')
