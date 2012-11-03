@@ -65,19 +65,19 @@ function! s:PW_move()  "{{{
 	let cur = substitute(cur, '\[\[\(.*\)\]\]', '\1', '')
 	if line('.') < 4
 		if cur == 'トップ'
-			call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:top)
+			call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:top, 1)
 		elseif cur == 'リロード'
 			if b:page == 'FormattingRules' || b:page == 'RecentChanges'
 				call PW_get_source_page(b:site_name, b:url, b:enc, b:top, b:page)
 			else
-				call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:page)
+				call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:page, 1)
 			endif
 		elseif cur == '新規'
 			let page = input('新規ページ名: ')
 			if page == ''
 				return
 			endif
-			call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, page)
+			call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, page, 1)
 		elseif cur == '一覧'
 			call s:PW_show_page_list()
 		elseif cur == '単語検索'
@@ -103,7 +103,7 @@ function! s:PW_move()  "{{{
 		return
 	endif
 
-	call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, cur)
+	call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, cur, 1)
 endfunction "}}}
 catch /^Vim\%((\a\+)\)\?:E127/
 endtry
@@ -197,6 +197,7 @@ function! s:PW_show_page_list() "{{{
 	endif
 
 	" がんばって加工
+	" @REG
 	silent! %g/^$/d
 	silent! %g/<div/d
 	silent! %g/<\/div/d
@@ -256,6 +257,7 @@ function! s:PW_show_search() "{{{
 
 	" がんばって加工
 	" このへんでレジスタを壊すのが嫌い
+	" @REG
 	silent! %g/<div/d
 	silent! %g/<ul/d
 	silent! %g/<\/ul/d
@@ -266,6 +268,7 @@ function! s:PW_show_search() "{{{
 
 	" 最終行に [... 10 ページ見つかりました] メッセージ
 	" それを最初にだす
+	" @REG
 	execute "normal! GddggP0i" . b:site_name . " " . b:page . s:pukivim_ro_menu
 
 	call PW_endpage(b:site_name, b:url, b:enc, b:top, b:page, 1)

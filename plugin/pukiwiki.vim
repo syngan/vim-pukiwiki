@@ -186,7 +186,11 @@ function! s:PW_read_pukiwiki_list_witharg(...) "{{{
 		let url       = substitute(url  , '^\(.*\)?.*'             , '\1' , '')
 
 		" 最初に一度だけ空ファイルを開く
-		call PW_get_edit_page(site_name, url, enc, top, page)
+		if page == 'RecentChanges' 
+			call PW_get_source_page(site_name, url, enc, top, page)
+		else
+			call PW_get_edit_page(site_name, url, enc, top, page, 1)
+		endif
 		return 1
 	endfor
 
@@ -239,16 +243,16 @@ function! s:PW_init_check() "{{{
 	return 1
 endfunction "}}}
 
-function! PW_get_edit_page(site_name, url, enc, top, page) "{{{
+function! PW_get_edit_page(site_name, url, enc, top, page, opennew) "{{{
 " edit ページを開く
-	return s:PW_get_page(a:site_name, a:url, a:enc, a:top, a:page, "edit")
+	return s:PW_get_page(a:site_name, a:url, a:enc, a:top, a:page, "edit", a:opennew)
 endfunction "}}}
 
 function! PW_get_source_page(site_name, url, enc, top, page) "{{{
-	return s:PW_get_page(a:site_name, a:url, a:enc, a:top, a:page, "source")
+	return s:PW_get_page(a:site_name, a:url, a:enc, a:top, a:page, "source", 1)
 endfunction "}}}
 
-function! s:PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
+function! s:PW_get_page(site_name, url, enc, top, page, pwcmd, opennew) "{{{
 " ページを開く
 " pwcmd = "edit" or "source"
 	let start = localtime()
@@ -294,7 +298,12 @@ function! s:PW_get_page(site_name, url, enc, top, page, pwcmd) "{{{
 	let phase2 = localtime()
 
 	" 全消去
-	call PW_newpage(a:site_name, a:url, a:enc, a:top, a:page)
+	if a:opennew
+		call PW_newpage(a:site_name, a:url, a:enc, a:top, a:page)
+	else
+		" @REG
+		execute 'normal! ggdG'
+	endif
 
 	silent! execute "normal! i" . a:site_name . " " . a:page . "\n"
 				\ . "[[トップ]] [[添付]] [[リロード]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]\n"
@@ -378,6 +387,7 @@ function! s:PW_write() "{{{
 
 	" ヘッダの削除. ユーザがヘッダを修正すると
 	" 書き込みが壊れるだめな仕様
+	" @REG
 	silent! execute "normal! gg3D"
 	let cl = 1
 	execute ":setlocal fenc="
@@ -435,7 +445,7 @@ function! s:PW_write() "{{{
 		let body = iconv( body, b:enc, &enc )
 		if body =~ '<title>\_.\{-}を削除しました\_.\{-}<\/title>'
 			let page = b:page
-			call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:top)
+			call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:top, 0)
 			call AL_echo(page . ' を削除しました')
 			return
 		endif
@@ -457,7 +467,7 @@ function! s:PW_write() "{{{
 		execute ":diffthis"
 		execute ":new"
 
-		call PW_get_edit_page(site_name, url, enc, top, page)
+		call PW_get_edit_page(site_name, url, enc, top, page, 0)
 		execute ":diffthis"
 		if g:pukiwiki_debug
 			echo "digest=[" . b:digest . "] cmd=[" . cmd . "]"
@@ -472,7 +482,7 @@ function! s:PW_write() "{{{
 		return 0
 	endif
 
-	call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:page)
+	call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:page, 0)
 
 	" 元いた行に移動
 	execute "normal! " . lineno . "G"
