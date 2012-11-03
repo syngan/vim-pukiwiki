@@ -198,6 +198,7 @@ function! s:PW_show_page_list() "{{{
 
 	" がんばって加工
 	" @REG
+	let regbak = @"
 	silent! %g/^$/d
 	silent! %g/<div/d
 	silent! %g/<\/div/d
@@ -208,6 +209,7 @@ function! s:PW_show_page_list() "{{{
 	silent! %g/^\[/d
 	silent! %g/<br \/.*/d
 	silent! %s/\s*<li>\[\[\(.*\)\]\]$/\1/
+	let @" = regbak
 
 	if g:pukiwiki_debug
 		let file = g:pukiwiki_datadir . '/pukiwiki.9.list-3'
@@ -258,6 +260,7 @@ function! s:PW_show_search() "{{{
 	" がんばって加工
 	" このへんでレジスタを壊すのが嫌い
 	" @REG
+	let regbak = @"
 	silent! %g/<div/d
 	silent! %g/<ul/d
 	silent! %g/<\/ul/d
@@ -270,6 +273,7 @@ function! s:PW_show_search() "{{{
 	" それを最初にだす
 	" @REG
 	execute "normal! GddggP0i" . b:site_name . " " . b:page . s:pukivim_ro_menu
+	let @" = regbak
 
 	call PW_endpage(b:site_name, b:url, b:enc, b:top, b:page, 1)
 endfunction "}}}
