@@ -1,2 +1,158 @@
-vim: set ts=4 sts=4 sw=4 noet ai fdm=marker ft=help:
-$Id$
+*pukiwiki.txt*	A vim client for the PukiWiki 1.4.7 for Japanese
+
+Version: 0.5
+Author : syncan
+License: MIT license  {{{
+    Permission is hereby granted, free of charge, to any person obtaining
+    a copy of this software and associated documentation files (the
+    "Software"), to deal in the Software without restriction, including
+    without limitation the rights to use, copy, modify, merge, publish,
+    distribute, sublicense, and/or sell copies of the Software, and to
+    permit persons to whom the Software is furnished to do so, subject to
+    the following conditions:
+    The above copyright notice and this permission notice shall be included
+    in all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+    IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+    CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+    TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+    SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+}}}
+
+
+==============================================================================
+目次						*pukiwiki-contents*
+
+
+概要				|pukiwiki-introduction|
+インストール			|pukiwiki-install|
+インターフェース		|pukiwiki-interface|
+  関数				  |pukiwiki-functions|
+  コマンド			  |pukiwiki-commands|
+カスタマイズ			|pukiwiki-customizing|
+更新履歴			|pukiwiki-changelog|
+
+==============================================================================
+概要						*pukiwiki-introduction*
+
+*pukiwiki* は PukiWiki を参照・編集するための Vim プラグインです。
+
+
+要件:
+- Vim 7.2 以降
+- curl
+
+動作確認環境
+- Vim 7.2 + Ubuntu
+
+最新版:
+https://github.com/syngan/vim-pukiwiki/
+
+==============================================================================
+インストール					*pukiwiki-install*
+
+==============================================================================
+インターフェース				*pukiwiki-interface*
+
+------------------------------------------------------------------------------
+コマンド					*pukiwiki-commands*
+
+:PukiVim [{site-name} [{page-name}]]
+
+------------------------------------------------------------------------------
+関数						*pukiwiki-functions*
+
+PukiWiki([{site-name} [, {page-name}]])
+
+PW_get_back_page() 
+
+==============================================================================
+カスタマイズ					*pukiwiki-customizing*
+
+g:pukiwiki_multiuser					*g:pukiwiki_multiuser*
+	デフォルト値: Unix の場合 1、それ以外の場合 0 です。
+	(オリジナル版から存在。使ったことがない)
+
+g:pukiwiki_datadir					*g:pukiwiki_datadir*
+	ブックマークなどを保存するためのディレクトリです。
+	デフォルト値は Unix の場合は "$HOME/.vim/pukiwiki"、Windows の場合は
+	"$HOME/vimfiles/pukiwiki" です。
+
+g:pukiwiki_timestamp_update			*g:pukiwiki_timestamp_update*
+	PukiWiki のページ更新時にタイムスタンプの更新に対する動作を指定
+	します。1 の場合タイムスタンプを更新、0 の場合タイムスタンプは更新しな
+	い、それ以外の場合はページ更新毎にタイムスタンプの更新に対する問い合わ
+	せをします。デフォルト値は -1 (毎回確認) です。
+ 
+
+
+==============================================================================
+更新履歴					*pukiwiki-changelog*
+
+
+2012-11-03 syngan  v0.5
+
+	* レジスタを壊さないように退避するようにした
+
+2012-10-26 syngan  v0.4
+
+	* [戻る]機能を追加
+	  - PW_get_back_page()
+	  - ただし、スクリプトローカル変数で管理しているので挙動がおかしい
+	  - バッファローカルな変数ではうまく動かせられなかった
+
+
+2012-10-16 syngan  v0.3
+
+	* E127 対応
+	  - ftplugin/pukiwiki_edit でやっていた,
+	    関数の定義済みチェックを削除して,
+	    try/catch で E127 を無視するようにした.
+	  - 不要（と思われる) runtime 処理を削除
+
+	* PW_newpage(), PW_endpage() を追加
+	  - 同じような処理がたくさんあるので整理
+	  - 全消去を "ggdG" から ":e!" に変更
+
+	* [[最終更新]] [[ヘルプ]] のリロードに失敗するバグの修正
+
+	* 未使用関数（オリジナル版で定義されていて使わなくなったもの）を削除
+
+	* 冗長処理を修正
+
+2012-10-13 syngan  v0.2
+
+	* 添付ファイル対応
+	   - メニューに [[添付]] を追加し、添付ファイル一覧を表示
+	   - 各ページの編集画面で、ファイル名だけを書いた行で
+	      :call PW_fileupload() 
+		 とすればファイルを添付できるようにした.
+		 複数行指定可能
+
+2012-10-12 syngan  v0.1
+
+	* 起動時に引数をとるようにして, ブックマークをとばせるようにした
+	   :PukiVim [ SiteName [ PageName ]]
+
+	* :w されたとき，ファイルが変更されていない場合には 
+	  Pukiwiki と接続しないようにした
+
+	* g:pukiwiki_check_snapshot のデフォルト値を変更した
+
+	* iconv 後の書き込みに失敗することがあるので fenc の値を空にするようにした
+	   + execute ":setlocal fenc="
+
+	* インデントが壊れるのを修正
+	   +	execute ":setlocal paste"
+	    2005-11-20  鯖缶@VimWiki
+	    * ページの読み込み時に :set paste していたのをやめて
+	    indentexpr を空にするように変更。
+
+	* [[最終更新]] の取得方法を変更
+	   + cmd=source を利用
+
+==============================================================================
+vim:tw=78:fo=tcq2mM:ts=8:ft=help:norl
