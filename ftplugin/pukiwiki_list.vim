@@ -26,6 +26,6 @@ function! s:PW_read()
 		execute ":w"
 	endif
 
-	call PW_get_edit_page(site_name, url, enc, top, page)
+	call PW_get_edit_page(site_name, url, enc, top, page, 1)
 endfunction
 

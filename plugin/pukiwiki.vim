@@ -262,7 +262,7 @@ function! s:PW_get_page(site_name, url, enc, top, page, pwcmd, opennew) "{{{
 	let tmp = tempname()
 	let cmd = "curl -s -o " . tmp .' '. AL_quote(cmd)
 
-	let result = AL_system(cmd)
+	let ret = AL_system(cmd)
 
 	let result = PW_fileread(tmp)
 	call delete(tmp)
@@ -270,8 +270,8 @@ function! s:PW_get_page(site_name, url, enc, top, page, pwcmd, opennew) "{{{
 
 	if a:pwcmd == 'edit' 
 		if result !~ '<textarea\_.\{-}>\_.\{-}</textarea>\_.\{-}<textarea'
-			call AL_echo('ページの読み込みに失敗しました。凍結されているか、認証が必要です。', 'WarningMsg')
-			return
+"			call AL_echo('ページの読み込みに失敗しました。凍結されているか、認証が必要です。', 'WarningMsg')
+			return PW_get_source_page(a:site_name, a:url, a:enc, a:top, a:page)
 		endif
 	elseif a:pwcmd == 'source'
 		if result !~ '<pre id="source">'
