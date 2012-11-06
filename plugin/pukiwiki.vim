@@ -70,6 +70,12 @@ command! -nargs=* PukiVim :call PukiWiki(<f-args>)
 let s:pukiwiki_history = []
 " }}}
 
+" vital.vim {{{
+"let s:VITAL = vital#of('vim-pukiwiki')
+"let s:HTTP = s:VITAL.import('Web.Http')
+" }}}
+
+
 function! PW_newpage(site_name, url, enc, top, page) "{{{
 
 
@@ -135,69 +141,72 @@ function! PukiWiki(...) "{{{
 		return
 	endif
 
-	if a:0 == 0 
-		if !s:PW_read_pukiwiki_list()
-			AL_echo('ブックマークの読み込みに失敗しました。', 'ErrorMsg')
-			return
-		endif
-	else
-		if !call("s:PW_read_pukiwiki_list_witharg", a:000)
-			AL_echo('ブックマークの読み込みに失敗しました。', 'ErrorMsg')
-			return
-		endif
+	if !call("s:PW_read_pukiwiki_list", a:000)
+"		AL_echo('ブックマークの読み込みに失敗しました。', 'ErrorMsg')
+		return
 	endif
 
 endfunction "}}}
 
-function! s:PW_read_pukiwiki_list() "{{{
-" bookmark
-	if !filereadable(s:pukiwiki_list)
-		return 0
-	endif
-
-	" ブックマークを開く
-	execute ":e " . s:pukiwiki_list
-	execute "set filetype=pukiwiki_list"
-	return 1
-endfunction "}}}
-
-function! s:PW_read_pukiwiki_list_witharg(...) "{{{
+function! s:PW_read_pukiwiki_list(...) "{{{
 " bookmark
 " PukiVim [ SiteName [ PageName ]]
-
-	let site_name = a:1
-
-	if !filereadable(s:pukiwiki_list)
+"
+	if !exists('g:pukiwiki_config')
+		AL_echo('g:pukiwiki_config does not defined.', 'ErrorMsg')
 		return 0
 	endif
 
-	for line in readfile(s:pukiwiki_list)
-		if line !~ '^' . site_name . '\t\+http://.*\t\+.*$'
-			continue
-		endif
-		let url       = substitute(line , '.*\(http.*\)\t\+.*'     , '\1' , '')
-		let enc       = substitute(line , '^.*\t\+\(.*\)$'         , '\1' , '')
-		let top       = substitute(url  , '.*?\([^\t]*\)\t*'       , '\1' , '')
-		if a:0 > 1
-			let page  = a:2
-		else
-			let page  = top
-		endif
-		let url       = substitute(url  , '^\(.*\)?.*'             , '\1' , '')
+	if a:0 == 0
+		" 問い合わせ
+		let site_name = input('サイト名: ')
+	else
+		let site_name = a:1
+	endif
 
-		" 最初に一度だけ空ファイルを開く
-		if page == 'RecentChanges' 
-			call PW_get_source_page(site_name, url, enc, top, page)
-		else
-			call PW_get_edit_page(site_name, url, enc, top, page, 1)
+	try 
+		if !has_key(g:pukiwiki_config, site_name)
+			call AL_echo('site "' . site_name . '" not found.', 'ErrorMsg')
+			return 0
 		endif
-		return 1
-	endfor
+	catch /^Vim\%((\a\+)\)\?:E715/
+		call AL_echo('g:pukiwiki_config is not a dictionary.', 'ErrorMsg')
+		return 0
+	endtry
+	
+	let dict = g:pukiwiki_config[site_name]
+	if (!has_key(dict, 'url'))
+		call AL_echo('"url" does not defined.', 'ErrorMsg')
+		return 0
+	endif
+	let url = dict['url']
 
-	echohl ErrorMsg 
-	echo 'site "' . site_name . '" not found.'
-	echohl None
-	return 0
+	if (has_key(dict, 'encode'))
+		let enc = dict['encode']
+	else
+		let enc = 'euc-jp'
+	endif
+	if (has_key(dict, 'top'))
+		let top = dict['top']
+	else
+		let top	= ''
+	endif
+
+	if a:0 > 1
+		let page  = a:2
+	else
+		let page  = top
+	endif
+
+call AL_echo('top=' . top . ',page=' . page, 'ErrorMsg')
+	" 最初に一度だけ空ファイルを開く
+	if page == 'RecentChanges'
+		call PW_get_source_page(site_name, url, enc, top, page)
+	else
+		call PW_get_edit_page(site_name, url, enc, top, page, 1)
+	endif
+	return 1
+
 endfunction "}}}
 
 function! s:PW_init_check() "{{{
@@ -230,15 +239,15 @@ function! s:PW_init_check() "{{{
 	endif
 
 	" BookMark 最初は無いからスクリプトに付属の物をユーザー用にコピーする。
-	let s:pukiwiki_list = g:pukiwiki_datadir . '/pukiwiki.list'
-	let pukivim_dir = substitute(expand('<sfile>:p:h'), '[/\\]plugin$', '', '')
-	let s:pukiwiki_list_dist = pukivim_dir . '/pukiwiki.list-dist'
-	if !filereadable(s:pukiwiki_list)
-		if !AL_filecopy(s:pukiwiki_list_dist, s:pukiwiki_list)
-			call AL_echo('pukiwiki.list-dist のコピーに失敗しました。', 'ErrorMsg')
-			return 0
-		endif
-	endif
+"	let s:pukiwiki_list = g:pukiwiki_datadir . '/pukiwiki.list'
+"	let pukivim_dir = substitute(expand('<sfile>:p:h'), '[/\\]plugin$', '', '')
+"	let s:pukiwiki_list_dist = pukivim_dir . '/pukiwiki.list-dist'
+"	if !filereadable(s:pukiwiki_list)
+"		if !AL_filecopy(s:pukiwiki_list_dist, s:pukiwiki_list)
+"			call AL_echo('pukiwiki.list-dist のコピーに失敗しました。', 'ErrorMsg')
+"			return 0
+"		endif
+"	endif
 
 	return 1
 endfunction "}}}
@@ -258,14 +267,19 @@ function! s:PW_get_page(site_name, url, enc, top, page, pwcmd, opennew) "{{{
 	let start = localtime()
 	let enc_page = iconv(a:page, &enc, a:enc)
 	let enc_page = PW_urlencode(enc_page)
+"	let enc_page = s:HTTP.escape(enc_page)
+	" 勝手に utf-8 に変換しよるからつかえない.
 	let cmd = a:url . "?cmd=" . a:pwcmd . "&page=" . enc_page
 	let tmp = tempname()
-	let cmd = "curl -s -o " . tmp .' '. AL_quote(cmd)
+	if 1
+		let cmd = "curl -s -o " . tmp .' '. AL_quote(cmd)
+		let ret = AL_system(cmd)
+		let result = PW_fileread(tmp)
+		call delete(tmp)
+	else
+"		let result = s:HTTP.get(cmd)
+	endif
 
-	let ret = AL_system(cmd)
-
-	let result = PW_fileread(tmp)
-	call delete(tmp)
 	let result = iconv(result, a:enc, &enc)
 
 	if a:pwcmd == 'edit' 
