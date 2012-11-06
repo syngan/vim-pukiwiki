@@ -29,7 +29,9 @@ endif
 
 scriptencoding euc-jp
 
+"---------------------------------------------
 " global 変数
+"---------------------------------------------
 
 " デバッグ用
 if !exists('g:pukiwiki_debug')
@@ -41,6 +43,7 @@ endif
 if !exists('g:pukiwiki_multiuser')
 	let g:pukiwiki_multiuser = has('unix') && !has('macunix') ? 1 : 0
 endif
+
 " ユーザファイルの位置設定
 if !exists('g:pukiwiki_datadir')
 	if g:pukiwiki_multiuser
@@ -74,7 +77,6 @@ let s:pukiwiki_history = []
 "let s:VITAL = vital#of('vim-pukiwiki')
 "let s:HTTP = s:VITAL.import('Web.Http')
 " }}}
-
 
 function! PW_newpage(site_name, url, enc, top, page) "{{{
 
@@ -198,7 +200,6 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 		let page  = top
 	endif
 
-call AL_echo('top=' . top . ',page=' . page, 'ErrorMsg')
 	" 最初に一度だけ空ファイルを開く
 	if page == 'RecentChanges'
 		call PW_get_source_page(site_name, url, enc, top, page)
@@ -233,10 +234,10 @@ function! s:PW_init_check() "{{{
 		return 0
 	endif
 
-	if !AL_mkdir(g:pukiwiki_datadir)
-		AL_echo('データディレクトリーが作成できません。', 'ErrorMsg')
-		return 0
-	endif
+"	if !AL_mkdir(g:pukiwiki_datadir)
+"		AL_echo('データディレクトリーが作成できません。', 'ErrorMsg')
+"		return 0
+"	endif
 
 	" BookMark 最初は無いからスクリプトに付属の物をユーザー用にコピーする。
 "	let s:pukiwiki_list = g:pukiwiki_datadir . '/pukiwiki.list'
@@ -581,8 +582,8 @@ function! PW_urlencode(str) "{{{
 endfunction "}}}
 
 " これはエラーにならない
-function! PW_setfiletype_ok()
+function! PW_setfiletype_ok() " {{{
 	execute ":setlocal filetype=pukiwiki_edit"
-endfunction
+endfunction "}}}
 
 " vim:set foldmethod=marker:

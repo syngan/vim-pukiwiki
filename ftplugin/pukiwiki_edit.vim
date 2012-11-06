@@ -339,9 +339,9 @@ endfunction "}}}
 catch /^Vim\%((\a\+)\)\?:E127/
 endtry
 
-" これはエラーにならなる
-function! PW_setfiletype()
+" これはエラーになる
+function! PW_setfiletype() " {{{
 	execute ":setlocal filetype=pukiwiki_edit"
-endfunction
+endfunction "}}}
 
 " vim:set foldmethod=marker:
