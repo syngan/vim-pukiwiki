@@ -1,7 +1,7 @@
 *pukiwiki.txt*	A vim client for the PukiWiki 1.4.7 for Japanese
 
-Version: 0.5
-Author : syncan
+Version: 0.6
+Author : syngan
 License: MIT license  {{{
     Permission is hereby granted, free of charge, to any person obtaining
     a copy of this software and associated documentation files (the
@@ -29,6 +29,7 @@ License: MIT license  {{{
 
 概要				|pukiwiki-introduction|
 インストール			|pukiwiki-install|
+使い方				|pukiwiki-usage|
 インターフェース		|pukiwiki-interface|
   関数				  |pukiwiki-functions|
   コマンド			  |pukiwiki-commands|
@@ -41,18 +42,53 @@ License: MIT license  {{{
 *pukiwiki* は PukiWiki を参照・編集するための Vim プラグインです。
 
 
-要件:
-- Vim 7.2 以降
-- curl
-
 動作確認環境
-- Vim 7.2 + Ubuntu
+- PukiWiki 1.4.7 + Vim 7.2 + Ubuntu
 
 最新版:
 https://github.com/syngan/vim-pukiwiki/
 
 ==============================================================================
 インストール					*pukiwiki-install*
+
+runtimepath が指定されているディレクトリ（通常 ~/.vim か $HOME/vimfiles) 配下
+に配置してください。
+
+curl がインストールされている必要があります。
+
+==============================================================================
+使い方						*pukiwiki-usage*
+
+使用するためには vimrc に g:pukiwiki_config を設定する必要があります。
+
+Example >
+	" PukiWiki のサイト情報
+	let g:pukiwiki_config = {
+	\	"LocalWiki" : {
+	\		"url" : "http://127.0.0.1/pukiwiki/",
+	\		"top" : 'FrontPage',
+	\		"encode" : "euc-jp",
+	\	},
+	\}
+<
+
+|:PukiVim|
+
+として起動し、g:pukiwiki_config で指定したサイト名を入力するか、
+
+:PukiVim "サイト名" 
+
+などとして起動します。
+
+あとは、
+  <CR> でページの移動
+  :w でページ更新
+  <TAB> で [[ ]] 間をジャンプ
+
+注意事項）
+  - undo しすぎると空ファイルになります。
+  - 最初の 3 行は変更しないでください。
+    ヘッダ部であるとして動作しているので、書き込みが壊れることがあります。
 
 ==============================================================================
 インターフェース				*pukiwiki-interface*
@@ -86,12 +122,14 @@ g:pukiwiki_timestamp_update			*g:pukiwiki_timestamp_update*
 	します。1 の場合タイムスタンプを更新、0 の場合タイムスタンプは更新しな
 	い、それ以外の場合はページ更新毎にタイムスタンプの更新に対する問い合わ
 	せをします。デフォルト値は -1 (毎回確認) です。
- 
 
 
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
 
+2012-11-06 syngan  v0.6
+
+	* bookmark ファイルを廃止. g:pukiwiki_config で設定するようにした
 
 2012-11-03 syngan  v0.5
 
