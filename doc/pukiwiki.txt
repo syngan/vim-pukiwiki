@@ -105,6 +105,8 @@ PukiWiki([{site-name} [, {page-name}]])
 
 PW_get_back_page() 
 
+PW_fileupload() range
+
 ==============================================================================
 カスタマイズ					*pukiwiki-customizing*
 
