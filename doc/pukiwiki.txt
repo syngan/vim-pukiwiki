@@ -59,7 +59,7 @@ curl がインストールされている必要があります。
 ==============================================================================
 使い方						*pukiwiki-usage*
 
-使用するためには vimrc に g:pukiwiki_config を設定する必要があります。
+使用するためには vimrc に |g:pukiwiki_config| を設定する必要があります。
 
 Example >
 	" PukiWiki のサイト情報
@@ -74,9 +74,10 @@ Example >
 
 |:PukiVim|
 
-として起動し、g:pukiwiki_config で指定したサイト名を入力するか、
+として起動し、|g:pukiwiki_config| で指定したサイト名を入力するか、
 
 :PukiVim "サイト名" 
+(:PukiVim LocalWiki)
 
 などとして起動します。
 
@@ -131,7 +132,7 @@ g:pukiwiki_timestamp_update			*g:pukiwiki_timestamp_update*
 
 2012-11-06 syngan  v0.6
 
-	* bookmark ファイルを廃止. g:pukiwiki_config で設定するようにした
+	* bookmark ファイルを廃止. |g:pukiwiki_config| で設定するようにした
 
 2012-11-03 syngan  v0.5
 

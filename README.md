@@ -9,40 +9,48 @@ vim-pukiwiki ? A vim client for the PukiWiki 1.4.7 for Japanese.
 
 - メニュー等日本語でべたに書いているので日本語仕える人専用です.
 - 初心者の最初の作品なので生温かい目で見守ってください.
+- http://d.hatena.ne.jp/syngan/
 
 ==============================================================================
 使い方
 
-  最初は以下のコマンドを実行
-    :PukiVim
+使用するためには vimrc に |g:pukiwiki_config| を設定する必要があります。
 
-  起動するとまず、ブックマークが表示されるのでそこに閲覧、編集したいPukiWikiサイトを書式に従って記入する事が出来ます。
-  サイト名にカーソルを合わせて <CR> を押すとそのサイトのトップページが表示されます。
-  1行目には現在閲覧中のサイト名、ページ名が表示されます。
-  2行目に表示されている BracketName はカーソルを合わせて <CR> を押すことでそれらの機能を使用することが出来ます。
-  4行目からが本文なので自由に編集してください。
-  編集が完了したら
+Example >
+	" PukiWiki のサイト情報
+	let g:pukiwiki_config = {
+	\	"LocalWiki" : {
+	\		"url" : "http://127.0.0.1/pukiwiki/",
+	\		"top" : 'FrontPage',
+	\		"encode" : "euc-jp",
+	\	},
+	\}
+<
 
-  :w
+|:PukiVim|
 
-  でサーバーに書き込むことが出来ます。
+として起動し、|g:pukiwiki_config| で指定したサイト名を入力するか、
+
+:PukiVim "サイト名" 
+(:PukiVim LocalWiki)
+
+などとして起動します。
+
+あとは、
+  <CR> でページの移動
+  :w でページ更新
+  <TAB> で [[ ]] 間をジャンプ
+
+注意事項）
+  - undo しすぎると空ファイルになります。
+  - 最初の 3 行は変更しないでください。
+    ヘッダ部であるとして動作しているので、書き込みが壊れることがあります。
+
   現在 <CR> でページ遷移出来るのは
         BracketName
         BracketNameのエイリアス
   だけです。InterWikiNameや外部URLには現在対応していません。
 
-  @ curl が必要
-
-  注意事項）
-  - ヘッダ部（上から3行）部分を変更すると書き込み時の結果がおかしくなることがあります．
-  - Ubuntu + vim 7.2 でのみ動作確認
-
-  option)
-  g:pukiwiki_multiuser = {0/1} [default:unix=1,otherwise=0]
-     (使ったことがない)
-  g:pukiwiki_datadir   = directory
-  g:pukiwiki_timestamp_update = {0/1/otherwise}  [default:-1]
- 
 ==============================================================================
 
 TODO:
@@ -50,14 +58,15 @@ TODO:
   - ドキュメント
   - autoload 化
   - vitalize
+    - alice.vim が複数バージョンが存在するときの動作が不定なのでこわい
   - undo 連続しても空まで戻らないようにしたい
   - 履歴, ブックマーク
+    - PW_get_back_page() つけたけど, s: 変数なので
+      複数ページ同時に開くと壊れる
+    - ブックマークは, ページを開く手段さえ用意しておけばいいのかな.
+  - オリジナル版では bdelete がいるとかなんとか...
+  - undo で空にならないようにできないのか.
 
-
-HELP!:
-  - PW_setfiletype() でエラーになるのはなぜ
-
-BUGS:
 
 
 オリジナル

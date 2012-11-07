@@ -65,30 +65,30 @@ function! s:PW_move()  "{{{
 	let cur = substitute(cur, '\[\[\(.*\)\]\]', '\1', '')
 	if line('.') < 4
 		if cur == 'トップ'
-			call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:top, 1)
+			call PW_get_top_page(b:site_name)
 		elseif cur == 'リロード'
 			if b:page == 'FormattingRules' || b:page == 'RecentChanges'
-				call PW_get_source_page(b:site_name, b:url, b:enc, b:top, b:page)
+				call PW_get_source_page(b:site_name, b:page)
 			else
-				call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:page, 1)
+				call PW_get_edit_page(b:site_name, b:page, 0)
 			endif
 		elseif cur == '新規'
 			let page = input('新規ページ名: ')
 			if page == ''
 				return
 			endif
-			call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, page, 1)
+			call PW_get_edit_page(b:site_name, page, 1)
 		elseif cur == '一覧'
 			call s:PW_show_page_list()
 		elseif cur == '単語検索'
 			call s:PW_show_search()
 		elseif cur == '添付'
-			call s:PW_show_attach(b:site_name, b:url, b:enc, b:top, b:page)
+			call s:PW_show_attach(b:site_name, b:page)
 		elseif cur == '最終更新'
 			let page = 'RecentChanges'
-			call PW_get_source_page(b:site_name, b:url, b:enc, b:top, page)
+			call PW_get_source_page(b:site_name, page)
 		elseif cur == 'ヘルプ'
-			call PW_get_source_page(b:site_name, b:url, b:enc, b:top, 'FormattingRules')
+			call PW_get_source_page(b:site_name, 'FormattingRules')
 		endif
 		return
 	endif
@@ -103,7 +103,7 @@ function! s:PW_move()  "{{{
 		return
 	endif
 
-	call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, cur, 1)
+	call PW_get_edit_page(b:site_name, cur, 1)
 endfunction "}}}
 catch /^Vim\%((\a\+)\)\?:E127/
 endtry
@@ -126,15 +126,22 @@ function! s:PW_bracket_move_rev() "{{{
 endfunction "}}}
 
 try
-function! s:PW_show_attach(site_name, url, enc, top, page) "{{{
+function! s:PW_show_attach(site_name, page) "{{{
 "----------------------------------------------
 " 添付ファイル用の画面を表示する.
 " 表示せずにコマンドだけ・・・のほうがいいのかな
 "----------------------------------------------
+
+	let sitedict = g:pukiwiki_config[a:site_name]
+	let url = sitedict['url']
+	let enc = sitedict['encode']
+	let top = sitedict['top']
+
+
 	" 添付ファイルの一覧
-	let enc_page = iconv(a:page, &enc, a:enc)
+	let enc_page = iconv(a:page, &enc, enc)
 	let enc_page = PW_urlencode(enc_page)
-	let url = a:url . '?plugin=attach&pcmd=list&refer=' . enc_page
+	let url = url . '?plugin=attach&pcmd=list&refer=' . enc_page
 	
 	let tmp = tempname()
 	
@@ -142,7 +149,7 @@ function! s:PW_show_attach(site_name, url, enc, top, page) "{{{
 	let result = AL_system(cmd)
 
 	let body = PW_fileread(tmp)
-	let body = iconv(body, a:enc, &enc)
+	let body = iconv(body, enc, &enc)
 	let body = substitute(body, '^.*\(<div id="body">.*<hr class="full_hr" />\).*$', '\1', '')
 	let body = substitute(body, '^.*<div id="body">.*<ul>\(.*\)</ul>.*<hr class="full_hr" />.*$', '\1', '')
 	let body = substitute(body, '<span class="small">.\{-}</span>\n', '', 'g')
@@ -153,21 +160,27 @@ function! s:PW_show_attach(site_name, url, enc, top, page) "{{{
 	let body = substitute(body, '<.\{-}>', '', 'g')
 	let body = substitute(body, '\n\n*', '\n', 'g')
 
-	call PW_newpage(a:site_name, a:url, a:enc, a:top, a:page)
+	call PW_newpage(a:site_name, a:page)
 	call PW_set_statusline(a:site_name, a:page)
 
 	execute "normal! i" . a:site_name . " " . b:page . s:pukivim_ro_menu 
 	execute "normal! i添付ファイル一覧 [[" . b:page . "]]\n"
 	execute "normal! i" . body
 
-	call PW_endpage(a:site_name, a:url, a:enc, a:top, a:page, 1)
+	call PW_endpage(a:site_name, a:page, 1)
 endfunction "}}}
 catch /^Vim\%((\a\+)\)\?:E127/
 endtry
 
 try
 function! s:PW_show_page_list() "{{{
-	let url = b:url . '?cmd=list'
+
+	let sitedict = g:pukiwiki_config[b:site_name]
+	let url = sitedict['url']
+	let enc = sitedict['encode']
+	let top = sitedict['top']
+
+	let url = url . '?cmd=list'
 	let result = tempname()
 	let cmd = 'curl -s -o ' . result . ' "' . url . '"'
 	call AL_system(cmd)
@@ -177,13 +190,13 @@ function! s:PW_show_page_list() "{{{
 		return 
 	endif
 
-	call PW_newpage(b:site_name, b:url, b:enc, b:top, 'cmd=list')
+	call PW_newpage(b:site_name, 'cmd=list')
 	call PW_set_statusline(b:site_name, b:page)
 
 	let body = PW_fileread(result)
 	call delete(result)
 
-	let body = iconv(body, b:enc, &enc)
+	let body = iconv(body, enc, &enc)
 	let body = substitute(body, '^.*<div id="body">\(.*\)<hr class="full_hr" />.*$', '\1', '')
 	let body = substitute(body, '<a id\_.\{-}<strong>\(\_.\{-}\)<\/strong><\/a>', '\[\[\1\]\]', 'g')
 "	let body = substitute(body, '<li><a href=".\{-}">\(\_.\{-}\)<\/a><small>(.*)</small></li>', '\[\[\1\]\]', 'g')
@@ -222,13 +235,19 @@ function! s:PW_show_page_list() "{{{
 
 	call AL_decode_entityreference_with_range('%')
 
-	call PW_endpage(b:site_name, b:url, b:enc, b:top, b:page, 1)
+	call PW_endpage(b:site_name, b:page, 1)
 endfunction "}}}
 catch /^Vim\%((\a\+)\)\?:E127/
 endtry
 
 try
 function! s:PW_show_search() "{{{
+
+	let sitedict = g:pukiwiki_config[b:site_name]
+	let url = sitedict['url']
+	let enc = sitedict['encode']
+	let top = sitedict['top']
+
 	let word = input('キーワード: ')
 	if word == ''
 		return
@@ -242,16 +261,16 @@ function! s:PW_show_search() "{{{
 	let result = tempname()
 	let cmd = 'curl -s -o ' . result . ' -d encode_hint=' . PW_urlencode('ぷ')
 	let cmd = cmd . ' -d word=' . PW_urlencode(word)
-	let cmd = cmd . ' -d type=' . type . ' -d cmd=search ' . b:url
+	let cmd = cmd . ' -d type=' . type . ' -d cmd=search ' . url
 	call AL_system(cmd)
 
-	call PW_newpage(b:site_name, b:url, b:enc, b:top, 'cmd=search')
+	call PW_newpage(b:site_name, 'cmd=search')
 	call PW_set_statusline(b:site_name, b:page)
 
 	let body = PW_fileread(result)
 	call delete(result)
 
-	let body = iconv(body, b:enc, &enc)
+	let body = iconv(body, enc, &enc)
 	let body = substitute(body, '^.*<div id="body">\(.*\)<hr class="full_hr" />.*$', '\1', '')
 	let body = substitute(body, '\(.*\)<form action.*', '\1', '')
 "	let body = substitute(body, '^<div class=[^\n]\{-}$', '', '')
@@ -275,7 +294,7 @@ function! s:PW_show_search() "{{{
 	execute "normal! GddggP0i" . b:site_name . " " . b:page . s:pukivim_ro_menu
 	let @" = regbak
 
-	call PW_endpage(b:site_name, b:url, b:enc, b:top, b:page, 1)
+	call PW_endpage(b:site_name, b:page, 1)
 endfunction "}}}
 catch /^Vim\%((\a\+)\)\?:E127/
 endtry
@@ -283,9 +302,14 @@ endtry
 try
 function! PW_fileupload() range "{{{
 
+	let sitedict = g:pukiwiki_config[b:site_name]
+	let url = sitedict['url']
+	let enc = sitedict['encode']
+	let top = sitedict['top']
+
 	let pass = input('パスワード: ')
 
-	let enc_page = iconv(b:page, &enc, b:enc)
+	let enc_page = iconv(b:page, &enc, enc)
 	let enc_page = PW_urlencode(enc_page)
 
 	let tmpfile = tempname()
@@ -314,7 +338,7 @@ function! PW_fileupload() range "{{{
 		endif
 
 		let fcmd = cmd . ' -F "attach_file=@' . curr_line . '"'
-		let fcmd = fcmd . ' "' . b:url . '"'
+		let fcmd = fcmd . ' "' . url . '"'
 		let result = AL_system(fcmd)
 		let errcode = v:shell_error 
 		if errcode != 0
@@ -329,7 +353,7 @@ function! PW_fileupload() range "{{{
 		endif
 
 		let body = PW_fileread(tmpfile)
-		let body = iconv(body, b:enc, &enc)
+		let body = iconv(body, enc, &enc)
 		let body = substitute(body, '^.*<h1 class="title">\(.*\)</h1>.*$', '\1', '')
 		let body = substitute(body, '<a href=".*">\(.*\)</a>', '[[\1]]', '')
 		call setline(linenum, curr_line . "\t" . body)
@@ -340,7 +364,7 @@ catch /^Vim\%((\a\+)\)\?:E127/
 endtry
 
 " これはエラーになる
-function! PW_setfiletype() " {{{
+function! PW_setfiletype_ng() " {{{
 	execute ":setlocal filetype=pukiwiki_edit"
 endfunction "}}}
 

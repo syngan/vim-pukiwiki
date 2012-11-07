@@ -78,10 +78,12 @@ let s:pukiwiki_history = []
 "let s:HTTP = s:VITAL.import('Web.Http')
 " }}}
 
-function! PW_newpage(site_name, url, enc, top, page) "{{{
+function! PW_newpage(site_name, page) "{{{
 
+	let sitedict = g:pukiwiki_config[a:site_name]
+	let enc = sitedict['encode']
 
-	execute ":e! ++enc=" . a:enc . " " . tempname()
+	execute ":e! ++enc=" . enc . " " . tempname()
 	execute ":setlocal modifiable"
 	execute ":setlocal indentexpr="
 	execute ":setlocal noautoindent"
@@ -91,13 +93,10 @@ function! PW_newpage(site_name, url, enc, top, page) "{{{
 	execute ":setlocal filetype=pukiwiki_edit"
 
 	let b:site_name = a:site_name
-	let b:url       = a:url
-	let b:enc       = a:enc
-	let b:top       = a:top
 	let b:page      = a:page
 endfunction "}}}
 
-function! PW_endpage(site_name, url, enc, top, page, readonly) "{{{
+function! PW_endpage(site_name, page, readonly) "{{{
 	execute "normal! gg"
 	execute ':setlocal nobuflisted'
 	execute ":set nomodified"
@@ -120,12 +119,16 @@ endfunction "}}}
 function! PW_buf_vars() "{{{
 	" デバッグ用
 	call AL_echokv('site_name' , b:site_name)
-	call AL_echokv('url'       , b:url)
-	call AL_echokv('enc'       , b:enc)
-	call AL_echokv('top'       , b:top)
 	call AL_echokv('page'      , b:page)
 	call AL_echokv('digest'    , b:digest)
 	call AL_echokv('original'  , b:original)
+
+	let sitedict = g:pukiwiki_config[a:site_name]
+	call AL_echokv('url' , sitedict['url'])
+	call AL_echokv('top' , sitedict['top'])
+	call AL_echokv('enc' , sitedict['encode'])
+
+
 endfunction "}}}
 
 function! s:PW_get_digest(str) "{{{
@@ -183,15 +186,14 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 	endif
 	let url = dict['url']
 
-	if (has_key(dict, 'encode'))
-		let enc = dict['encode']
-	else
-		let enc = 'euc-jp'
+	if (!has_key(dict, 'encode'))
+		let dict['encode'] = 'euc-jp'
 	endif
 	if (has_key(dict, 'top'))
 		let top = dict['top']
 	else
-		let top	= ''
+		let top	= 'FrontPage'
+		let dict['top'] = top
 	endif
 
 	if a:0 > 1
@@ -202,9 +204,9 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 
 	" 最初に一度だけ空ファイルを開く
 	if page == 'RecentChanges'
-		call PW_get_source_page(site_name, url, enc, top, page)
+		call PW_get_source_page(site_name, page)
 	else
-		call PW_get_edit_page(site_name, url, enc, top, page, 1)
+		call PW_get_edit_page(site_name, page, 1)
 	endif
 	return 1
 
@@ -253,24 +255,38 @@ function! s:PW_init_check() "{{{
 	return 1
 endfunction "}}}
 
-function! PW_get_edit_page(site_name, url, enc, top, page, opennew) "{{{
+
+function! PW_get_top_page(site_name) "{{{
+
+	let sitedict = g:pukiwiki_config[a:site_name]
+	let top = sitedict['top']
+
+	return PW_get_edit_page(a:site_name, top, 1)
+
+endfunction "}}}
+
+function! PW_get_edit_page(site_name, page, opennew) "{{{
 " edit ページを開く
-	return s:PW_get_page(a:site_name, a:url, a:enc, a:top, a:page, "edit", a:opennew)
+	return s:PW_get_page(a:site_name, a:page, "edit", a:opennew)
 endfunction "}}}
 
-function! PW_get_source_page(site_name, url, enc, top, page) "{{{
-	return s:PW_get_page(a:site_name, a:url, a:enc, a:top, a:page, "source", 1)
+function! PW_get_source_page(site_name, page) "{{{
+	return s:PW_get_page(a:site_name, a:page, "source", 1)
 endfunction "}}}
 
-function! s:PW_get_page(site_name, url, enc, top, page, pwcmd, opennew) "{{{
+function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 " ページを開く
 " pwcmd = "edit" or "source"
+	let sitedict = g:pukiwiki_config[a:site_name]
+	let url = sitedict['url']
+	let enc = sitedict['encode']
+	let top = sitedict['top']
 	let start = localtime()
-	let enc_page = iconv(a:page, &enc, a:enc)
+	let enc_page = iconv(a:page, &enc, enc)
 	let enc_page = PW_urlencode(enc_page)
 "	let enc_page = s:HTTP.escape(enc_page)
 	" 勝手に utf-8 に変換しよるからつかえない.
-	let cmd = a:url . "?cmd=" . a:pwcmd . "&page=" . enc_page
+	let cmd = url . "?cmd=" . a:pwcmd . "&page=" . enc_page
 	let tmp = tempname()
 	if 1
 		let cmd = "curl -s -o " . tmp .' '. AL_quote(cmd)
@@ -281,12 +297,12 @@ function! s:PW_get_page(site_name, url, enc, top, page, pwcmd, opennew) "{{{
 "		let result = s:HTTP.get(cmd)
 	endif
 
-	let result = iconv(result, a:enc, &enc)
+	let result = iconv(result, enc, &enc)
 
 	if a:pwcmd == 'edit' 
 		if result !~ '<textarea\_.\{-}>\_.\{-}</textarea>\_.\{-}<textarea'
 "			call AL_echo('ページの読み込みに失敗しました。凍結されているか、認証が必要です。', 'WarningMsg')
-			return PW_get_source_page(a:site_name, a:url, a:enc, a:top, a:page)
+			return PW_get_source_page(a:site_name, a:page)
 		endif
 	elseif a:pwcmd == 'source'
 		if result !~ '<pre id="source">'
@@ -314,7 +330,7 @@ function! s:PW_get_page(site_name, url, enc, top, page, pwcmd, opennew) "{{{
 
 	" 全消去
 	if a:opennew
-		call PW_newpage(a:site_name, a:url, a:enc, a:top, a:page)
+		call PW_newpage(a:site_name, a:page)
 	else
 		" @REG
 		let regbak = @"
@@ -344,14 +360,14 @@ function! s:PW_get_page(site_name, url, enc, top, page, pwcmd, opennew) "{{{
 		augroup PukiWikiEdit
 			execute "autocmd! BufWriteCmd " . status_line . " call s:PW_write()"
 		augroup END
-		call PW_endpage(a:site_name, a:url, a:enc, a:top, a:page, 0)
+		call PW_endpage(a:site_name, a:page, 0)
 	endif
 	if a:pwcmd == 'source'
-		call PW_endpage(a:site_name, a:url, a:enc, a:top, a:page, 1)
+		call PW_endpage(a:site_name, a:page, 1)
 	endif
 
-	if len(s:pukiwiki_history) == 0 || s:pukiwiki_history[-1] != [a:site_name, a:url, a:enc, a:top, a:page, a:pwcmd]
-		call add(s:pukiwiki_history, [a:site_name, a:url, a:enc, a:top, a:page, a:pwcmd])
+	if len(s:pukiwiki_history) == 0 || s:pukiwiki_history[-1] != [a:site_name, a:page, a:pwcmd]
+		call add(s:pukiwiki_history, [a:site_name, a:page, a:pwcmd])
 	endif
 
 	if g:pukiwiki_debug
@@ -367,12 +383,12 @@ endfunction "}}}
 function! PW_get_back_page() "{{{
 	if (len(s:pukiwiki_history) > 0) 
 		let last = remove(s:pukiwiki_history, -1)
-		if last[4] == b:page && len(s:pukiwiki_history) > 0
+		if last[1] == b:page && len(s:pukiwiki_history) > 0
 			let last = remove(s:pukiwiki_history, -1)
 		else
 			return 
 		endif
-		call s:PW_get_page(last[0], last[1], last[2], last[3], last[4], last[5], 1) 
+		call s:PW_get_page(last[0], last[1], last[2], 1) 
 	endif
 endfunction "}}}
 
@@ -381,6 +397,11 @@ function! s:PW_write() "{{{
 	if ! &modified
 		return
 	endif
+
+	let sitedict = g:pukiwiki_config[b:site_name]
+	let url = sitedict['url']
+	let enc = sitedict['encode']
+	let top = sitedict['top']
 
 	let notimestamp = ''
 	let lineno = line('.')
@@ -412,7 +433,7 @@ function! s:PW_write() "{{{
 	execute ":setlocal fenc="
 	while cl <= line('$')
 		let line = getline(cl)
-		let line = iconv(line, &enc, b:enc)
+		let line = iconv(line, &enc, enc)
 		let line = PW_urlencode(line)
 		call setline(cl, line)
 		let cl = cl + 1
@@ -430,10 +451,11 @@ function! s:PW_write() "{{{
 		call AL_echo(file)
 	endif
 
+
 	execute ":setlocal noai"
-	let cmd = "normal! 1G0iencode_hint=" . PW_urlencode( iconv( 'ぷ', &enc, b:enc ) )
-	let cmd = cmd . "&cmd=edit&page=" . PW_urlencode( iconv( b:page, &enc, b:enc ) )
-	let cmd = cmd . "&digest=" . b:digest . "&write=" . PW_urlencode( iconv( 'ページの更新', &enc, b:enc ) )
+	let cmd = "normal! 1G0iencode_hint=" . PW_urlencode( iconv( 'ぷ', &enc, enc ) )
+	let cmd = cmd . "&cmd=edit&page=" . PW_urlencode( iconv( b:page, &enc, enc ) )
+	let cmd = cmd . "&digest=" . b:digest . "&write=" . PW_urlencode( iconv( 'ページの更新', &enc, enc ) )
 	let cmd = cmd . "&notimestamp=" . notimestamp
 	let cmd = cmd . "&original="
 	let cmd = cmd . "&msg="
@@ -448,7 +470,7 @@ function! s:PW_write() "{{{
 	let post = tempname()
 	call AL_write(post)
 	let result = tempname()
-	let cmd = "curl -s -o " . result . " -d @" . post . ' "' . b:url . '"'
+	let cmd = "curl -s -o " . result . " -d @" . post . ' "' . url . '"'
 	call AL_system(cmd)
 
 	if ! g:pukiwiki_debug
@@ -461,10 +483,10 @@ function! s:PW_write() "{{{
 	" 作成されている場合には何らかのエラーをHTMLで吐き出している。
 	if filereadable(result)
 		let body = PW_fileread(result)
-		let body = iconv( body, b:enc, &enc )
+		let body = iconv( body, enc, &enc )
 		if body =~ '<title>\_.\{-}を削除しました\_.\{-}<\/title>'
 			let page = b:page
-			call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:top, 0)
+			call PW_get_edit_page(b:site_name, top, 0)
 			call AL_echo(page . ' を削除しました')
 			return
 		endif
@@ -475,9 +497,6 @@ function! s:PW_write() "{{{
 		execute ":setlocal nomodifiable"
 		execute ":setlocal readonly"
 		let site_name = b:site_name
-		let url       = b:url
-		let enc       = b:enc
-		let top       = b:top
 		let page      = b:page
 
 		" 書き込みしようとしたバッファの名前の前に'ローカル'を付けて
@@ -486,13 +505,13 @@ function! s:PW_write() "{{{
 		execute ":diffthis"
 		execute ":new"
 
-		call PW_get_edit_page(site_name, url, enc, top, page, 0)
+		call PW_get_edit_page(site_name, page, 0)
 		execute ":diffthis"
 		if g:pukiwiki_debug
 			echo "digest=[" . b:digest . "] cmd=[" . cmd . "]"
-			echo "&enc=" . &enc . ", enc=" . b:enc . ", page=" . b:page
-			echo "iconv=" . Byte2hex(iconv(b:page, &enc, b:enc))
-			echo "urlen=" . PW_urlencode( iconv( b:page, &enc, b:enc ) )
+			echo "&enc=" . &enc . ", enc=" . enc . ", page=" . b:page
+			echo "iconv=" . Byte2hex(iconv(b:page, &enc, enc))
+			echo "urlen=" . PW_urlencode( iconv( b:page, &enc, enc ) )
 			call AL_echo('更新の衝突が発生したか、その他のエラーで書き込めませんでした。' . result, 'ErrorMsg')
 		else
 			call AL_echo('更新の衝突が発生したか、その他のエラーで書き込めませんでした。', 'ErrorMsg')
@@ -501,7 +520,7 @@ function! s:PW_write() "{{{
 		return 0
 	endif
 
-	call PW_get_edit_page(b:site_name, b:url, b:enc, b:top, b:page, 0)
+	call PW_get_edit_page(b:site_name, b:page, 0)
 
 	" 元いた行に移動
 	execute "normal! " . lineno . "G"
