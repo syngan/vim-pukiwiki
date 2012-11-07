@@ -72,12 +72,12 @@ Example >
 	\}
 <
 
-|:PukiVim|
+|:PukiWiki|
 
 として起動し、|g:pukiwiki_config| で指定したサイト名を入力するか、
 
-:PukiVim "サイト名" 
-(:PukiVim LocalWiki)
+:PukiWiki "サイト名" 
+(:PukiWiki LocalWiki)
 
 などとして起動します。
 
@@ -97,7 +97,7 @@ Example >
 ------------------------------------------------------------------------------
 コマンド					*pukiwiki-commands*
 
-:PukiVim [{site-name} [{page-name}]]
+:PukiWiki [{site-name} [{page-name}]]
 
 ------------------------------------------------------------------------------
 関数						*pukiwiki-functions*
@@ -115,11 +115,6 @@ g:pukiwiki_multiuser					*g:pukiwiki_multiuser*
 	デフォルト値: Unix の場合 1、それ以外の場合 0 です。
 	(オリジナル版から存在。使ったことがない)
 
-g:pukiwiki_datadir					*g:pukiwiki_datadir*
-	ブックマークなどを保存するためのディレクトリです。
-	デフォルト値は Unix の場合は "$HOME/.vim/pukiwiki"、Windows の場合は
-	"$HOME/vimfiles/pukiwiki" です。
-
 g:pukiwiki_timestamp_update			*g:pukiwiki_timestamp_update*
 	PukiWiki のページ更新時にタイムスタンプの更新に対する動作を指定
 	します。1 の場合タイムスタンプを更新、0 の場合タイムスタンプは更新しな
@@ -129,6 +124,13 @@ g:pukiwiki_timestamp_update			*g:pukiwiki_timestamp_update*
 
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
+
+2012-11-07 syngan  v0.7
+
+	* filetype を pukiwiki_edit から pukiwiki に変更した
+	* ftplugin/pukiwiki.vim に定義していた関数群を plugin/pukiwiki.vim に
+	  移動した
+	* コマンドを :PukiVim から |:PukiWiki| に変更した
 
 2012-11-06 syngan  v0.6
 
@@ -176,7 +178,7 @@ g:pukiwiki_timestamp_update			*g:pukiwiki_timestamp_update*
 2012-10-12 syngan  v0.1
 
 	* 起動時に引数をとるようにして, ブックマークをとばせるようにした
-	   :PukiVim [ SiteName [ PageName ]]
+	   :PukiWiki [ SiteName [ PageName ]]
 
 	* :w されたとき，ファイルが変更されていない場合には 
 	  Pukiwiki と接続しないようにした

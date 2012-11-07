@@ -27,12 +27,12 @@ Example >
 	\}
 <
 
-|:PukiVim|
+|:PukiWiki|
 
 として起動し、|g:pukiwiki_config| で指定したサイト名を入力するか、
 
-:PukiVim "サイト名" 
-(:PukiVim LocalWiki)
+:PukiWiki "サイト名" 
+(:PukiWiki LocalWiki)
 
 などとして起動します。
 
