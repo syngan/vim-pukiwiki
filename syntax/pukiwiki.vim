@@ -24,14 +24,8 @@
 
 scriptencoding euc-jp
 
-runtime! syntax/help.vim
-
-hi def link pukiwikiBracketName Underlined
-"hi def link Head Directory
-"hi def link VimPHPURL Underlined
-hi def link pukiwikiBodyDelim LineNr
-"hi def link NotEditable WarningMsg
-
+"runtime! syntax/help.vim
+syntax include @Help syntax/help.vim
 
 "syntax match VimPHPURL display "s\?https\?:\/\/[-_.!~*'()a-zA-Z0-9;/?:@&=+$,%#]\+\/vim.php[-\./0-9a-zA-Z]*"
 "syntax match BracketName display "\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]"
@@ -44,16 +38,28 @@ syntax match pukiwikiBodyDelim display "^-\{3,}.*--$"
 syntax match pukiwikiBlockElement   "^#[A-Za-z0-9_]*"
 syntax match pukiwikiInlineElement	"&[A-Za-z0-9_]*"
 syntax match pukiwikiPre            "^ .*$"
-syntax match pukiwikiH1             "^\*[^\*]*$"
-syntax match pukiwikiH2             "^\*\*[^\*]*$"
-syntax match pukiwikiH3             "^\*\*\*[^\*]*$"
+syntax match pukiwikiHeading        "^\*\{1,3}[^\*]*$"
+syntax match pukiwikiComment        "^\/\/.*$"
+syntax match pukiwikiLinkURL        +https\=://[-!#$%&*+,./:;=?@0-9a-zA-Z_~]\++
+syntax match pukiwikiList           +^[+-]\++
 
 
 hi def link pukiwikiBlockElement	Function
 hi def link pukiwikiInlineElement	Function
-hi def link pukiwikiH1 String
-hi def link pukiwikiH2 String
-hi def link pukiwikiH3 String
+hi def link pukiwikiHeading         String
+hi def link pukiwikiComment         Comment 
+hi def link pukiwikiPre             Statement
+hi def link pukiwikiList            Statement
+hi def link pukiwikiLinkURL         Underlined
 
-hi def link pukiwikiPre Statement
+hi def link pukiwikiBracketName Underlined
+"hi def link Head Directory
+"hi def link VimPHPURL Underlined
+hi def link pukiwikiBodyDelim LineNr
+"hi def link NotEditable WarningMsg
+
+
+
+" Title, Label, Identifier, Statement, Underline, Special
+" Delimiter Comment
 
