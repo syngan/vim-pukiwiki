@@ -100,6 +100,13 @@ function! s:PW_newpage(site_name, page) "{{{
 
 	execute ":setlocal filetype=pukiwiki"
 
+	" nnoremap {{{
+	nnoremap <silent> <buffer> <CR>    :call PW_move()<CR>
+	nnoremap <silent> <buffer> <TAB>   :call PW_bracket_move()<CR>
+	nnoremap <silent> <buffer> <S-TAB> :call PW_bracket_move_rev()<CR>
+	"nnoremap <silent> <buffer> B       :call PW_get_last_page()<CR>
+	" }}}
+
 	let b:site_name = a:site_name
 	let b:page      = a:page
 endfunction "}}}
