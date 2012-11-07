@@ -30,6 +30,15 @@ nnoremap <silent> <buffer> <S-TAB> :call <SID>PW_bracket_move_rev()<CR>
 "nnoremap <silent> <buffer> B       :call PW_get_last_page()<CR>
 " }}}
 
+if exists('s:loaded_ftplugin_pukiwiki') && s:loaded_ftplugin_pukiwiki
+  finish
+endif
+let s:loaded_ftplugin_pukiwiki = 1
+
+function! PW_set_loaded_flag(val) "{{{
+	let s:loaded_ftplugin_pukiwiki = a:val
+endfunction "}}}
+
 " variables {{{
 let s:pukivim_ro_menu = "\n"
 	\ . "[[トップ]] [[添付]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]\n"
@@ -39,7 +48,7 @@ let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 "let s:bracket_name = '\[\[\_.\{-}\]\]'
 "}}}
 
-try
+"try
 function! s:PW_move()  "{{{
 	if line('.') < 4
 		" ヘッダ部分
@@ -105,8 +114,8 @@ function! s:PW_move()  "{{{
 
 	call PW_get_edit_page(b:site_name, cur, 1)
 endfunction "}}}
-catch /^Vim\%((\a\+)\)\?:E127/
-endtry
+"catch /^Vim\%((\a\+)\)\?:E127/
+"endtry
 
 function! s:PW_bracket_move() "{{{
 	let tmp = @/
@@ -125,7 +134,7 @@ function! s:PW_bracket_move_rev() "{{{
 	let @/ = tmp
 endfunction "}}}
 
-try
+"try
 function! s:PW_show_attach(site_name, page) "{{{
 "----------------------------------------------
 " 添付ファイル用の画面を表示する.
@@ -169,10 +178,10 @@ function! s:PW_show_attach(site_name, page) "{{{
 
 	call PW_endpage(a:site_name, a:page, 1)
 endfunction "}}}
-catch /^Vim\%((\a\+)\)\?:E127/
-endtry
+"catch /^Vim\%((\a\+)\)\?:E127/
+"endtry
 
-try
+"try
 function! s:PW_show_page_list() "{{{
 
 	let sitedict = g:pukiwiki_config[b:site_name]
@@ -237,10 +246,10 @@ function! s:PW_show_page_list() "{{{
 
 	call PW_endpage(b:site_name, b:page, 1)
 endfunction "}}}
-catch /^Vim\%((\a\+)\)\?:E127/
-endtry
+"catch /^Vim\%((\a\+)\)\?:E127/
+"endtry
 
-try
+"try
 function! s:PW_show_search() "{{{
 
 	let sitedict = g:pukiwiki_config[b:site_name]
@@ -296,10 +305,10 @@ function! s:PW_show_search() "{{{
 
 	call PW_endpage(b:site_name, b:page, 1)
 endfunction "}}}
-catch /^Vim\%((\a\+)\)\?:E127/
-endtry
+"catch /^Vim\%((\a\+)\)\?:E127/
+"endtry
 
-try
+"try
 function! PW_fileupload() range "{{{
 
 	let sitedict = g:pukiwiki_config[b:site_name]
@@ -360,8 +369,8 @@ function! PW_fileupload() range "{{{
     endfor
 
 endfunction "}}}
-catch /^Vim\%((\a\+)\)\?:E127/
-endtry
+"catch /^Vim\%((\a\+)\)\?:E127/
+"endtry
 
 " これはエラーになる
 function! PW_setfiletype_ng() " {{{
