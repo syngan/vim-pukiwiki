@@ -82,7 +82,7 @@ let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 " }}}
 
 " vital.vim {{{
-"let s:VITAL = vital#of('vim-pukiwiki')
+let s:VITAL = vital#of('vim-pukiwiki')
 "let s:Prelude = s:VITAL.import('Prelude')
 "let s:HTTP = s:VITAL.import('Web.Http')
 " }}}
@@ -109,8 +109,6 @@ function! PW_buf_vars() "{{{
 	else
 		call AL_echokv('digest'    , 'undefined')
 	endif
-
-
 
 endfunction "}}}
 "}}}
@@ -139,10 +137,10 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 		return 0
 	endif
 
-"	if !s:Prelude.is_dict(g:pukiwiki_config)
-"		call AL_echo('g:pukiwiki_config is not a dictionary.', 'ErrorMsg')
-"		return 0
-"	endif
+	if !s:VITAL.is_dict(g:pukiwiki_config)
+		call AL_echo('g:pukiwiki_config is not a dictionary.', 'ErrorMsg')
+		return 0
+	endif
 
 	if a:0 == 0
 		" 問い合わせ
@@ -208,11 +206,7 @@ function! s:PW_init_check() "{{{
 	endif
 
 	" curl の有無をチェック
-	let curl = 'curl'
-	if has('win32')
-		let curl = 'curl.exe'
-	endif
-	if curl != AL_hascmd('curl')
+	if !executable('curl')
 		call AL_echo('curl が見つかりません。', 'ErrorMsg')
 		return 0
 	endif
@@ -312,8 +306,9 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 	let cmd = url . "?cmd=" . a:pwcmd . "&page=" . enc_page
 	let tmp = tempname()
 	if 1
-		let cmd = "curl -s -o " . tmp .' '. AL_quote(cmd)
-		let ret = AL_system(cmd)
+		let cmd = "curl -s -o " . tmp .' "'. (cmd) . '"'
+"		let ret = s:PW_system(cmd)
+		let ret = s:PW_system(cmd)
 		let result = s:PW_fileread(tmp)
 		call delete(tmp)
 	else
@@ -389,14 +384,6 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 		call add(s:pukiwiki_history, [a:site_name, a:page, a:pwcmd])
 	endif
 
-	if g:pukiwiki_debug
-		let phase4 = localtime()
-		echo 'start - phase1  = ' . (phase1 - start)
-		echo 'phase1 - phase2 = ' . (phase2 - phase1)
-		echo 'phase2 - phase3 = ' . (phase3 - phase2)
-		echo 'phase3 - phase4 = ' . (phase4 - phase3)
-	endif
-
 endfunction "}}}
 
 function! s:PW_write() "{{{
@@ -424,61 +411,39 @@ function! s:PW_write() "{{{
 		endif
 	endif
 
-	if g:pukiwiki_debug
-		let file = g:pukiwiki_datadir . '/pukiwiki.1'
-		call AL_write(file)
-		call AL_echo(file)
-	endif
-
 	" ヘッダの削除. ユーザがヘッダを修正すると
 	" 書き込みが壊れるだめな仕様
 	" @REG
 	let regbak = @"
 	silent! execute "normal! gg3D"
 	let @" = regbak
-	let cl = 1
 	execute ":setlocal fenc="
+
+	" urlencode
+	let body = []
+	let cl = 1
 	while cl <= line('$')
 		let line = getline(cl)
 		let line = iconv(line, &enc, enc)
 		let line = s:PW_urlencode(line)
-		call setline(cl, line)
+		call add(body, line . '%0A')
 		let cl = cl + 1
 	endwhile
 
-	if 1 < line('$')
-		silent! %s/$/%0A/
-		execute ":noh"
-		let @/ = ''
-	endif
-
-	if g:pukiwiki_debug
-		let file = g:pukiwiki_datadir . '/pukiwiki.2'
-		call AL_write(file)
-		call AL_echo(file)
-	endif
-
-
-	execute ":setlocal noai"
-	let cmd = "normal! 1G0iencode_hint=" . s:PW_urlencode( iconv( 'ぷ', &enc, enc ) )
+	" urlencode した本文前にその他の情報設定
+	let cmd = "encode_hint=" . s:PW_urlencode( iconv( 'ぷ', &enc, enc ) )
 	let cmd = cmd . "&cmd=edit&page=" . s:PW_urlencode( iconv( b:pukiwiki_page, &enc, enc ) )
 	let cmd = cmd . "&digest=" . b:pukiwiki_digest . "&write=" . s:PW_urlencode( iconv( 'ページの更新', &enc, enc ) )
 	let cmd = cmd . "&notimestamp=" . notimestamp
 	let cmd = cmd . "&original="
 	let cmd = cmd . "&msg="
-	call AL_execute(cmd)
-
-	if g:pukiwiki_debug
-		let file = g:pukiwiki_datadir . '/pukiwiki.3'
-		call AL_write(file)
-		call AL_echo(file)
-	endif
+	let body[0] = cmd . body[0]
 
 	let post = tempname()
-	call AL_write(post)
+	call writefile(body, post, "b")
 	let result = tempname()
 	let cmd = "curl -s -o " . result . " -d @" . post . ' "' . url . '"'
-	call AL_system(cmd)
+	call s:PW_system(cmd)
 
 	if ! g:pukiwiki_debug
 		call delete(post)
@@ -582,7 +547,7 @@ function! s:PW_show_attach(site_name, page) "{{{
 	let tmp = tempname()
 	
 	let cmd = "curl -s -o " . tmp .' "'. url . '"'
-	let result = AL_system(cmd)
+	let result = s:PW_system(cmd)
 
 	let body = s:PW_fileread(tmp)
 	let body = iconv(body, enc, &enc)
@@ -616,7 +581,7 @@ function! s:PW_show_page_list() "{{{
 	let url = url . '?cmd=list'
 	let result = tempname()
 	let cmd = 'curl -s -o ' . result . ' "' . url . '"'
-	call AL_system(cmd)
+	call s:PW_system(cmd)
 
 	if ! filereadable(result)
 		echo "cannot obtain the list: " . cmd
@@ -636,12 +601,6 @@ function! s:PW_show_page_list() "{{{
 
 	execute "normal! i" . body
 
-	if g:pukiwiki_debug
-		let file = g:pukiwiki_datadir . '/pukiwiki.9.list-2'
-		call AL_write(file)
-		call AL_echo(file)
-	endif
-
 	" がんばって加工
 	" @REG
 	let regbak = @"
@@ -656,12 +615,6 @@ function! s:PW_show_page_list() "{{{
 	silent! %g/<br \/.*/d
 	silent! %s/\s*<li>\[\[\(.*\)\]\]$/\1/
 	let @" = regbak
-
-	if g:pukiwiki_debug
-		let file = g:pukiwiki_datadir . '/pukiwiki.9.list-3'
-		call AL_write(file)
-		call AL_echo(file)
-	endif
 
 	execute ":setlocal noai"
 	execute "normal! gg0i" . b:pukiwiki_site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
@@ -692,7 +645,7 @@ function! s:PW_show_search() "{{{
 	let cmd = 'curl -s -o ' . result . ' -d encode_hint=' . s:PW_urlencode('ぷ')
 	let cmd = cmd . ' -d word=' . s:PW_urlencode(word)
 	let cmd = cmd . ' -d type=' . type . ' -d cmd=search ' . url
-	call AL_system(cmd)
+	call s:PW_system(cmd)
 
 	call s:PW_newpage(b:pukiwiki_site_name, 'cmd=search')
 	call s:PW_set_statusline(b:pukiwiki_site_name, b:pukiwiki_page)
@@ -770,7 +723,7 @@ function! PW_fileupload() range "{{{
 
 		let fcmd = cmd . ' -F "attach_file=@' . curr_line . '"'
 		let fcmd = fcmd . ' "' . url . '"'
-		let result = AL_system(fcmd)
+		let result = s:PW_system(fcmd)
 		let errcode = v:shell_error 
 		if errcode != 0
 			let msg = ''
@@ -889,7 +842,7 @@ function! s:PW_fileread(filename) "{{{
 	else
 		let filename=a:filename
 	endif
-	return AL_fileread(filename)
+	return s:PW_fileread(filename)
 endfunction "}}}
 
 function! s:PW_urlencode(str) "{{{
@@ -909,25 +862,30 @@ function! s:PW_urlencode(str) "{{{
     elseif ch == ' '
       let result = result . '+'
     else
-      let hex = AL_nr2hex(char2nr(ch))
-      let result = result.'%'.(strlen(hex) < 2 ? '0' : '').hex
+"      let hex = AL_nr2hex(char2nr(ch))
+"      let result = result.'%'.(strlen(hex) < 2 ? '0' : '').hex
+	  let result .= printf("%%%02X", char2nr(ch))
     endif
   endwhile
   return result
 endfunction "}}}
 
+function! s:PW_system(cmd) " {{{
+	return s:VITAL.system(a:cmd)
+endfunction " }}}
+
+function! s:PW_fileread(filename) "{{{
+  if filereadable(a:filename)
+    return join(readfile(a:filename, 'b'), "\n")
+  endif
+  return ''
+endfunction "}}}
+
 " {{{
 " AL_decode_entityreference_with_range
+" AL_matchstr_undercursor
 " AL_echo
 " AL_echokv
-" AL_execute
-" AL_matchstr_undercursor
-" AL_nr2hex
-" AL_system
-" AL_write
-" AL_hascmd
-" AL_quote
-" AL_fileread
 " }}}
 "}}}
 
