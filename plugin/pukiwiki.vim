@@ -83,14 +83,15 @@ let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 
 " vital.vim {{{
 "let s:VITAL = vital#of('vim-pukiwiki')
+"let s:Prelude = s:VITAL.import('Prelude')
 "let s:HTTP = s:VITAL.import('Web.Http')
 " }}}
 
 " debug {{{
 function! PW_buf_vars() "{{{
 	" デバッグ用
-	if exists('b:sitename')
-		call AL_echokv('site_name' , b:site_name)
+	if exists('b:pukiwiki_sitename')
+		call AL_echokv('site_name' , b:pukiwiki_site_name)
 		let sitedict = g:pukiwiki_config[a:site_name]
 		call AL_echokv('url' , sitedict['url'])
 		call AL_echokv('top' , sitedict['top'])
@@ -98,13 +99,13 @@ function! PW_buf_vars() "{{{
 	else
 		call AL_echokv('site_name' , 'undefined')
 	endif
-	if exists('b:page')
-		call AL_echokv('page'      , b:page)
+	if exists('b:pukiwiki_page')
+		call AL_echokv('page'      , b:pukiwiki_page)
 	else
 		call AL_echokv('page'      , 'undefined')
 	endif
-	if exists('b:digest')
-		call AL_echokv('digest'    , b:digest)
+	if exists('b:pukiwiki_digest')
+		call AL_echokv('digest'    , b:pukiwiki_digest)
 	else
 		call AL_echokv('digest'    , 'undefined')
 	endif
@@ -134,9 +135,14 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 " PukiVim [ SiteName [ PageName ]]
 "
 	if !exists('g:pukiwiki_config')
-		AL_echo('g:pukiwiki_config does not defined.', 'ErrorMsg')
+		call AL_echo('g:pukiwiki_config does not defined.', 'ErrorMsg')
 		return 0
 	endif
+
+"	if !s:Prelude.is_dict(g:pukiwiki_config)
+"		call AL_echo('g:pukiwiki_config is not a dictionary.', 'ErrorMsg')
+"		return 0
+"	endif
 
 	if a:0 == 0
 		" 問い合わせ
@@ -151,7 +157,6 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 			return 0
 		endif
 	catch /^Vim\%((\a\+)\)\?:E715/
-		call AL_echo('g:pukiwiki_config is not a dictionary.', 'ErrorMsg')
 		return 0
 	endtry
 	
@@ -252,8 +257,8 @@ function! s:PW_newpage(site_name, page) "{{{
 	"nnoremap <silent> <buffer> B       :call PW_get_last_page()<CR>
 	" }}}
 
-	let b:site_name = a:site_name
-	let b:page      = a:page
+	let b:pukiwiki_site_name = a:site_name
+	let b:pukiwiki_page      = a:page
 endfunction "}}}
 
 function! s:PW_endpage(site_name, page, readonly) "{{{
@@ -367,9 +372,9 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 	call AL_decode_entityreference_with_range('%')
 	let phase3 = localtime()
 
-	let b:digest    = digest
+	let b:pukiwiki_digest    = digest
 
-	let status_line = s:PW_set_statusline(b:site_name, b:page)
+	let status_line = s:PW_set_statusline(b:pukiwiki_site_name, b:pukiwiki_page)
 	if a:pwcmd == 'edit'
 		augroup PukiWikiEdit
 			execute "autocmd! BufWriteCmd " . status_line . " call s:PW_write()"
@@ -400,7 +405,7 @@ function! s:PW_write() "{{{
 		return
 	endif
 
-	let sitedict = g:pukiwiki_config[b:site_name]
+	let sitedict = g:pukiwiki_config[b:pukiwiki_site_name]
 	let url = sitedict['url']
 	let enc = sitedict['encode']
 	let top = sitedict['top']
@@ -456,8 +461,8 @@ function! s:PW_write() "{{{
 
 	execute ":setlocal noai"
 	let cmd = "normal! 1G0iencode_hint=" . s:PW_urlencode( iconv( 'ぷ', &enc, enc ) )
-	let cmd = cmd . "&cmd=edit&page=" . s:PW_urlencode( iconv( b:page, &enc, enc ) )
-	let cmd = cmd . "&digest=" . b:digest . "&write=" . s:PW_urlencode( iconv( 'ページの更新', &enc, enc ) )
+	let cmd = cmd . "&cmd=edit&page=" . s:PW_urlencode( iconv( b:pukiwiki_page, &enc, enc ) )
+	let cmd = cmd . "&digest=" . b:pukiwiki_digest . "&write=" . s:PW_urlencode( iconv( 'ページの更新', &enc, enc ) )
 	let cmd = cmd . "&notimestamp=" . notimestamp
 	let cmd = cmd . "&original="
 	let cmd = cmd . "&msg="
@@ -487,8 +492,8 @@ function! s:PW_write() "{{{
 		let body = s:PW_fileread(result)
 		let body = iconv( body, enc, &enc )
 		if body =~ '<title>\_.\{-}を削除しました\_.\{-}<\/title>'
-			let page = b:page
-			call s:PW_get_edit_page(b:site_name, top, 0)
+			let page = b:pukiwiki_page
+			call s:PW_get_edit_page(b:pukiwiki_site_name, top, 0)
 			call AL_echo(page . ' を削除しました')
 			return
 		endif
@@ -498,22 +503,22 @@ function! s:PW_write() "{{{
 		execute ":set nomodified"
 		execute ":setlocal nomodifiable"
 		execute ":setlocal readonly"
-		let site_name = b:site_name
-		let page      = b:page
+		let site_name = b:pukiwiki_site_name
+		let page      = b:pukiwiki_page
 
 		" 書き込みしようとしたバッファの名前の前に'ローカル'を付けて
 		" 現在のサーバー上の内容を取得して'diffthis'を実行する。
-		call s:PW_set_statusline(b:site_name, 'ローカル ' . b:page)
+		call s:PW_set_statusline(b:pukiwiki_site_name, 'ローカル ' . b:pukiwiki_page)
 		execute ":diffthis"
 		execute ":new"
 
 		call s:PW_get_edit_page(site_name, page, 0)
 		execute ":diffthis"
 		if g:pukiwiki_debug
-			echo "digest=[" . b:digest . "] cmd=[" . cmd . "]"
-			echo "&enc=" . &enc . ", enc=" . enc . ", page=" . b:page
-			echo "iconv=" . Byte2hex(iconv(b:page, &enc, enc))
-			echo "urlen=" . s:PW_urlencode( iconv( b:page, &enc, enc ) )
+			echo "digest=[" . b:pukiwiki_digest . "] cmd=[" . cmd . "]"
+			echo "&enc=" . &enc . ", enc=" . enc . ", page=" . b:pukiwiki_page
+			echo "iconv=" . Byte2hex(iconv(b:pukiwiki_page, &enc, enc))
+			echo "urlen=" . s:PW_urlencode( iconv( b:pukiwiki_page, &enc, enc ) )
 			call AL_echo('更新の衝突が発生したか、その他のエラーで書き込めませんでした。' . result, 'ErrorMsg')
 		else
 			call AL_echo('更新の衝突が発生したか、その他のエラーで書き込めませんでした。', 'ErrorMsg')
@@ -522,11 +527,11 @@ function! s:PW_write() "{{{
 		return 0
 	endif
 
-	call s:PW_get_edit_page(b:site_name, b:page, 0)
+	call s:PW_get_edit_page(b:pukiwiki_site_name, b:pukiwiki_page, 0)
 
 	" 元いた行に移動
 	execute "normal! " . lineno . "G"
-"	silent! echo 'update ' . b:page
+"	silent! echo 'update ' . b:pukiwiki_page
 	if g:pukiwiki_debug
 		" 毎回うっとーしいので debug 用に
 		call AL_echo('更新成功！')
@@ -538,7 +543,7 @@ endfunction "}}}
 function! PW_get_back_page() "{{{
 	if (len(s:pukiwiki_history) > 0) 
 		let [site_name, page, pwcmd] = remove(s:pukiwiki_history, -1)
-		if page == b:page && len(s:pukiwiki_history) > 0
+		if page == b:pukiwiki_page && len(s:pukiwiki_history) > 0
 			let [site_name, page, pwcmd] = remove(s:pukiwiki_history, -1)
 		else
 			return 
@@ -547,7 +552,7 @@ function! PW_get_back_page() "{{{
 	endif
 endfunction "}}}
 
-" page open {{{
+" page open s:[top/attach/list/search] {{{
 function! s:PW_get_top_page(site_name) "{{{
 
 	let sitedict = g:pukiwiki_config[a:site_name]
@@ -594,8 +599,8 @@ function! s:PW_show_attach(site_name, page) "{{{
 	call s:PW_newpage(a:site_name, a:page)
 	call s:PW_set_statusline(a:site_name, a:page)
 
-	execute "normal! i" . a:site_name . " " . b:page . s:pukivim_ro_menu 
-	execute "normal! i添付ファイル一覧 [[" . b:page . "]]\n"
+	execute "normal! i" . a:site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu 
+	execute "normal! i添付ファイル一覧 [[" . b:pukiwiki_page . "]]\n"
 	execute "normal! i" . body
 
 	call s:PW_endpage(a:site_name, a:page, 1)
@@ -603,7 +608,7 @@ endfunction "}}}
 
 function! s:PW_show_page_list() "{{{
 
-	let sitedict = g:pukiwiki_config[b:site_name]
+	let sitedict = g:pukiwiki_config[b:pukiwiki_site_name]
 	let url = sitedict['url']
 	let enc = sitedict['encode']
 	let top = sitedict['top']
@@ -618,8 +623,8 @@ function! s:PW_show_page_list() "{{{
 		return 
 	endif
 
-	call s:PW_newpage(b:site_name, 'cmd=list')
-	call s:PW_set_statusline(b:site_name, b:page)
+	call s:PW_newpage(b:pukiwiki_site_name, 'cmd=list')
+	call s:PW_set_statusline(b:pukiwiki_site_name, b:pukiwiki_page)
 
 	let body = s:PW_fileread(result)
 	call delete(result)
@@ -659,16 +664,16 @@ function! s:PW_show_page_list() "{{{
 	endif
 
 	execute ":setlocal noai"
-	execute "normal! gg0i" . b:site_name . " " . b:page . s:pukivim_ro_menu
+	execute "normal! gg0i" . b:pukiwiki_site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
 
 	call AL_decode_entityreference_with_range('%')
 
-	call s:PW_endpage(b:site_name, b:page, 1)
+	call s:PW_endpage(b:pukiwiki_site_name, b:pukiwiki_page, 1)
 endfunction "}}}
 
 function! s:PW_show_search() "{{{
 
-	let sitedict = g:pukiwiki_config[b:site_name]
+	let sitedict = g:pukiwiki_config[b:pukiwiki_site_name]
 	let url = sitedict['url']
 	let enc = sitedict['encode']
 	let top = sitedict['top']
@@ -689,8 +694,8 @@ function! s:PW_show_search() "{{{
 	let cmd = cmd . ' -d type=' . type . ' -d cmd=search ' . url
 	call AL_system(cmd)
 
-	call s:PW_newpage(b:site_name, 'cmd=search')
-	call s:PW_set_statusline(b:site_name, b:page)
+	call s:PW_newpage(b:pukiwiki_site_name, 'cmd=search')
+	call s:PW_set_statusline(b:pukiwiki_site_name, b:pukiwiki_page)
 
 	let body = s:PW_fileread(result)
 	call delete(result)
@@ -715,23 +720,27 @@ function! s:PW_show_search() "{{{
 	" 最終行に [... 10 ページ見つかりました] メッセージ
 	" それを最初にだす
 	" @REG
-	execute "normal! GddggP0i" . b:site_name . " " . b:page . s:pukivim_ro_menu
+	execute "normal! GddggP0i" . b:pukiwiki_site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
 	let @" = regbak
 
-	call s:PW_endpage(b:site_name, b:page, 1)
+	call s:PW_endpage(b:pukiwiki_site_name, b:pukiwiki_page, 1)
 endfunction "}}}
 " }}}
 
 function! PW_fileupload() range "{{{
 
-	let sitedict = g:pukiwiki_config[b:site_name]
+	if !exists('b:pukiwiki_site_name')
+		return 
+	endif
+
+	let sitedict = g:pukiwiki_config[b:pukiwiki_site_name]
 	let url = sitedict['url']
 	let enc = sitedict['encode']
 	let top = sitedict['top']
 
 	let pass = input('パスワード: ')
 
-	let enc_page = iconv(b:page, &enc, enc)
+	let enc_page = iconv(b:pukiwiki_page, &enc, enc)
 	let enc_page = s:PW_urlencode(enc_page)
 
 	let tmpfile = tempname()
@@ -783,9 +792,10 @@ function! PW_fileupload() range "{{{
 
 endfunction "}}}
 
-" motion {{{
+" g:motion {{{
+
 function! PW_move()  "{{{
-	if !exists('b:site_name')
+	if !exists('b:pukiwiki_site_name')
 		return 
 	endif
 	if line('.') < 4
@@ -812,30 +822,30 @@ function! PW_move()  "{{{
 	let cur = substitute(cur, '\[\[\(.*\)\]\]', '\1', '')
 	if line('.') < 4
 		if cur == 'トップ'
-			call s:PW_get_top_page(b:site_name)
+			call s:PW_get_top_page(b:pukiwiki_site_name)
 		elseif cur == 'リロード'
-			if b:page == 'FormattingRules' || b:page == 'RecentChanges'
-				call s:PW_get_source_page(b:site_name, b:page)
+			if b:pukiwiki_page == 'FormattingRules' || b:pukiwiki_page == 'RecentChanges'
+				call s:PW_get_source_page(b:pukiwiki_site_name, b:pukiwiki_page)
 			else
-				call s:PW_get_edit_page(b:site_name, b:page, 0)
+				call s:PW_get_edit_page(b:pukiwiki_site_name, b:pukiwiki_page, 0)
 			endif
 		elseif cur == '新規'
 			let page = input('新規ページ名: ')
 			if page == ''
 				return
 			endif
-			call s:PW_get_edit_page(b:site_name, page, 1)
+			call s:PW_get_edit_page(b:pukiwiki_site_name, page, 1)
 		elseif cur == '一覧'
 			call s:PW_show_page_list()
 		elseif cur == '単語検索'
 			call s:PW_show_search()
 		elseif cur == '添付'
-			call s:PW_show_attach(b:site_name, b:page)
+			call s:PW_show_attach(b:pukiwiki_site_name, b:pukiwiki_page)
 		elseif cur == '最終更新'
 			let page = 'RecentChanges'
-			call s:PW_get_source_page(b:site_name, page)
+			call s:PW_get_source_page(b:pukiwiki_site_name, page)
 		elseif cur == 'ヘルプ'
-			call s:PW_get_source_page(b:site_name, 'FormattingRules')
+			call s:PW_get_source_page(b:pukiwiki_site_name, 'FormattingRules')
 		endif
 		return
 	endif
@@ -850,7 +860,7 @@ function! PW_move()  "{{{
 		return
 	endif
 
-	call s:PW_get_edit_page(b:site_name, cur, 1)
+	call s:PW_get_edit_page(b:pukiwiki_site_name, cur, 1)
 endfunction "}}}
 
 function! PW_bracket_move() "{{{
@@ -871,7 +881,7 @@ function! PW_bracket_move_rev() "{{{
 endfunction "}}}
 " }}}
 
-" alice.vim {{{
+" s:alice.vim {{{
 
 function! s:PW_fileread(filename) "{{{
 	if has('win32')
@@ -880,40 +890,6 @@ function! s:PW_fileread(filename) "{{{
 		let filename=a:filename
 	endif
 	return AL_fileread(filename)
-endfunction "}}}
-
-function! s:AL_filecopy(from, to) "{{{
-	if isdirectory(a:from) || !filereadable(a:from)
-		return 0
-	endif
-
-	if isdirectory(a:to)
-		let to = a:to . '/' . AL_filename(a:from)
-	else
-		let to = a:to
-	endif
-
-	if has('win32') && &shell =~ '\ccmd'
-		let cmd = 'copy'
-	else
-		let cmd = 'cp'
-	endif
-
-	let cmd = cmd . ' ' . AL_quote(a:from) . ' ' . AL_quote(to)
-	if has('win32') && &shell =~ '\ccmd'
-		let cmd = substitute(cmd, '\/', '\\', 'g')
-	endif
-	call AL_system(cmd)
-
-	if g:pukiwiki_debug
-		call AL_echo(cmd)
-	endif
-
-	if !filereadable(to)
-		return 0
-	endif
-
-	return 1
 endfunction "}}}
 
 function! s:PW_urlencode(str) "{{{
@@ -940,6 +916,19 @@ function! s:PW_urlencode(str) "{{{
   return result
 endfunction "}}}
 
+" {{{
+" AL_decode_entityreference_with_range
+" AL_echo
+" AL_echokv
+" AL_execute
+" AL_matchstr_undercursor
+" AL_nr2hex
+" AL_system
+" AL_write
+" AL_hascmd
+" AL_quote
+" AL_fileread
+" }}}
 "}}}
 
 " vim:set foldmethod=marker:
