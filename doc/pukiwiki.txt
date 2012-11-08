@@ -1,6 +1,6 @@
 *pukiwiki.txt*	A vim client for the PukiWiki 1.4.7 for Japanese
 
-Version: 0.6
+Version: 0.7
 Author : syngan
 License: MIT license  {{{
     Permission is hereby granted, free of charge, to any person obtaining
@@ -146,7 +146,6 @@ g:pukiwiki_timestamp_update			*g:pukiwiki_timestamp_update*
 	  - PW_get_back_page()
 	  - ただし、スクリプトローカル変数で管理しているので挙動がおかしい
 	  - バッファローカルな変数ではうまく動かせられなかった
-
 
 2012-10-16 syngan  v0.3
 
