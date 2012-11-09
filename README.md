@@ -80,8 +80,7 @@ TODO:
   - x PukiWiki Plusでのセッションチケットへの対処
   - x 凍結/凍結解除機能
   - o :PukiVimコマンドの拡張
-  - x 1ファイル化(alice.vim含む)
-  - o Vim7以降でしか動かなくなった(改悪)
+  - o 1ファイル化(alice.vim含む)
 
 x はまだ対応できていない.
 

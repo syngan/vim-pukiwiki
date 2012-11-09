@@ -816,15 +816,6 @@ endfunction "}}}
 
 " s:alice.vim {{{
 
-function! s:PW_fileread(filename) "{{{
-	if has('win32')
-		let filename=substitute(a:filename,"/","\\","g")
-	else
-		let filename=a:filename
-	endif
-	return s:PW_fileread(filename)
-endfunction "}}}
-
 function! s:PW_urlencode(str) "{{{
 " 1) [._-] はそのまま
 " 2) [A-Za-z0-9] もそのまま。
