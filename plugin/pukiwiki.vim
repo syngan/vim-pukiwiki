@@ -83,7 +83,7 @@ let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 
 " vital.vim {{{
 let s:VITAL = vital#of('vim-pukiwiki')
-"let s:Prelude = s:VITAL.import('Prelude')
+let s:HTML = s:VITAL.import('Web.Html')
 "let s:HTTP = s:VITAL.import('Web.Http')
 " }}}
 
@@ -91,23 +91,23 @@ let s:VITAL = vital#of('vim-pukiwiki')
 function! PW_buf_vars() "{{{
 	" デバッグ用
 	if exists('b:pukiwiki_sitename')
-		call AL_echokv('site_name' , b:pukiwiki_site_name)
+		call s:PW_echokv('site_name' , b:pukiwiki_site_name)
 		let sitedict = g:pukiwiki_config[a:site_name]
-		call AL_echokv('url' , sitedict['url'])
-		call AL_echokv('top' , sitedict['top'])
-		call AL_echokv('enc' , sitedict['encode'])
+		call s:PW_echokv('url' , sitedict['url'])
+		call s:PW_echokv('top' , sitedict['top'])
+		call s:PW_echokv('enc' , sitedict['encode'])
 	else
-		call AL_echokv('site_name' , 'undefined')
+		call s:PW_echokv('site_name' , 'undefined')
 	endif
 	if exists('b:pukiwiki_page')
-		call AL_echokv('page'      , b:pukiwiki_page)
+		call s:PW_echokv('page'      , b:pukiwiki_page)
 	else
-		call AL_echokv('page'      , 'undefined')
+		call s:PW_echokv('page'      , 'undefined')
 	endif
 	if exists('b:pukiwiki_digest')
-		call AL_echokv('digest'    , b:pukiwiki_digest)
+		call s:PW_echokv('digest'    , b:pukiwiki_digest)
 	else
-		call AL_echokv('digest'    , 'undefined')
+		call s:PW_echokv('digest'    , 'undefined')
 	endif
 
 endfunction "}}}
@@ -122,7 +122,7 @@ function! PukiWiki(...) "{{{
 	endif
 
 	if !call("s:PW_read_pukiwiki_list", a:000)
-"		AL_echo('ブックマークの読み込みに失敗しました。', 'ErrorMsg')
+"		s:VITAL.print_error('ブックマークの読み込みに失敗しました。')
 		return
 	endif
 
@@ -133,12 +133,12 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 " PukiVim [ SiteName [ PageName ]]
 "
 	if !exists('g:pukiwiki_config')
-		call AL_echo('g:pukiwiki_config does not defined.', 'ErrorMsg')
+		call s:VITAL.print_error('g:pukiwiki_config does not defined.')
 		return 0
 	endif
 
 	if !s:VITAL.is_dict(g:pukiwiki_config)
-		call AL_echo('g:pukiwiki_config is not a dictionary.', 'ErrorMsg')
+		call s:VITAL.print_error('g:pukiwiki_config is not a dictionary.')
 		return 0
 	endif
 
@@ -151,7 +151,7 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 
 	try 
 		if !has_key(g:pukiwiki_config, site_name)
-			call AL_echo('site "' . site_name . '" not found.', 'ErrorMsg')
+			call s:VITAL.print_error('site "' . site_name . '" not found.')
 			return 0
 		endif
 	catch /^Vim\%((\a\+)\)\?:E715/
@@ -160,7 +160,7 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 	
 	let dict = g:pukiwiki_config[site_name]
 	if (!has_key(dict, 'url'))
-		call AL_echo('"url" does not defined.', 'ErrorMsg')
+		call s:VITAL.print_error('"url" does not defined.')
 		return 0
 	endif
 	let url = dict['url']
@@ -192,40 +192,12 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 endfunction "}}}
 
 function! s:PW_init_check() "{{{
-	" alice.vimのロードを確実にする
-	if !exists('*AL_version')
-		runtime! plugin/alice.vim
-	endif
-
-	" alice.vim の有無をチェック
-	if !exists('*AL_version')
-		echohl ErrorMsg
-		echo 'alice.vim がロードされていません。'
-		echohl None
-		return 0
-	endif
 
 	" curl の有無をチェック
 	if !executable('curl')
-		call AL_echo('curl が見つかりません。', 'ErrorMsg')
+		call s:VITAL.print_error('curl が見つかりません。')
 		return 0
 	endif
-
-"	if !AL_mkdir(g:pukiwiki_datadir)
-"		AL_echo('データディレクトリーが作成できません。', 'ErrorMsg')
-"		return 0
-"	endif
-
-	" BookMark 最初は無いからスクリプトに付属の物をユーザー用にコピーする。
-"	let s:pukiwiki_list = g:pukiwiki_datadir . '/pukiwiki.list'
-"	let pukivim_dir = substitute(expand('<sfile>:p:h'), '[/\\]plugin$', '', '')
-"	let s:pukiwiki_list_dist = pukivim_dir . '/pukiwiki.list-dist'
-"	if !filereadable(s:pukiwiki_list)
-"		if !s:AL_filecopy(s:pukiwiki_list_dist, s:pukiwiki_list)
-"			call AL_echo('pukiwiki.list-dist のコピーに失敗しました。', 'ErrorMsg')
-"			return 0
-"		endif
-"	endif
 
 	return 1
 endfunction "}}}
@@ -319,17 +291,16 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 
 	if a:pwcmd == 'edit' 
 		if result !~ '<textarea\_.\{-}>\_.\{-}</textarea>\_.\{-}<textarea'
-"			call AL_echo('ページの読み込みに失敗しました。凍結されているか、認証が必要です。', 'WarningMsg')
 			return s:PW_get_source_page(a:site_name, a:page)
 		endif
 	elseif a:pwcmd == 'source'
 		if result !~ '<pre id="source">'
-			call AL_echo('ページの読み込みに失敗しました。認証が必要です。', 'WarningMsg')
+			call s:VITAL.print_error('ページの読み込みに失敗しました。認証が必要です。')
 			return
 		endif
 
 	else
-		call AL_echo('unknown command: ' . a:pwcmd, 'WarningMsg')
+		call s:VITAL.print_error('unknown command: ' . a:pwcmd)
 		return
 	endif
 
@@ -362,9 +333,10 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 "		silent! execute "normal! i" . elm[4] . "\n"
 "	endfor
 "	silent! execute "normal! ihistory<<<<<" . len(s:pukiwiki_history) . "\n" 
+
+	let msg = s:HTML.decodeEntityReference(msg)
 	silent! execute "normal! i" . msg
 
-	call AL_decode_entityreference_with_range('%')
 	let phase3 = localtime()
 
 	let b:pukiwiki_digest    = digest
@@ -459,7 +431,7 @@ function! s:PW_write() "{{{
 		if body =~ '<title>\_.\{-}を削除しました\_.\{-}<\/title>'
 			let page = b:pukiwiki_page
 			call s:PW_get_edit_page(b:pukiwiki_site_name, top, 0)
-			call AL_echo(page . ' を削除しました')
+			call echo(page . ' を削除しました')
 			return
 		endif
 
@@ -484,9 +456,9 @@ function! s:PW_write() "{{{
 			echo "&enc=" . &enc . ", enc=" . enc . ", page=" . b:pukiwiki_page
 			echo "iconv=" . Byte2hex(iconv(b:pukiwiki_page, &enc, enc))
 			echo "urlen=" . s:PW_urlencode( iconv( b:pukiwiki_page, &enc, enc ) )
-			call AL_echo('更新の衝突が発生したか、その他のエラーで書き込めませんでした。' . result, 'ErrorMsg')
+			call s:VITAL.print_error('更新の衝突が発生したか、その他のエラーで書き込めませんでした。' . result)
 		else
-			call AL_echo('更新の衝突が発生したか、その他のエラーで書き込めませんでした。', 'ErrorMsg')
+			call s:VITAL.print_error('更新の衝突が発生したか、その他のエラーで書き込めませんでした。')
 			call delete(result)
 		endif
 		return 0
@@ -499,7 +471,7 @@ function! s:PW_write() "{{{
 "	silent! echo 'update ' . b:pukiwiki_page
 	if g:pukiwiki_debug
 		" 毎回うっとーしいので debug 用に
-		call AL_echo('更新成功！')
+		call echo('更新成功！')
 	endif
 
 
@@ -616,10 +588,18 @@ function! s:PW_show_page_list() "{{{
 	silent! %s/\s*<li>\[\[\(.*\)\]\]$/\1/
 	let @" = regbak
 
+	" page 名しかないので, decode しなくても良い気がする.
+	" single quote &apos;  &#xxxx などはやらないといけないらしい.
+	let cl = 1
+	while cl <= line('$')
+		let line = getline(cl)
+		call setline(cl, s:HTML.decodeEntityReference(line))
+		let cl = cl + 1
+	endwhile
+
 	execute ":setlocal noai"
 	execute "normal! gg0i" . b:pukiwiki_site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
 
-	call AL_decode_entityreference_with_range('%')
 
 	call s:PW_endpage(b:pukiwiki_site_name, b:pukiwiki_page, 1)
 endfunction "}}}
@@ -724,7 +704,7 @@ function! PW_fileupload() range "{{{
 		let fcmd = cmd . ' -F "attach_file=@' . curr_line . '"'
 		let fcmd = fcmd . ' "' . url . '"'
 		let result = s:PW_system(fcmd)
-		let errcode = v:shell_error 
+		let errcode = s:VITAL.get_last_status()
 		if errcode != 0
 			let msg = ''
 			if errcode == 26 
@@ -753,9 +733,9 @@ function! PW_move()  "{{{
 	endif
 	if line('.') < 4
 		" ヘッダ部分
-		let cur = AL_matchstr_undercursor('\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]')
+		let cur = s:PW_matchstr_undercursor('\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]')
 	else
-		let cur = AL_matchstr_undercursor(s:bracket_name)
+		let cur = s:PW_matchstr_undercursor(s:bracket_name)
 	endif
 
 	if cur == ''
@@ -768,7 +748,7 @@ function! PW_move()  "{{{
 	endif
 
 	if &modified
-		call AL_echo('変更が保存されていません。', 'ErrorMsg')
+		call s:VITAL.print_error('変更が保存されていません。')
 		return
 	endif
 
@@ -858,12 +838,10 @@ function! s:PW_urlencode(str) "{{{
     let ch = a:str[i]
     let i = i + 1
     if ch =~ '[-_.0-9A-Za-z]' 
-      let result = result . ch
+      let result .= ch
     elseif ch == ' '
-      let result = result . '+'
+      let result .= '+'
     else
-"      let hex = AL_nr2hex(char2nr(ch))
-"      let result = result.'%'.(strlen(hex) < 2 ? '0' : '').hex
 	  let result .= printf("%%%02X", char2nr(ch))
     endif
   endwhile
@@ -881,12 +859,19 @@ function! s:PW_fileread(filename) "{{{
   return ''
 endfunction "}}}
 
-" {{{
-" AL_decode_entityreference_with_range
-" AL_matchstr_undercursor
-" AL_echo
-" AL_echokv
-" }}}
+function! s:PW_echokv(key, value)  " {{{
+	echohl String | echo a:key | echohl None
+	echon '=' . a:value
+endfunction "}}}
+
+" matchstr() for under the cursor
+" from alice.vim by MURAOKA Taro <koron@tka.att.ne.jp>
+function! s:PW_matchstr_undercursor(mx) "{{{
+  let column = col('.')
+  let mx = '\m\%<'.(column + 1).'c'.a:mx.'\%>'.column.'c'
+  return matchstr(getline('.'), mx)
+endfunction "}}}
+
 "}}}
 
 " vim:set foldmethod=marker:
