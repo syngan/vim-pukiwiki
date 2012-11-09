@@ -56,7 +56,6 @@ Example >
 TODO:
   - 凍結/凍結解除機能
   - ドキュメント
-  - autoload 化
   - vitalize
   - undo 連続しても空まで戻らないようにしたい
   - 履歴, ブックマーク
