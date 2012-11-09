@@ -1,6 +1,6 @@
 *pukiwiki.txt*	A vim client for the PukiWiki 1.4.7 for Japanese
 
-Version: 0.7
+Version: 0.8
 Author : syngan
 License: MIT license  {{{
     Permission is hereby granted, free of charge, to any person obtaining
@@ -83,11 +83,11 @@ Example >
 
 あとは、
   <CR> でページの移動
-  :w でページ更新
+  |:w| でページ更新
   <TAB> で [[ ]] 間をジャンプ
 
 注意事項）
-  - undo しすぎると空ファイルになります。
+  - |:undo| しすぎると空ファイルになります。
   - 最初の 3 行は変更しないでください。
     ヘッダ部であるとして動作しているので、書き込みが壊れることがあります。
 
@@ -124,6 +124,11 @@ g:pukiwiki_timestamp_update			*g:pukiwiki_timestamp_update*
 
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
+
+2012-11-09 syngan  v0.8
+
+	* alice.vim (AL_xxx) を廃止. 
+	* vital.vim を導入
 
 2012-11-07 syngan  v0.7
 
