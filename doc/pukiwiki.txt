@@ -111,16 +111,14 @@ PW_fileupload() range
 ==============================================================================
 カスタマイズ					*pukiwiki-customizing*
 
-g:pukiwiki_multiuser					*g:pukiwiki_multiuser*
-	デフォルト値: Unix の場合 1、それ以外の場合 0 です。
-	(オリジナル版から存在。使ったことがない)
-
 g:pukiwiki_timestamp_update			*g:pukiwiki_timestamp_update*
 	PukiWiki のページ更新時にタイムスタンプの更新に対する動作を指定
 	します。1 の場合タイムスタンプを更新、0 の場合タイムスタンプは更新しな
 	い、それ以外の場合はページ更新毎にタイムスタンプの更新に対する問い合わ
 	せをします。デフォルト値は -1 (毎回確認) です。
 
+g:pukiwiki_config				*g:pukiwiki_config*
+	アクセスする PukiWiki サイトに関する情報を設定します。
 
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
