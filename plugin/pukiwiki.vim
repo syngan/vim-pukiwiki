@@ -23,9 +23,6 @@
 "=============================================================================
 
 " option {{{
-if exists('plugin_pukiwiki_disable')
-	finish
-endif
 
 scriptencoding euc-jp
 
@@ -36,25 +33,6 @@ scriptencoding euc-jp
 " デバッグ用
 if !exists('g:pukiwiki_debug')
 	let g:pukiwiki_debug = 0
-endif
-
-" ブックマークを保存する場所
-" マルチユーザ設定
-if !exists('g:pukiwiki_multiuser')
-	let g:pukiwiki_multiuser = has('unix') && !has('macunix') ? 1 : 0
-endif
-
-" ユーザファイルの位置設定
-if !exists('g:pukiwiki_datadir')
-	if g:pukiwiki_multiuser
-		if has('win32')
-			let g:pukiwiki_datadir = $HOME . '/vimfiles/pukiwiki'
-		else
-			let g:pukiwiki_datadir = $HOME . '/.vim/pukiwiki'
-		endif
-	else
-		let g:pukiwiki_datadir = substitute(expand('<sfile>:p:h'), '[/\\]plugin$', '', '')
-	endif
 endif
 
 " タイムスタンプを変更するかどうかの確認メッセージ
