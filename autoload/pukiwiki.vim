@@ -97,17 +97,18 @@ function! pukiwiki#PukiWiki(...) "{{{
 		return
 	endif
 
-	if !call("s:PW_read_pukiwiki_list", a:000)
-"		s:VITAL.print_error('ブックマークの読み込みに失敗しました。')
-		return
-	endif
-
+	return s:PW_read_pukiwiki_list(a:000)
 endfunction "}}}
 
 function! s:PW_read_pukiwiki_list(...) "{{{
 " bookmark
 " PukiVim [ SiteName [ PageName ]]
 "
+	if &modified
+		call s:VITAL.print_error('変更が保存されていません。')
+		return
+	endif
+
 	if !exists('g:pukiwiki_config')
 		call s:VITAL.print_error('g:pukiwiki_config does not defined.')
 		return 0
@@ -183,7 +184,7 @@ function! s:PW_newpage(site_name, page) "{{{
 	let sitedict = g:pukiwiki_config[a:site_name]
 	let enc = sitedict['encode']
 
-	execute ":e! ++enc=" . enc . " " . tempname()
+	execute ":e ++enc=" . enc . " " . tempname()
 	execute ":setlocal modifiable"
 	execute ":setlocal indentexpr="
 	execute ":setlocal noautoindent"
@@ -242,6 +243,8 @@ endfunction "}}}
 function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 " ページを開く
 " pwcmd = "edit" or "source"
+
+
 	let sitedict = g:pukiwiki_config[a:site_name]
 	let url = sitedict['url']
 	let enc = sitedict['encode']
