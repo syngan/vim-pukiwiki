@@ -127,6 +127,17 @@ g:pukiwiki_timestamp_update			*g:pukiwiki_timestamp_update*
 g:pukiwiki_config				*g:pukiwiki_config*
 	アクセスする PukiWiki サイトに関する情報を設定します。
 
+g:pukiwiki_no_default_key_mappings
+					*g:pukiwiki_no_default_key_mappings*
+	この値が真の場合には以下のキーマッピングを設定しません。
+
+(|pukiwiki-viewer| 内）
+{lhs}		{rhs}					意味
+--------	--------------------------------------  -----------------
+<CR>		:call pukiwiki#jump()<CR>           	ページを移動
+<TAB>		:call pukiwiki#move_next_bracket()<CR>	次のリンクを検索
+<S-TAB>		:call pukiwiki#move_prev_bracket()<CR>	前のリンクを検索
+
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
 

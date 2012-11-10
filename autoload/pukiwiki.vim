@@ -109,7 +109,7 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 "
 	if &modified
 		call s:VITAL.print_error('変更が保存されていません。')
-		return
+		return 0
 	endif
 
 	if !exists('g:pukiwiki_config')
@@ -197,10 +197,12 @@ function! s:PW_newpage(site_name, page) "{{{
 	execute ":setlocal filetype=pukiwiki"
 
 	" nnoremap {{{
-	nnoremap <silent> <buffer> <CR>    :call pukiwiki#jump()<CR>
-	nnoremap <silent> <buffer> <TAB>   :call pukiwiki#move_next_bracket()<CR>
-	nnoremap <silent> <buffer> <S-TAB> :call pukiwiki#move_prev_bracket()<CR>
-	"nnoremap <silent> <buffer> B       :call pukiwiki#get_last_page()<CR>
+	if !exists('g:pukiwiki_no_default_key_mappings') || !g:pukiwiki_no_default_key_mappings
+		nnoremap <silent> <buffer> <CR>    :call pukiwiki#jump()<CR>
+		nnoremap <silent> <buffer> <TAB>   :call pukiwiki#move_next_bracket()<CR>
+		nnoremap <silent> <buffer> <S-TAB> :call pukiwiki#move_prev_bracket()<CR>
+	"	nnoremap <silent> <buffer> B       :call pukiwiki#get_last_page()<CR>
+	endif
 	" }}}
 
 	let b:pukiwiki_site_name = a:site_name
