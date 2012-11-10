@@ -97,7 +97,10 @@ function! pukiwiki#PukiWiki(...) "{{{
 		return
 	endif
 
-	return s:PW_read_pukiwiki_list(a:000)
+	if !call("s:PW_read_pukiwiki_list", a:000)
+		" s:VITAL.print_error('ブックマークの読み込みに失敗しました。')
+		return
+	endif
 endfunction "}}}
 
 function! s:PW_read_pukiwiki_list(...) "{{{
