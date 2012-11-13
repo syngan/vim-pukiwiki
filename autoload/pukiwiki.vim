@@ -250,7 +250,6 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 " ページを開く
 " pwcmd = "edit" or "source"
 
-
 	let sitedict = g:pukiwiki_config[a:site_name]
 	let url = sitedict['url']
 	let enc = sitedict['encode']
@@ -379,14 +378,19 @@ function! s:PW_write() "{{{
 	" urlencode
 	let body = []
 	let cl = 1
+
 	while cl <= line('$')
 		let line = getline(cl)
 		let line = iconv(line, &enc, enc)
 		let line = s:PW_urlencode(line)
-		call add(body, line . '%0A')
+		if cl < line('$')
+			call add(body, line . '%0A')
+		else
+			call add(body, line)
+		endif
 		let cl = cl + 1
 	endwhile
-
+	
 	" urlencode した本文前にその他の情報設定
 	let cmd = "encode_hint=" . s:PW_urlencode( iconv( 'ぷ', &enc, enc ) )
 	let cmd = cmd . "&cmd=edit&page=" . s:PW_urlencode( iconv( b:pukiwiki_page, &enc, enc ) )
@@ -398,6 +402,10 @@ function! s:PW_write() "{{{
 
 	let post = tempname()
 	call writefile(body, post, "b")
+
+	" ここまででエラーが発生した状態でサーバと通信されてもこまる.
+	" try/catch すべきか.
+	
 	let result = tempname()
 	let cmd = "curl -s -o " . result . " -d @" . post . ' "' . url . '"'
 	call s:PW_system(cmd)
@@ -411,12 +419,12 @@ function! s:PW_write() "{{{
 	" 成功するとPukiWikiがlocationヘッダーを吐くのでresultが作成されない。
 	" 作成されている場合には何らかのエラーをHTMLで吐き出している。
 	if filereadable(result)
-		let body = s:PW_fileread(result)
-		let body = iconv( body, enc, &enc )
-		if body =~ '<title>\_.\{-}を削除しました\_.\{-}<\/title>'
+		let bodyr = s:PW_fileread(result)
+		let bodyr = iconv( bodyr, enc, &enc )
+		if bodyr =~ '<title>\_.\{-}を削除しました\_.\{-}<\/title>'
 			let page = b:pukiwiki_page
 			call s:PW_get_edit_page(b:pukiwiki_site_name, top, 0)
-			call echo(page . ' を削除しました')
+			echo page . ' を削除しました'
 			return
 		endif
 
