@@ -218,6 +218,7 @@ function! s:PW_endpage(site_name, page, readonly) "{{{
 		execute ":setlocal readonly"
 	endif
 	execute ":setlocal noswapfile"
+	execute ":setlocal nopaste"
 	silent! execute ":redraws!"
 endfunction "}}}
 
