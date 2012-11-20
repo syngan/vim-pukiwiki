@@ -634,6 +634,11 @@ function! pukiwiki#get_back_page() "{{{
 	endif
 endfunction "}}}
 
+function! pukiwiki#get_history_list() "{{{
+	" protected でないと困るのだが.
+	return s:pukiwiki_history
+endfunction "}}}
+
 " page open s:[top/attach/list/search] {{{
 function! s:PW_get_top_page(site_name) "{{{
 
