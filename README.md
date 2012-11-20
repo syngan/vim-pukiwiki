@@ -17,7 +17,7 @@ vim-pukiwiki ? A vim client for the PukiWiki 1.4.7 for Japanese.
 使用するためには vimrc に |g:pukiwiki_config| を設定する必要があります。
 
 Example >
-	" PukiWiki のサイト情報
+	" PukiWiki のサイト情報 "
 	let g:pukiwiki_config = {
 	\	"LocalWiki" : {
 	\		"url" : "http://127.0.0.1/pukiwiki/",
@@ -64,6 +64,9 @@ TODO:
     - ブックマークは, ページを開く手段さえ用意しておけばいいのかな.
   - オリジナル版では bdelete がいるとかなんとか...
   - undo で空にならないようにできないのか.
+
+BUG:
+  - S-TAB のキーマップが動作しない.
 
 オリジナル
   http://vimwiki.net/?scripts%2F10
