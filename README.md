@@ -21,7 +21,7 @@ Example >
 	let g:pukiwiki_config = {
 	\	"LocalWiki" : {
 	\		"url" : "http://127.0.0.1/pukiwiki/",
-	\		"top" : 'FrontPage',
+	\		"top" : "FrontPage",
 	\		"encode" : "euc-jp",
 	\	},
 	\}
@@ -64,6 +64,7 @@ TODO:
     - ブックマークは, ページを開く手段さえ用意しておけばいいのかな.
   - オリジナル版では bdelete がいるとかなんとか...
   - undo で空にならないようにできないのか.
+  - 最初の3行は編集不可にしたい
 
 BUG:
   - S-TAB のキーマップが動作しない.
