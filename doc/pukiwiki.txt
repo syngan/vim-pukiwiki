@@ -1,6 +1,6 @@
 *pukiwiki.txt*	A vim client for the PukiWiki 1.4.7 for Japanese
 
-Version: 0.9
+Version: 0.10
 Author : syngan
 License: MIT license  {{{
     Permission is hereby granted, free of charge, to any person obtaining
@@ -140,6 +140,10 @@ g:pukiwiki_no_default_key_mappings
 
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
+
+2012-11-19 syngan  v0.10
+
+	* unite-pukiwiki/history を追加
 
 2012-11-09 syngan  v0.9
 

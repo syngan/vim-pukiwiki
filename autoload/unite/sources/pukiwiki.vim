@@ -37,7 +37,7 @@ let s:uni_puki = {
 "	\ 'alias_table' : { 'open' : 'open_page' },
 "	\ 'default_kind' : 'openable',
 
- 
+
 function! s:uni_puki.gather_candidates(args, context) "{{{
 " 候補は history のリスト
 " history の要素はリストで [site, page, others]
@@ -46,10 +46,11 @@ function! s:uni_puki.gather_candidates(args, context) "{{{
 	" copy しないとリストが壊れる.
 	" 関数渡すために v:val も保存
     return map(copy(history), "{
-	\ 'word' :  v:val[0] . ' -- ' . v:val[1], 
+	\ 'word' :  v:key . ' ' . v:val[0] . ' -- ' . v:val[1],
 	\ 'action__command' : 'PukiWiki ' . v:val[0] . ' ' . v:val[1],
 	\ 'source' : 'pukiwiki/history',
 	\ 'pukiwiki_history' : v:val,
+	\ 'pukiwiki_index' : v:key,
 	\}")
 endfunction "}}}
 
@@ -68,6 +69,26 @@ function! s:uni_puki.action_table.open_page.func(candidates) "{{{
 "	let command = a:candidates.action__command
 "	let type = get(a:candidates, 'action__type', ':')
 "	execute type . comand
+endfunction "}}}
+
+" delete は複数選択可能 (is_selectable=1)
+let s:uni_puki.action_table.delete = {
+	\ 'description' : 'delete the selected page from the history',
+	\ 'is_quit' : 1,
+	\ 'is_selectable' : 1,
+	\}
+
+function! s:uni_puki.action_table.delete.func(candidates) "{{{
+	" is_selectable = 1 の場合は candidates がリストになるらしい.
+	let idx = len(a:candidates) - 1
+	let history = pukiwiki#get_history_list()
+
+	" candidates は選択順序に依存せず、昇順でくると仮定.
+	while idx >= 0
+		let index = a:candidates[idx].pukiwiki_index
+		call remove(history, index)
+		let idx = idx - 1
+	 endwhile
 endfunction "}}}
 
 function! unite#sources#pukiwiki#define() "{{{
