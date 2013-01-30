@@ -26,7 +26,6 @@ License: MIT license  {{{
 ==============================================================================
 目次						*pukiwiki-contents*
 
-
 概要				|pukiwiki-introduction|
 インストール			|pukiwiki-install|
 使い方				|pukiwiki-usage|
@@ -141,6 +140,10 @@ g:pukiwiki_no_default_key_mappings
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
 
+2013-01-30 syngan  v0.11
+
+	* unite-outline の source を追加
+	*
 2012-11-19 syngan  v0.10
 
 	* unite-pukiwiki/history を追加
