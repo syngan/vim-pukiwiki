@@ -22,7 +22,18 @@
 " }}}
 "=============================================================================
 
-scriptencoding euc-jp
+if exists('b:loaded_pukiwiki')
+  finish
+ endif
+
+let s:save_cpo = &cpo
+set cpo&vim
 
 command! -nargs=* PukiWiki :call pukiwiki#PukiWiki(<f-args>)
 
+let b:loaded_pukiwiki = 1
+
+let &cpo = s:save_cpo
+unlet s:save_cpo
+
+" vim: foldmethod=marker

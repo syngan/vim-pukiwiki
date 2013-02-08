@@ -22,6 +22,11 @@
 " }}}
 "=============================================================================
 
+let s:save_cpo = &cpo
+set cpo&vim
+
+
+
 " option {{{
 
 scriptencoding euc-jp
@@ -1062,5 +1067,8 @@ function! s:PW_matchstr_undercursor(mx) "{{{
 endfunction "}}}
 
 "}}}
+
+let &cpo = s:save_cpo
+unlet s:save_cpo
 
 " vim:set foldmethod=marker:
