@@ -24,44 +24,44 @@ License: MIT license  {{{
 
 
 ==============================================================================
-$BL\<!(B						*pukiwiki-contents*
+目次						*pukiwiki-contents*
 
-$B35MW(B				|pukiwiki-introduction|
-$B%$%s%9%H!<%k(B			|pukiwiki-install|
-$B;H$$J}(B				|pukiwiki-usage|
-$B%$%s%?!<%U%'!<%9(B		|pukiwiki-interface|
-  $B4X?t(B				  |pukiwiki-functions|
-  $B%3%^%s%I(B			  |pukiwiki-commands|
-$B%+%9%?%^%$%:(B			|pukiwiki-customizing|
-$B99?7MzNr(B			|pukiwiki-changelog|
+概要				|pukiwiki-introduction|
+インストール			|pukiwiki-install|
+使い方				|pukiwiki-usage|
+インターフェース		|pukiwiki-interface|
+  関数				  |pukiwiki-functions|
+  コマンド			  |pukiwiki-commands|
+カスタマイズ			|pukiwiki-customizing|
+更新履歴			|pukiwiki-changelog|
 
 ==============================================================================
-$B35MW(B						*pukiwiki-introduction*
+概要						*pukiwiki-introduction*
 
-*pukiwiki* $B$O(B PukiWiki $B$r;2>H!&JT=8$9$k$?$a$N(B Vim $B%W%i%0%$%s$G$9!#(B
+*pukiwiki* は PukiWiki を参照・編集するための Vim プラグインです。
 
 
-$BF0:n3NG'4D6-(B
+動作確認環境
 - PukiWiki 1.4.7 + Vim 7.2 + Ubuntu
 
-$B:G?7HG(B:
+最新版:
 https://github.com/syngan/vim-pukiwiki/
 
 ==============================================================================
-$B%$%s%9%H!<%k(B					*pukiwiki-install*
+インストール					*pukiwiki-install*
 
-runtimepath $B$,;XDj$5$l$F$$$k%G%#%l%/%H%j!JDL>o(B ~/.vim $B$+(B $HOME/vimfiles) $BG[2<(B
-$B$KG[CV$7$F$/$@$5$$!#(B
+runtimepath が指定されているディレクトリ（通常 ~/.vim か $HOME/vimfiles) 配下
+に配置してください。
 
-curl $B$,%$%s%9%H!<%k$5$l$F$$$kI,MW$,$"$j$^$9!#(B
+curl がインストールされている必要があります。
 
 ==============================================================================
-$B;H$$J}(B						*pukiwiki-usage*
+使い方						*pukiwiki-usage*
 
-$B;HMQ$9$k$?$a$K$O(B vimrc $B$K(B |g:pukiwiki_config| $B$r@_Dj$9$kI,MW$,$"$j$^$9!#(B
+使用するためには vimrc に |g:pukiwiki_config| を設定する必要があります。
 
 Example >
-	" PukiWiki $B$N%5%$%H>pJs(B
+	" PukiWiki のサイト情報
 	let g:pukiwiki_config = {
 	\	"LocalWiki" : {
 	\		"url" : "http://127.0.0.1/pukiwiki/",
@@ -73,36 +73,36 @@ Example >
 
 |:PukiWiki|
 
-$B$H$7$F5/F0$7!"(B|g:pukiwiki_config| $B$G;XDj$7$?%5%$%HL>$rF~NO$9$k$+!"(B
+として起動し、|g:pukiwiki_config| で指定したサイト名を入力するか、
 
-:PukiWiki "$B%5%$%HL>(B" 
+:PukiWiki "サイト名" 
 (:PukiWiki LocalWiki)
 
-$B$J$I$H$7$F5/F0$7$^$9!#(B
+などとして起動します。
 
-$B$"$H$O!"(B
-  <CR> $B$G%Z!<%8$N0\F0(B
-  |:w| $B$G%Z!<%899?7(B
-  <TAB> $B$G(B [[ ]] $B4V$r%8%c%s%W(B
+あとは、
+  <CR> でページの移動
+  |:w| でページ更新
+  <TAB> で [[ ]] 間をジャンプ
 
-$BCm0U;v9`!K(B
-  - |:undo| $B$7$9$.$k$H6u%U%!%$%k$K$J$j$^$9!#(B
-  - $B:G=i$N(B 3 $B9T$OJQ99$7$J$$$G$/$@$5$$!#(B
-    $B%X%C%@It$G$"$k$H$7$FF0:n$7$F$$$k$N$G!"=q$-9~$_$,2u$l$k$3$H$,$"$j$^$9!#(B
+注意事項）
+  - |:undo| しすぎると空ファイルになります。
+  - 最初の 3 行は変更しないでください。
+    ヘッダ部であるとして動作しているので、書き込みが壊れることがあります。
 
 ==============================================================================
-$B%$%s%?!<%U%'!<%9(B				*pukiwiki-interface*
+インターフェース				*pukiwiki-interface*
 
 ------------------------------------------------------------------------------
-$B%3%^%s%I(B					*pukiwiki-commands*
+コマンド					*pukiwiki-commands*
 
 :PukiWiki [{site-name} [{page-name}]]
 
 ------------------------------------------------------------------------------
-$B4X?t(B						*pukiwiki-functions*
+関数						*pukiwiki-functions*
 
 pukiwiki#PukiWiki([{site-name} [, {page-name}]])
-			|:PukiWiki| $B$N4X?tHG$G$9!#(B
+			|:PukiWiki| の関数版です。
 
 pukiwiki#get_back_page() 
 
@@ -115,118 +115,118 @@ pukiwiki#move_next_bracket()
 pukiwiki#move_prev_bracket()
 
 ==============================================================================
-$B%+%9%?%^%$%:(B					*pukiwiki-customizing*
+カスタマイズ					*pukiwiki-customizing*
 
 g:pukiwiki_timestamp_update			*g:pukiwiki_timestamp_update*
-	PukiWiki $B$N%Z!<%899?7;~$K%?%$%`%9%?%s%W$N99?7$KBP$9$kF0:n$r;XDj(B
-	$B$7$^$9!#(B1 $B$N>l9g%?%$%`%9%?%s%W$r99?7!"(B0 $B$N>l9g%?%$%`%9%?%s%W$O99?7$7$J(B
-	$B$$!"$=$l0J30$N>l9g$O%Z!<%899?7Kh$K%?%$%`%9%?%s%W$N99?7$KBP$9$kLd$$9g$o(B
-	$B$;$r$7$^$9!#%G%U%)%k%HCM$O(B -1 ($BKh2s3NG'(B) $B$G$9!#(B
+	PukiWiki のページ更新時にタイムスタンプの更新に対する動作を指定
+	します。1 の場合タイムスタンプを更新、0 の場合タイムスタンプは更新しな
+	い、それ以外の場合はページ更新毎にタイムスタンプの更新に対する問い合わ
+	せをします。デフォルト値は -1 (毎回確認) です。
 
 g:pukiwiki_config				*g:pukiwiki_config*
-	$B%"%/%;%9$9$k(B PukiWiki $B%5%$%H$K4X$9$k>pJs$r@_Dj$7$^$9!#(B
+	アクセスする PukiWiki サイトに関する情報を設定します。
 
 g:pukiwiki_no_default_key_mappings
 					*g:pukiwiki_no_default_key_mappings*
-	$B$3$NCM$,??$N>l9g$K$O0J2<$N%-!<%^%C%T%s%0$r@_Dj$7$^$;$s!#(B
+	この値が真の場合には以下のキーマッピングを設定しません。
 
-(|pukiwiki-viewer| $BFb!K(B
-{lhs}		{rhs}					$B0UL#(B
+(|pukiwiki-viewer| 内）
+{lhs}		{rhs}					意味
 --------	--------------------------------------  -----------------
-<CR>		:call pukiwiki#jump()<CR>           	$B%Z!<%8$r0\F0(B
-<TAB>		:call pukiwiki#move_next_bracket()<CR>	$B<!$N%j%s%/$r8!:w(B
-<S-TAB>		:call pukiwiki#move_prev_bracket()<CR>	$BA0$N%j%s%/$r8!:w(B
+<CR>		:call pukiwiki#jump()<CR>           	ページを移動
+<TAB>		:call pukiwiki#move_next_bracket()<CR>	次のリンクを検索
+<S-TAB>		:call pukiwiki#move_prev_bracket()<CR>	前のリンクを検索
 
 ==============================================================================
-$B99?7MzNr(B					*pukiwiki-changelog*
+更新履歴					*pukiwiki-changelog*
 
 2013-01-30 syngan  v0.11
 
-	* unite-outline $B$N(B source $B$rDI2C(B
+	* unite-outline の source を追加
 	*
 2012-11-19 syngan  v0.10
 
-	* unite-pukiwiki/history $B$rDI2C(B
+	* unite-pukiwiki/history を追加
 
 2012-11-09 syngan  v0.9
 
-	* autoload $B2=(B
+	* autoload 化
 
 2012-11-09 syngan  v0.8
 
-	* alice.vim (AL_xxx) $B$rGQ;_(B. 
-	* vital.vim $B$rF3F~(B
+	* alice.vim (AL_xxx) を廃止. 
+	* vital.vim を導入
 
 2012-11-07 syngan  v0.7
 
-	* filetype $B$r(B pukiwiki_edit $B$+$i(B pukiwiki $B$KJQ99$7$?(B
-	* ftplugin/pukiwiki.vim $B$KDj5A$7$F$$$?4X?t72$r(B plugin/pukiwiki.vim $B$K(B
-	  $B0\F0$7$?(B
-	* $B%3%^%s%I$r(B :PukiVim $B$+$i(B |:PukiWiki| $B$KJQ99$7$?(B
+	* filetype を pukiwiki_edit から pukiwiki に変更した
+	* ftplugin/pukiwiki.vim に定義していた関数群を plugin/pukiwiki.vim に
+	  移動した
+	* コマンドを :PukiVim から |:PukiWiki| に変更した
 
 2012-11-06 syngan  v0.6
 
-	* bookmark $B%U%!%$%k$rGQ;_(B. |g:pukiwiki_config| $B$G@_Dj$9$k$h$&$K$7$?(B
+	* bookmark ファイルを廃止. |g:pukiwiki_config| で設定するようにした
 
 2012-11-03 syngan  v0.5
 
-	* $B%l%8%9%?$r2u$5$J$$$h$&$KB`Hr$9$k$h$&$K$7$?(B
+	* レジスタを壊さないように退避するようにした
 
 2012-10-26 syngan  v0.4
 
-	* [$BLa$k(B]$B5!G=$rDI2C(B
+	* [戻る]機能を追加
 	  - PW_get_back_page()
-	  - $B$?$@$7!"%9%/%j%W%H%m!<%+%kJQ?t$G4IM}$7$F$$$k$N$G5sF0$,$*$+$7$$(B
-	  - $B%P%C%U%!%m!<%+%k$JJQ?t$G$O$&$^$/F0$+$;$i$l$J$+$C$?(B
+	  - ただし、スクリプトローカル変数で管理しているので挙動がおかしい
+	  - バッファローカルな変数ではうまく動かせられなかった
 
 2012-10-16 syngan  v0.3
 
-	* E127 $BBP1~(B
-	  - ftplugin/pukiwiki_edit $B$G$d$C$F$$$?(B,
-	    $B4X?t$NDj5A:Q$_%A%'%C%/$r:o=|$7$F(B,
-	    try/catch $B$G(B E127 $B$rL5;k$9$k$h$&$K$7$?(B.
-	  - $BITMW!J$H;W$o$l$k(B) runtime $B=hM}$r:o=|(B
+	* E127 対応
+	  - ftplugin/pukiwiki_edit でやっていた,
+	    関数の定義済みチェックを削除して,
+	    try/catch で E127 を無視するようにした.
+	  - 不要（と思われる) runtime 処理を削除
 
-	* PW_newpage(), PW_endpage() $B$rDI2C(B
-	  - $BF1$8$h$&$J=hM}$,$?$/$5$s$"$k$N$G@0M}(B
-	  - $BA4>C5n$r(B "ggdG" $B$+$i(B ":e!" $B$KJQ99(B
+	* PW_newpage(), PW_endpage() を追加
+	  - 同じような処理がたくさんあるので整理
+	  - 全消去を "ggdG" から ":e!" に変更
 
-	* [[$B:G=*99?7(B]] [[$B%X%k%W(B]] $B$N%j%m!<%I$K<:GT$9$k%P%0$N=$@5(B
+	* [[最終更新]] [[ヘルプ]] のリロードに失敗するバグの修正
 
-	* $BL$;HMQ4X?t!J%*%j%8%J%kHG$GDj5A$5$l$F$$$F;H$o$J$/$J$C$?$b$N!K$r:o=|(B
+	* 未使用関数（オリジナル版で定義されていて使わなくなったもの）を削除
 
-	* $B>iD9=hM}$r=$@5(B
+	* 冗長処理を修正
 
 2012-10-13 syngan  v0.2
 
-	* $BE:IU%U%!%$%kBP1~(B
-	   - $B%a%K%e!<$K(B [[$BE:IU(B]] $B$rDI2C$7!"E:IU%U%!%$%k0lMw$rI=<((B
-	   - $B3F%Z!<%8$NJT=82hLL$G!"%U%!%$%kL>$@$1$r=q$$$?9T$G(B
+	* 添付ファイル対応
+	   - メニューに [[添付]] を追加し、添付ファイル一覧を表示
+	   - 各ページの編集画面で、ファイル名だけを書いた行で
 	      :call PW_fileupload() 
-		 $B$H$9$l$P%U%!%$%k$rE:IU$G$-$k$h$&$K$7$?(B.
-		 $BJ#?t9T;XDj2DG=(B
+		 とすればファイルを添付できるようにした.
+		 複数行指定可能
 
 2012-10-12 syngan  v0.1
 
-	* $B5/F0;~$K0z?t$r$H$k$h$&$K$7$F(B, $B%V%C%/%^!<%/$r$H$P$;$k$h$&$K$7$?(B
+	* 起動時に引数をとるようにして, ブックマークをとばせるようにした
 	   :PukiWiki [ SiteName [ PageName ]]
 
-	* :w $B$5$l$?$H$-!$%U%!%$%k$,JQ99$5$l$F$$$J$$>l9g$K$O(B 
-	  Pukiwiki $B$H@\B3$7$J$$$h$&$K$7$?(B
+	* :w されたとき，ファイルが変更されていない場合には 
+	  Pukiwiki と接続しないようにした
 
-	* g:pukiwiki_check_snapshot $B$N%G%U%)%k%HCM$rJQ99$7$?(B
+	* g:pukiwiki_check_snapshot のデフォルト値を変更した
 
-	* iconv $B8e$N=q$-9~$_$K<:GT$9$k$3$H$,$"$k$N$G(B fenc $B$NCM$r6u$K$9$k$h$&$K$7$?(B
+	* iconv 後の書き込みに失敗することがあるので fenc の値を空にするようにした
 	   + execute ":setlocal fenc="
 
-	* $B%$%s%G%s%H$,2u$l$k$N$r=$@5(B
+	* インデントが壊れるのを修正
 	   +	execute ":setlocal paste"
-	    2005-11-20  $B;*4L(B@VimWiki
-	    * $B%Z!<%8$NFI$_9~$_;~$K(B :set paste $B$7$F$$$?$N$r$d$a$F(B
-	    indentexpr $B$r6u$K$9$k$h$&$KJQ99!#(B
+	    2005-11-20  鯖缶@VimWiki
+	    * ページの読み込み時に :set paste していたのをやめて
+	    indentexpr を空にするように変更。
 
-	* [[$B:G=*99?7(B]] $B$N<hF@J}K!$rJQ99(B
-	   + cmd=source $B$rMxMQ(B
+	* [[最終更新]] の取得方法を変更
+	   + cmd=source を利用
 
 ==============================================================================
 vim:tw=78:fo=tcq2mM:ts=8:ft=help:norl
