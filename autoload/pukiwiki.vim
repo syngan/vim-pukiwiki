@@ -365,8 +365,18 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 	let b:pukiwiki_digest    = digest
 
 	let status_line = s:PW_set_statusline(b:pukiwiki_site_name, b:pukiwiki_page)
+
+	" undo ÍúÎò¤ò¾Ãµî¤¹¤ë, @see *clear-undo*
+	let oldundolevel = &undolevels
+	echo oldundolevel
+	execute ":setlocal undolevels=-1"
+	execute "normal a \<BS>\<Esc>"
+	execute ":setlocal undolevels=" . oldundolevel
+	unlet oldundolevel
+
 	if a:pwcmd == 'edit'
 		augroup PukiWikiEdit
+			execute "autocmd!"
 			execute "autocmd! BufWriteCmd " . status_line . " call s:PW_write()"
 		augroup END
 		call s:PW_endpage(a:site_name, a:page, 0)
