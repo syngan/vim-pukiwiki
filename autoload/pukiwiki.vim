@@ -939,7 +939,6 @@ function! pukiwiki#jump_menu(pname)
 	if a:pname == 'トップ' || a:pname == 'top'
 		call s:PW_get_top_page(b:pukiwiki_site_name)
 	elseif a:pname == 'リロード' || a:pname == 'reload'
-		call s:VITAL.print_error("?? b:pukiwiki_page=". b:pukiwiki_page)
 		if b:pukiwiki_page == 'FormattingRules' || b:pukiwiki_page == 'RecentChanges'
 			call s:PW_get_source_page(b:pukiwiki_site_name, b:pukiwiki_page)
 		else
