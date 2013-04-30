@@ -404,7 +404,7 @@ function! s:PW_write_vital() "{{{
 	elseif g:pukiwiki_timestamp_update == 0
 		let notimestamp = 'true'
 	else
-		let last_confirm = input('タイムスタンプを変更しない。(y/N): ')
+		let last_confirm = input('タイムスタンプを変更する？(Y/n): ')
 		if last_confirm =~ '^\cy'
 			let notimestamp = 'true'
 		endif

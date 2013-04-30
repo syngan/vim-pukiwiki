@@ -86,8 +86,6 @@ Example >
 		\ })
 <
 
-
-
 ==============================================================================
 使い方						*pukiwiki-usage*
 
@@ -166,9 +164,12 @@ g:pukiwiki_config				*g:pukiwiki_config*
 	アクセスする PukiWiki サイトに関する情報を設定します。
 
 g:pukiwiki_show_header				g:pukiwiki_show_header
-	PukiWiki のヘッダ部を表示する場合に 1 を指定します。デフォルトは 0 で
-	す。メニューは Unite pukiwiki/menu により表示することを推奨します。
+	PukiWiki のヘッダ部を表示する場合に 1 を指定します。デフォルトは 0 （
+	ヘッダ部を表示しない）です。
 	本オプションで 1 を指定時にはファイルの最初の 3 行は編集しないでください。
+
+	本オプションの値は 0 にして Unite pukiwiki/menu により表示すること推奨
+	します。
 
 g:pukiwiki_no_default_key_mappings
 					*g:pukiwiki_no_default_key_mappings*
