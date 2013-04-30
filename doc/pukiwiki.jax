@@ -24,44 +24,44 @@ License: MIT license  {{{
 
 
 ==============================================================================
-目次						*pukiwiki-contents*
+�ܼ�						*pukiwiki-contents*
 
-概要				|pukiwiki-introduction|
-インストール			|pukiwiki-install|
-使い方				|pukiwiki-usage|
-インターフェース		|pukiwiki-interface|
-  関数				  |pukiwiki-functions|
-  コマンド			  |pukiwiki-commands|
-カスタマイズ			|pukiwiki-customizing|
-更新履歴			|pukiwiki-changelog|
+����				|pukiwiki-introduction|
+���󥹥ȡ���			|pukiwiki-install|
+�Ȥ���				|pukiwiki-usage|
+���󥿡��ե�����		|pukiwiki-interface|
+  �ؿ�				  |pukiwiki-functions|
+  ���ޥ��			  |pukiwiki-commands|
+�������ޥ���			|pukiwiki-customizing|
+��������			|pukiwiki-changelog|
 
 ==============================================================================
-概要						*pukiwiki-introduction*
+����						*pukiwiki-introduction*
 
-*pukiwiki* は PukiWiki を参照・編集するための Vim プラグインです。
+*pukiwiki* �� PukiWiki �򻲾ȡ��Խ����뤿��� Vim �ץ饰����Ǥ���
 
 
-動作確認環境
+ư���ǧ�Ķ�
 - PukiWiki 1.4.7 + Vim 7.2 + Ubuntu
 
-最新版:
+�ǿ���:
 https://github.com/syngan/vim-pukiwiki/
 
 ==============================================================================
-インストール					*pukiwiki-install*
+���󥹥ȡ���					*pukiwiki-install*
 
-runtimepath が指定されているディレクトリ（通常 ~/.vim か $HOME/vimfiles) 配下
-に配置してください。
+runtimepath �����ꤵ��Ƥ���ǥ��쥯�ȥ���̾� ~/.vim �� $HOME/vimfiles) �۲�
+�����֤��Ƥ���������
 
-curl がインストールされている必要があります。
+curl �����󥹥ȡ��뤵��Ƥ���ɬ�פ�����ޤ���
 
 ==============================================================================
-使い方						*pukiwiki-usage*
+�Ȥ���						*pukiwiki-usage*
 
-使用するためには vimrc に |g:pukiwiki_config| を設定する必要があります。
+���Ѥ��뤿��ˤ� vimrc �� |g:pukiwiki_config| �����ꤹ��ɬ�פ�����ޤ���
 
 Example >
-	" PukiWiki のサイト情報
+	" PukiWiki �Υ����Ⱦ���
 	let g:pukiwiki_config = {
 	\	"LocalWiki" : {
 	\		"url" : "http://127.0.0.1/pukiwiki/",
@@ -73,36 +73,36 @@ Example >
 
 |:PukiWiki|
 
-として起動し、|g:pukiwiki_config| で指定したサイト名を入力するか、
+�Ȥ��Ƶ�ư����|g:pukiwiki_config| �ǻ��ꤷ��������̾�����Ϥ��뤫��
 
-:PukiWiki "サイト名" 
+:PukiWiki "������̾" 
 (:PukiWiki LocalWiki)
 
-などとして起動します。
+�ʤɤȤ��Ƶ�ư���ޤ���
 
-あとは、
-  <CR> でページの移動
-  |:w| でページ更新
-  <TAB> で [[ ]] 間をジャンプ
+���Ȥϡ�
+  <CR> �ǥڡ����ΰ�ư
+  |:w| �ǥڡ�������
+  <TAB> �� [[ ]] �֤򥸥���
 
-注意事項）
-  - |:undo| しすぎると空ファイルになります。
-  - 最初の 3 行は変更しないでください。
-    ヘッダ部であるとして動作しているので、書き込みが壊れることがあります。
+���ջ����
+  - |:undo| ��������ȶ��ե�����ˤʤ�ޤ���
+  - �ǽ�� 3 �Ԥ��ѹ����ʤ��Ǥ���������
+    �إå����Ǥ���Ȥ���ư��Ƥ���Τǡ��񤭹��ߤ�����뤳�Ȥ�����ޤ���
 
 ==============================================================================
-インターフェース				*pukiwiki-interface*
+���󥿡��ե�����				*pukiwiki-interface*
 
 ------------------------------------------------------------------------------
-コマンド					*pukiwiki-commands*
+���ޥ��					*pukiwiki-commands*
 
 :PukiWiki [{site-name} [{page-name}]]
 
 ------------------------------------------------------------------------------
-関数						*pukiwiki-functions*
+�ؿ�						*pukiwiki-functions*
 
 pukiwiki#PukiWiki([{site-name} [, {page-name}]])
-			|:PukiWiki| の関数版です。
+			|:PukiWiki| �δؿ��ǤǤ���
 
 pukiwiki#get_back_page() 
 
@@ -115,118 +115,118 @@ pukiwiki#move_next_bracket()
 pukiwiki#move_prev_bracket()
 
 ==============================================================================
-カスタマイズ					*pukiwiki-customizing*
+�������ޥ���					*pukiwiki-customizing*
 
 g:pukiwiki_timestamp_update			*g:pukiwiki_timestamp_update*
-	PukiWiki のページ更新時にタイムスタンプの更新に対する動作を指定
-	します。1 の場合タイムスタンプを更新、0 の場合タイムスタンプは更新しな
-	い、それ以外の場合はページ更新毎にタイムスタンプの更新に対する問い合わ
-	せをします。デフォルト値は -1 (毎回確認) です。
+	PukiWiki �Υڡ����������˥����ॹ����פι������Ф���ư������
+	���ޤ���1 �ξ�祿���ॹ����פ򹹿���0 �ξ�祿���ॹ����פϹ�������
+	��������ʳ��ξ��ϥڡ���������˥����ॹ����פι������Ф����䤤���
+	���򤷤ޤ����ǥե�����ͤ� -1 (����ǧ) �Ǥ���
 
 g:pukiwiki_config				*g:pukiwiki_config*
-	アクセスする PukiWiki サイトに関する情報を設定します。
+	������������ PukiWiki �����Ȥ˴ؤ����������ꤷ�ޤ���
 
 g:pukiwiki_no_default_key_mappings
 					*g:pukiwiki_no_default_key_mappings*
-	この値が真の場合には以下のキーマッピングを設定しません。
+	�����ͤ����ξ��ˤϰʲ��Υ����ޥåԥ󥰤����ꤷ�ޤ���
 
-(|pukiwiki-viewer| 内）
-{lhs}		{rhs}					意味
+(|pukiwiki-viewer| ���
+{lhs}		{rhs}					��̣
 --------	--------------------------------------  -----------------
-<CR>		:call pukiwiki#jump()<CR>           	ページを移動
-<TAB>		:call pukiwiki#move_next_bracket()<CR>	次のリンクを検索
-<S-TAB>		:call pukiwiki#move_prev_bracket()<CR>	前のリンクを検索
+<CR>		:call pukiwiki#jump()<CR>           	�ڡ������ư
+<TAB>		:call pukiwiki#move_next_bracket()<CR>	���Υ�󥯤򸡺�
+<S-TAB>		:call pukiwiki#move_prev_bracket()<CR>	���Υ�󥯤򸡺�
 
 ==============================================================================
-更新履歴					*pukiwiki-changelog*
+��������					*pukiwiki-changelog*
 
 2013-01-30 syngan  v0.11
 
-	* unite-outline の source を追加
+	* unite-outline �� source ���ɲ�
 	*
 2012-11-19 syngan  v0.10
 
-	* unite-pukiwiki/history を追加
+	* unite-pukiwiki/history ���ɲ�
 
 2012-11-09 syngan  v0.9
 
-	* autoload 化
+	* autoload ��
 
 2012-11-09 syngan  v0.8
 
-	* alice.vim (AL_xxx) を廃止. 
-	* vital.vim を導入
+	* alice.vim (AL_xxx) ���ѻ�. 
+	* vital.vim ��Ƴ��
 
 2012-11-07 syngan  v0.7
 
-	* filetype を pukiwiki_edit から pukiwiki に変更した
-	* ftplugin/pukiwiki.vim に定義していた関数群を plugin/pukiwiki.vim に
-	  移動した
-	* コマンドを :PukiVim から |:PukiWiki| に変更した
+	* filetype �� pukiwiki_edit ���� pukiwiki ���ѹ�����
+	* ftplugin/pukiwiki.vim ��������Ƥ����ؿ����� plugin/pukiwiki.vim ��
+	  ��ư����
+	* ���ޥ�ɤ� :PukiVim ���� |:PukiWiki| ���ѹ�����
 
 2012-11-06 syngan  v0.6
 
-	* bookmark ファイルを廃止. |g:pukiwiki_config| で設定するようにした
+	* bookmark �ե�������ѻ�. |g:pukiwiki_config| �����ꤹ��褦�ˤ���
 
 2012-11-03 syngan  v0.5
 
-	* レジスタを壊さないように退避するようにした
+	* �쥸����������ʤ��褦�����򤹤�褦�ˤ���
 
 2012-10-26 syngan  v0.4
 
-	* [戻る]機能を追加
+	* [���]��ǽ���ɲ�
 	  - PW_get_back_page()
-	  - ただし、スクリプトローカル変数で管理しているので挙動がおかしい
-	  - バッファローカルな変数ではうまく動かせられなかった
+	  - ��������������ץȥ��������ѿ��Ǵ������Ƥ���Τǵ�ư����������
+	  - �Хåե�����������ѿ��ǤϤ��ޤ�ư�������ʤ��ä�
 
 2012-10-16 syngan  v0.3
 
-	* E127 対応
-	  - ftplugin/pukiwiki_edit でやっていた,
-	    関数の定義済みチェックを削除して,
-	    try/catch で E127 を無視するようにした.
-	  - 不要（と思われる) runtime 処理を削除
+	* E127 �б�
+	  - ftplugin/pukiwiki_edit �Ǥ�äƤ���,
+	    �ؿ�������Ѥߥ����å���������,
+	    try/catch �� E127 ��̵�뤹��褦�ˤ���.
+	  - ���סʤȻפ���) runtime ��������
 
-	* PW_newpage(), PW_endpage() を追加
-	  - 同じような処理がたくさんあるので整理
-	  - 全消去を "ggdG" から ":e!" に変更
+	* PW_newpage(), PW_endpage() ���ɲ�
+	  - Ʊ���褦�ʽ������������󤢤�Τ�����
+	  - ���õ�� "ggdG" ���� ":e!" ���ѹ�
 
-	* [[最終更新]] [[ヘルプ]] のリロードに失敗するバグの修正
+	* [[�ǽ�����]] [[�إ��]] �Υ�����ɤ˼��Ԥ���Х��ν���
 
-	* 未使用関数（オリジナル版で定義されていて使わなくなったもの）を削除
+	* ̤���Ѵؿ��ʥ��ꥸ�ʥ��Ǥ��������Ƥ��ƻȤ�ʤ��ʤä���Ρˤ���
 
-	* 冗長処理を修正
+	* ��Ĺ��������
 
 2012-10-13 syngan  v0.2
 
-	* 添付ファイル対応
-	   - メニューに [[添付]] を追加し、添付ファイル一覧を表示
-	   - 各ページの編集画面で、ファイル名だけを書いた行で
+	* ź�եե������б�
+	   - ��˥塼�� [[ź��]] ���ɲä���ź�եե����������ɽ��
+	   - �ƥڡ������Խ����̤ǡ��ե�����̾������񤤤��Ԥ�
 	      :call PW_fileupload() 
-		 とすればファイルを添付できるようにした.
-		 複数行指定可能
+		 �Ȥ���Хե������ź�դǤ���褦�ˤ���.
+		 ʣ���Ի����ǽ
 
 2012-10-12 syngan  v0.1
 
-	* 起動時に引数をとるようにして, ブックマークをとばせるようにした
+	* ��ư���˰�����Ȥ�褦�ˤ���, �֥å��ޡ�����ȤФ���褦�ˤ���
 	   :PukiWiki [ SiteName [ PageName ]]
 
-	* :w されたとき，ファイルが変更されていない場合には 
-	  Pukiwiki と接続しないようにした
+	* :w ���줿�Ȥ����ե����뤬�ѹ�����Ƥ��ʤ����ˤ� 
+	  Pukiwiki ����³���ʤ��褦�ˤ���
 
-	* g:pukiwiki_check_snapshot のデフォルト値を変更した
+	* g:pukiwiki_check_snapshot �Υǥե�����ͤ��ѹ�����
 
-	* iconv 後の書き込みに失敗することがあるので fenc の値を空にするようにした
+	* iconv ��ν񤭹��ߤ˼��Ԥ��뤳�Ȥ�����Τ� fenc ���ͤ���ˤ���褦�ˤ���
 	   + execute ":setlocal fenc="
 
-	* インデントが壊れるのを修正
+	* ����ǥ�Ȥ������Τ���
 	   +	execute ":setlocal paste"
-	    2005-11-20  鯖缶@VimWiki
-	    * ページの読み込み時に :set paste していたのをやめて
-	    indentexpr を空にするように変更。
+	    2005-11-20  ����@VimWiki
+	    * �ڡ������ɤ߹��߻��� :set paste ���Ƥ����Τ����
+	    indentexpr ����ˤ���褦���ѹ���
 
-	* [[最終更新]] の取得方法を変更
-	   + cmd=source を利用
+	* [[�ǽ�����]] �μ�����ˡ���ѹ�
+	   + cmd=source ������
 
 ==============================================================================
 vim:tw=78:fo=tcq2mM:ts=8:ft=help:norl
