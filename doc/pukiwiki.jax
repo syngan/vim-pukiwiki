@@ -1,6 +1,6 @@
 *pukiwiki.txt*	A vim client for the PukiWiki 1.4.7 for Japanese
 
-Version: 0.10
+Version: 0.12
 Author : syngan
 License: MIT license  {{{
     Permission is hereby granted, free of charge, to any person obtaining
@@ -110,9 +110,17 @@ pukiwiki#fileupload() range
 
 pukiwiki#jump() 
 
+pukiwiki#jump_menu(menu) 
+
 pukiwiki#move_next_bracket()
 
 pukiwiki#move_prev_bracket()
+
+:Unite pukiwiki/history
+
+:Unite pukiwiki/menu
+
+:Unite outline
 
 ==============================================================================
 カスタマイズ					*pukiwiki-customizing*
@@ -139,6 +147,10 @@ g:pukiwiki_no_default_key_mappings
 
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
+
+2013-01-30 syngan  v0.12
+
+	* unite-pukiwiki/menu を追加
 
 2013-01-30 syngan  v0.11
 

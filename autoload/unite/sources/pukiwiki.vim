@@ -25,6 +25,7 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
+" pukiwiki/history {{{
 " source を用意
 let s:uni_puki = {
 	\ 'name': 'pukiwiki/history',
@@ -36,7 +37,6 @@ let s:uni_puki = {
 " これだと動かない
 "	\ 'alias_table' : { 'open' : 'open_page' },
 "	\ 'default_kind' : 'openable',
-
 
 function! s:uni_puki.gather_candidates(args, context) "{{{
 " 候補は history のリスト
@@ -90,6 +90,71 @@ function! s:uni_puki.action_table.delete.func(candidates) "{{{
 		let idx = idx - 1
 	 endwhile
 endfunction "}}}
+" }}}
+
+" pukiwiki/menu {{{
+let s:uni_menu = {
+	\ 'name': 'pukiwiki/menu',
+	\ 'description': 'menu of PukiWiki',
+	\ 'default_action' : 'execute',
+	\ 'action_table' : {},
+	\ 'default_kind' : 'command',
+\}
+
+function! s:uni_menu.gather_candidates(args, context) "{{{
+" 候補は pukiwiki のメニュー固定
+" [[トップ]] [[添付]] [[リロード]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]
+	let cand = []
+	call add(cand, {
+	\	'word' : 'top page',
+	\	'action__command' : 'PukiWikiJumpMenu top',
+	\   'source' : 'pukiwiki/menu',
+	\})
+	call add(cand, {
+	\	'word' : 'attached files',
+	\	'action__command' : 'PukiWikiJumpMenu attach',
+	\   'source' : 'pukiwiki/menu',
+	\})
+	call add(cand, {
+	\	'word' : 'reload',
+	\	'action__command' : 'PukiWikiJumpMenu reload',
+	\   'source' : 'pukiwiki/menu',
+	\})
+	call add(cand, {
+	\	'word' : 'new page',
+	\	'action__command' : 'PukiWikiJumpMenu new',
+	\   'source' : 'pukiwiki/menu',
+	\})
+	call add(cand, {
+	\	'word' : 'page list',
+	\	'action__command' : 'PukiWikiJumpMenu list',
+	\   'source' : 'pukiwiki/menu',
+	\})
+	call add(cand, {
+	\	'word' : 'search',
+	\	'action__command' : 'PukiWikiJumpMenu search',
+	\   'source' : 'pukiwiki/menu',
+	\})
+	call add(cand, {
+	\	'word' : 'recent changes',
+	\	'action__command' : 'PukiWikiJumpMenu recent',
+	\   'source' : 'pukiwiki/menu',
+	\})
+	call add(cand, {
+	\	'word' : 'help',
+	\	'action__command' : 'PukiWikiJumpMenu help',
+	\   'source' : 'pukiwiki/menu',
+	\})
+	return cand
+endfunction
+let s:uni_menu.action_table.yank = { 'is_listed' : 0 }
+let s:uni_menu.action_table.yank_escape = { 'is_listed' : 0 }
+let s:uni_menu.action_table.preview = { 'is_listed' : 0 }
+let s:uni_menu.action_table.insert = { 'is_listed' : 0 }
+let s:uni_menu.action_table.insert_directory = { 'is_listed' : 0 }
+let s:uni_menu.action_table.edit = { 'is_listed' : 0 }
+
+" }}}
 
 function! unite#sources#pukiwiki#define() "{{{
 	" 登録. g:pukiwiki_config が定義されていない場合には
@@ -97,7 +162,7 @@ function! unite#sources#pukiwiki#define() "{{{
 	if !exists('g:pukiwiki_config')
 		return {}
 	endif
-	return s:uni_puki
+	return [s:uni_puki, s:uni_menu]
 endfunction "}}}
 
 let &cpo = s:save_cpo

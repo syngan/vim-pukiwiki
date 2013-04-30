@@ -664,7 +664,6 @@ function! s:PW_show_attach(site_name, page) "{{{
 	let url = sitedict['url']
 	let enc = sitedict['encode']
 
-
 	" 添付ファイルの一覧
 	if 0
 		let enc_page = s:VITAL.iconv(a:page, &enc, enc)
@@ -931,6 +930,43 @@ function! pukiwiki#fileupload() range "{{{
 endfunction "}}}
 
 " g:motion {{{
+function! pukiwiki#jump_menu(pname)
+
+	if !exists('b:pukiwiki_site_name')
+		return
+	endif
+
+	if a:pname == 'トップ' || a:pname == 'top'
+		call s:PW_get_top_page(b:pukiwiki_site_name)
+	elseif a:pname == 'リロード' || a:pname == 'reload'
+		call s:VITAL.print_error("?? b:pukiwiki_page=". b:pukiwiki_page)
+		if b:pukiwiki_page == 'FormattingRules' || b:pukiwiki_page == 'RecentChanges'
+			call s:PW_get_source_page(b:pukiwiki_site_name, b:pukiwiki_page)
+		else
+			call s:PW_get_edit_page(b:pukiwiki_site_name, b:pukiwiki_page, 0)
+		endif
+	elseif a:pname == '新規' || a:pname == 'new'
+		let page = input('新規ページ名: ')
+		if page == ''
+			return
+		endif
+		call s:PW_get_edit_page(b:pukiwiki_site_name, page, 1)
+	elseif a:pname == '一覧' || a:pname == 'list'
+		call s:PW_show_page_list()
+	elseif a:pname == '単語検索' || a:pname == 'search'
+		call s:PW_show_search()
+	elseif a:pname == '添付' || a:pname == 'attach'
+		call s:PW_show_attach(b:pukiwiki_site_name, b:pukiwiki_page)
+	elseif a:pname == '最終更新' || a:pname == 'recent'
+		let page = 'RecentChanges'
+		call s:PW_get_source_page(b:pukiwiki_site_name, page)
+	elseif a:pname == 'ヘルプ' || a:pname == 'help'
+		let page = 'FormattingRules'
+		call s:PW_get_source_page(b:pukiwiki_site_name, page)
+	endif
+	return
+endfunction
+
 
 function! pukiwiki#jump()  "{{{
 	if !exists('b:pukiwiki_site_name')
@@ -959,33 +995,7 @@ function! pukiwiki#jump()  "{{{
 
 	let cur = substitute(cur, '\[\[\(.*\)\]\]', '\1', '')
 	if line('.') < 4
-		if cur == 'トップ'
-			call s:PW_get_top_page(b:pukiwiki_site_name)
-		elseif cur == 'リロード'
-			if b:pukiwiki_page == 'FormattingRules' || b:pukiwiki_page == 'RecentChanges'
-				call s:PW_get_source_page(b:pukiwiki_site_name, b:pukiwiki_page)
-			else
-				call s:PW_get_edit_page(b:pukiwiki_site_name, b:pukiwiki_page, 0)
-			endif
-		elseif cur == '新規'
-			let page = input('新規ページ名: ')
-			if page == ''
-				return
-			endif
-			call s:PW_get_edit_page(b:pukiwiki_site_name, page, 1)
-		elseif cur == '一覧'
-			call s:PW_show_page_list()
-		elseif cur == '単語検索'
-			call s:PW_show_search()
-		elseif cur == '添付'
-			call s:PW_show_attach(b:pukiwiki_site_name, b:pukiwiki_page)
-		elseif cur == '最終更新'
-			let page = 'RecentChanges'
-			call s:PW_get_source_page(b:pukiwiki_site_name, page)
-		elseif cur == 'ヘルプ'
-			call s:PW_get_source_page(b:pukiwiki_site_name, 'FormattingRules')
-		endif
-		return
+		return pukiwiki#jump_menu(cur)
 	endif
 
 	" InterWikiNameのエイリアスではないエイリアス

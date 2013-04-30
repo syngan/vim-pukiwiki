@@ -68,6 +68,7 @@ TODO:
 
 BUG:
   - S-TAB のキーマップが動作しない.
+  - [添付]のリロード時にエラーが発生する
 
 オリジナル
   http://vimwiki.net/?scripts%2F10

@@ -30,6 +30,7 @@ let s:save_cpo = &cpo
 set cpo&vim
 
 command! -nargs=* PukiWiki :call pukiwiki#PukiWiki(<f-args>)
+command! -nargs=* PukiWikiJumpMenu :call pukiwiki#jump_menu(<f-args>)
 
 let b:loaded_pukiwiki = 1
 
