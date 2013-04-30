@@ -141,7 +141,7 @@ function! s:uni_menu.gather_candidates(args, context) "{{{
 	\   'source' : 'pukiwiki/menu',
 	\})
 	call add(cand, {
-	\	'word' : 'help',
+	\	'word' : 'help: formatting rules',
 	\	'action__command' : 'PukiWikiJumpMenu help',
 	\   'source' : 'pukiwiki/menu',
 	\})

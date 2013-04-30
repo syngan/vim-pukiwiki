@@ -348,7 +348,10 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 		let @" = regbak
 	endif
 
-	silent! execute "normal! i" . a:site_name . " " . a:page . s:pukivim_ro_menu
+
+	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header
+		silent! execute "normal! i" . a:site_name . " " . a:page . s:pukivim_ro_menu
+	endif
 "	silent! execute "normal! ihistory>>>>>" . len(s:pukiwiki_history) . "\n"
 "	for elm in s:pukiwiki_history
 "		silent! execute "normal! i" . elm[4] . "\n"
@@ -411,7 +414,11 @@ function! s:PW_write_vital() "{{{
 	" 書き込みが壊れるだめな仕様
 	" @REG
 	let regbak = @"
-	silent! execute "normal! gg3D"
+	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header
+		silent! execute "normal! gg3D"
+	else
+		silent! execute "normal! gg"
+	endif
 	let @" = regbak
 
 	" urlencode
@@ -528,7 +535,11 @@ function! s:PW_write_org() "{{{
 	" 書き込みが壊れるだめな仕様
 	" @REG
 	let regbak = @"
-	silent! execute "normal! gg3D"
+	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header
+		silent! execute "normal! gg3D"
+	else
+		silent! execute "normal! gg"
+	endif
 	let @" = regbak
 	execute ":setlocal fenc="
 
@@ -701,7 +712,9 @@ function! s:PW_show_attach(site_name, page) "{{{
 	call s:PW_newpage(a:site_name, a:page)
 	call s:PW_set_statusline(a:site_name, a:page)
 
-	execute "normal! i" . a:site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
+	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header
+		execute "normal! i" . a:site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
+	endif
 	execute "normal! i添付ファイル一覧 [[" . b:pukiwiki_page . "]]\n"
 	execute "normal! i" . body
 
@@ -769,7 +782,10 @@ function! s:PW_show_page_list() "{{{
 	endwhile
 
 	execute ":setlocal noai"
-	execute "normal! gg0i" . b:pukiwiki_site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
+	execute "normal! gg0"
+	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header
+		execute "normal! i" . b:pukiwiki_site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
+	endif
 
 
 	call s:PW_endpage(b:pukiwiki_site_name, b:pukiwiki_page, 1)
@@ -837,7 +853,10 @@ function! s:PW_show_search() "{{{
 	" 最終行に [... 10 ページ見つかりました] メッセージ
 	" それを最初にだす
 	" @REG
-	execute "normal! GddggP0i" . b:pukiwiki_site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
+	execute "normal! GddggP0"
+	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header
+		execute "normal! i" . b:pukiwiki_site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
+	endif
 	let @" = regbak
 
 	call s:PW_endpage(b:pukiwiki_site_name, b:pukiwiki_page, 1)
@@ -971,7 +990,7 @@ function! pukiwiki#jump()  "{{{
 	if !exists('b:pukiwiki_site_name')
 		return
 	endif
-	if line('.') < 4
+	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header && line('.') < 4
 		" ヘッダ部分
 		let cur = s:PW_matchstr_undercursor('\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]')
 	else
@@ -993,7 +1012,7 @@ function! pukiwiki#jump()  "{{{
 	endif
 
 	let cur = substitute(cur, '\[\[\(.*\)\]\]', '\1', '')
-	if line('.') < 4
+	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header && line('.') < 4
 		return pukiwiki#jump_menu(cur)
 	endif
 
