@@ -41,9 +41,6 @@ Example >
   :w でページ更新
   <TAB> で [[ ]] 間をジャンプ
 
-注意事項）
-  - undo しすぎると空ファイルになります。
-
   現在 <CR> でページ遷移出来るのは
         BracketName
         BracketNameのエイリアス
@@ -54,8 +51,7 @@ Example >
 TODO:
   - 凍結/凍結解除機能
   - ドキュメント
-  - vitalize
-  - undo 連続しても空まで戻らないようにしたい
+  - vitalize (network 周り)
   - 履歴, ブックマーク
     - PW_get_back_page() つけたけど, s: 変数なので
       複数ページ同時に開くと壊れる

@@ -1,6 +1,6 @@
 *pukiwiki.txt*	A vim client for the PukiWiki 1.4.7 for Japanese
 
-Version: 0.13
+Version: 0.14
 Author : syngan
 License: MIT license  {{{
     Permission is hereby granted, free of charge, to any person obtaining
@@ -42,7 +42,7 @@ License: MIT license  {{{
 
 
 動作確認環境
-- PukiWiki 1.4.7 + Vim 7.2 + Ubuntu
+- PukiWiki 1.4.7 + Vim 7.3 + Ubuntu 12.04
 
 最新版:
 https://github.com/syngan/vim-pukiwiki/
@@ -116,9 +116,6 @@ Example >
   |:w| でページ更新
   <TAB> で [[ ]] 間をジャンプ
 
-注意事項）
-  - |:undo| しすぎると空ファイルになります。
-
 ==============================================================================
 インターフェース				*pukiwiki-interface*
 
@@ -126,6 +123,12 @@ Example >
 コマンド					*pukiwiki-commands*
 
 :PukiWiki [{site-name} [{page-name}]]
+
+:Unite pukiwiki/history
+
+:Unite pukiwiki/menu
+
+:Unite outline
 
 ------------------------------------------------------------------------------
 関数						*pukiwiki-functions*
@@ -144,12 +147,6 @@ pukiwiki#jump_menu(menu)
 pukiwiki#move_next_bracket()
 
 pukiwiki#move_prev_bracket()
-
-:Unite pukiwiki/history
-
-:Unite pukiwiki/menu
-
-:Unite outline
 
 ==============================================================================
 カスタマイズ					*pukiwiki-customizing*
@@ -184,6 +181,11 @@ g:pukiwiki_no_default_key_mappings
 
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
+
+2013-04-30 syngan  v0.14
+
+	* undo 履歴をページ整形後に削除し, undo の繰り返しで
+	  空ファイルにならないようにした
 
 2013-04-30 syngan  v0.13
 
