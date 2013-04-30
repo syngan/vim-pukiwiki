@@ -147,12 +147,6 @@ function! s:uni_menu.gather_candidates(args, context) "{{{
 	\})
 	return cand
 endfunction
-let s:uni_menu.action_table.yank = { 'is_listed' : 0 }
-let s:uni_menu.action_table.yank_escape = { 'is_listed' : 0 }
-let s:uni_menu.action_table.preview = { 'is_listed' : 0 }
-let s:uni_menu.action_table.insert = { 'is_listed' : 0 }
-let s:uni_menu.action_table.insert_directory = { 'is_listed' : 0 }
-let s:uni_menu.action_table.edit = { 'is_listed' : 0 }
 
 " }}}
 
