@@ -21,6 +21,7 @@
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
+scriptencoding utf-8
 
 let s:save_cpo = &cpo
 set cpo&vim
@@ -30,18 +31,18 @@ set cpo&vim
 scriptencoding euc-jp
 
 "---------------------------------------------
-" global ÊÑ¿ô
+" global å¤‰æ•°
 "---------------------------------------------
 
-" ¥Ç¥Ğ¥Ã¥°ÍÑ
+" ãƒ‡ãƒãƒƒã‚°ç”¨
 if !exists('g:pukiwiki_debug')
 	let g:pukiwiki_debug = 0
 endif
 
-" ¥¿¥¤¥à¥¹¥¿¥ó¥×¤òÊÑ¹¹¤¹¤ë¤«¤É¤¦¤«¤Î³ÎÇ§¥á¥Ã¥»¡¼¥¸
-" 1 = ¤¤¤Ä¤â yes
-" 0 = ¤¤¤Ä¤â no
-"-1 (else) ³ÎÇ§¤¹¤ë
+" ã‚¿ã‚¤ãƒ ã‚¹ã‚¿ãƒ³ãƒ—ã‚’å¤‰æ›´ã™ã‚‹ã‹ã©ã†ã‹ã®ç¢ºèªãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
+" 1 = ã„ã¤ã‚‚ yes
+" 0 = ã„ã¤ã‚‚ no
+"-1 (else) ç¢ºèªã™ã‚‹
 if !exists('g:pukiwiki_timestamp_update')
 	let g:pukiwiki_timestamp_update = -1
 endif
@@ -52,7 +53,7 @@ endif
 let s:pukiwiki_history = []
 
 let s:pukivim_ro_menu = "\n"
-	\ . "[[¥È¥Ã¥×]] [[ÅºÉÕ]] [[¥ê¥í¡¼¥É]] [[¿·µ¬]] [[°ìÍ÷]] [[Ã±¸ì¸¡º÷]] [[ºÇ½ª¹¹¿·]] [[¥Ø¥ë¥×]]\n"
+	\ . "[[ãƒˆãƒƒãƒ—]] [[æ·»ä»˜]] [[ãƒªãƒ­ãƒ¼ãƒ‰]] [[æ–°è¦]] [[ä¸€è¦§]] [[å˜èªæ¤œç´¢]] [[æœ€çµ‚æ›´æ–°]] [[ãƒ˜ãƒ«ãƒ—]]\n"
 	\ . "------------------------------------------------------------------------------\n"
 "let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
@@ -68,7 +69,7 @@ let s:HTTP = s:VITAL.import('Web.Http')
 
 " debug {{{
 function! pukiwiki#buf_vars() "{{{
-	" ¥Ç¥Ğ¥Ã¥°ÍÑ
+	" ãƒ‡ãƒãƒƒã‚°ç”¨
 	if exists('b:pukiwiki_site_name')
 		call s:PW_echokv('site_name' , b:pukiwiki_site_name)
 		let sitedict = g:pukiwiki_config[a:site_name]
@@ -95,13 +96,13 @@ endfunction "}}}
 function! pukiwiki#PukiWiki(...) "{{{
 	if !s:PW_init_check()
 		echohl ErrorMsg
-		echo 'µ¯Æ°¤Ë¼ºÇÔ¤·¤Ş¤·¤¿¡£'
+		echo 'èµ·å‹•ã«å¤±æ•—ã—ã¾ã—ãŸã€‚'
 		echohl None
 		return
 	endif
 
 	if !call("s:PW_read_pukiwiki_list", a:000)
-		" s:VITAL.print_error('¥Ö¥Ã¥¯¥Ş¡¼¥¯¤ÎÆÉ¤ß¹ş¤ß¤Ë¼ºÇÔ¤·¤Ş¤·¤¿¡£')
+		" s:VITAL.print_error('ãƒ–ãƒƒã‚¯ãƒãƒ¼ã‚¯ã®èª­ã¿è¾¼ã¿ã«å¤±æ•—ã—ã¾ã—ãŸã€‚')
 		return
 	endif
 endfunction "}}}
@@ -111,7 +112,7 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 " PukiVim [ SiteName [ PageName ]]
 "
 	if &modified
-		call s:VITAL.print_error('ÊÑ¹¹¤¬ÊİÂ¸¤µ¤ì¤Æ¤¤¤Ş¤»¤ó¡£')
+		call s:VITAL.print_error('å¤‰æ›´ãŒä¿å­˜ã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚')
 		return 0
 	endif
 
@@ -126,8 +127,8 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 	endif
 
 	if a:0 == 0
-		" Ìä¤¤¹ç¤ï¤»
-		let site_name = input('¥µ¥¤¥ÈÌ¾: ')
+		" å•ã„åˆã‚ã›
+		let site_name = input('ã‚µã‚¤ãƒˆå: ')
 	else
 		let site_name = a:1
 	endif
@@ -164,7 +165,7 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 		let page  = top
 	endif
 
-	" ºÇ½é¤Ë°ìÅÙ¤À¤±¶õ¥Õ¥¡¥¤¥ë¤ò³«¤¯
+	" æœ€åˆã«ä¸€åº¦ã ã‘ç©ºãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã
 	if page == 'RecentChanges'
 		call s:PW_get_source_page(site_name, page)
 	else
@@ -176,9 +177,9 @@ endfunction "}}}
 
 function! s:PW_init_check() "{{{
 
-	" curl ¤ÎÍ­Ìµ¤ò¥Á¥§¥Ã¥¯
+	" curl ã®æœ‰ç„¡ã‚’ãƒã‚§ãƒƒã‚¯
 	if !executable('curl')
-		call s:VITAL.print_error('curl ¤¬¸«¤Ä¤«¤ê¤Ş¤»¤ó¡£')
+		call s:VITAL.print_error('curl ãŒè¦‹ã¤ã‹ã‚Šã¾ã›ã‚“ã€‚')
 		return 0
 	endif
 
@@ -264,14 +265,14 @@ function! s:PW_set_statusline(site_name, page) "{{{
 endfunction "}}}
 
 function! s:PW_get_digest(str) "{{{
-	" [[ÊÔ½¸]] ²èÌÌ¤«¤é digest ¤ò¼èÆÀ¤¹¤ë
+	" [[ç·¨é›†]] ç”»é¢ã‹ã‚‰ digest ã‚’å–å¾—ã™ã‚‹
 	let s = matchstr(a:str,
 	\     '<input type="hidden" name="digest" value="\zs.\{-}\ze" />')
 	return s
 endfunction "}}}
 
 function! s:PW_get_edit_page(site_name, page, opennew) "{{{
-" edit ¥Ú¡¼¥¸¤ò³«¤¯
+" edit ãƒšãƒ¼ã‚¸ã‚’é–‹ã
 	return s:PW_get_page(a:site_name, a:page, "edit", a:opennew)
 endfunction "}}}
 
@@ -280,7 +281,7 @@ function! s:PW_get_source_page(site_name, page) "{{{
 endfunction "}}}
 
 function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
-" ¥Ú¡¼¥¸¤ò³«¤¯
+" ãƒšãƒ¼ã‚¸ã‚’é–‹ã
 " pwcmd = "edit" or "source"
 
 	let sitedict = g:pukiwiki_config[a:site_name]
@@ -311,12 +312,12 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 
 	if a:pwcmd == 'edit'
 		if result !~ '<textarea\_.\{-}>\_.\{-}</textarea>\_.\{-}<textarea'
-			" cmd=source ¤ÇÆÉ¤ßÄ¾¤·
+			" cmd=source ã§èª­ã¿ç›´ã—
 			return s:PW_get_source_page(a:site_name, a:page)
 		endif
 	elseif a:pwcmd == 'source'
 		if result !~ '<pre id="source">'
-			call s:VITAL.print_error('¥Ú¡¼¥¸¤ÎÆÉ¤ß¹ş¤ß¤Ë¼ºÇÔ¤·¤Ş¤·¤¿¡£Ç§¾Ú¤¬É¬Í×¤Ç¤¹¡£')
+			call s:VITAL.print_error('ãƒšãƒ¼ã‚¸ã®èª­ã¿è¾¼ã¿ã«å¤±æ•—ã—ã¾ã—ãŸã€‚èªè¨¼ãŒå¿…è¦ã§ã™ã€‚')
 			return
 		endif
 
@@ -336,7 +337,7 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 	endif
 
 
-	" Á´¾Ãµî
+	" å…¨æ¶ˆå»
 	if a:opennew
 		call s:PW_newpage(a:site_name, a:page)
 	else
@@ -364,7 +365,7 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 
 	let status_line = s:PW_set_statusline(b:pukiwiki_site_name, b:pukiwiki_page)
 
-	" undo ÍúÎò¤ò¾Ãµî¤¹¤ë, @see *clear-undo*
+	" undo å±¥æ­´ã‚’æ¶ˆå»ã™ã‚‹, @see *clear-undo*
 	let oldundolevel = &undolevels
 	echo oldundolevel
 	execute ":setlocal undolevels=-1"
@@ -412,14 +413,14 @@ function! s:PW_write_vital() "{{{
 	elseif g:pukiwiki_timestamp_update == 0
 		let notimestamp = 'true'
 	else
-		let last_confirm = input('¥¿¥¤¥à¥¹¥¿¥ó¥×¤òÊÑ¹¹¤¹¤ë¡©(Y/n): ')
+		let last_confirm = input('ã‚¿ã‚¤ãƒ ã‚¹ã‚¿ãƒ³ãƒ—ã‚’å¤‰æ›´ã™ã‚‹ï¼Ÿ(Y/n): ')
 		if last_confirm =~ '^\cy'
 			let notimestamp = 'true'
 		endif
 	endif
 
-	" ¥Ø¥Ã¥À¤Îºï½ü. ¥æ¡¼¥¶¤¬¥Ø¥Ã¥À¤ò½¤Àµ¤¹¤ë¤È
-	" ½ñ¤­¹ş¤ß¤¬²õ¤ì¤ë¤À¤á¤Ê»ÅÍÍ
+	" ãƒ˜ãƒƒãƒ€ã®å‰Šé™¤. ãƒ¦ãƒ¼ã‚¶ãŒãƒ˜ãƒƒãƒ€ã‚’ä¿®æ­£ã™ã‚‹ã¨
+	" æ›¸ãè¾¼ã¿ãŒå£Šã‚Œã‚‹ã ã‚ãªä»•æ§˜
 	" @REG
 	let regbak = @"
 	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header
@@ -443,17 +444,17 @@ function! s:PW_write_vital() "{{{
 	endwhile
 
 	let param = {}
-	let param['encode_hint'] = '¤×'
+	let param['encode_hint'] = 'ã·'
 	let param['cmd'] = 'edit'
 	let param['page'] = s:VITAL.iconv(b:pukiwiki_page, &enc, enc)
 	let param['digest'] = b:pukiwiki_digest
-	let param['write'] = s:VITAL.iconv('¥Ú¡¼¥¸¤Î¹¹¿·', &enc, enc)
+	let param['write'] = s:VITAL.iconv('ãƒšãƒ¼ã‚¸ã®æ›´æ–°', &enc, enc)
 	let param["notimestamp"] = notimestamp
 	let param["original"] = ''
 	let param["msg"] = body
 
-	" ¤³¤³¤Ş¤Ç¤Ç¥¨¥é¡¼¤¬È¯À¸¤·¤¿¾õÂÖ¤Ç¥µ¡¼¥Ğ¤ÈÄÌ¿®¤µ¤ì¤Æ¤â¤³¤Ş¤ë.
-	" try/catch ¤¹¤Ù¤­¤«.
+	" ã“ã“ã¾ã§ã§ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ãŸçŠ¶æ…‹ã§ã‚µãƒ¼ãƒã¨é€šä¿¡ã•ã‚Œã¦ã‚‚ã“ã¾ã‚‹.
+	" try/catch ã™ã¹ãã‹.
 	let retdic = s:PW_request('write', param, b:pukiwiki_page, 'POST')
 	let g:hoge2 = retdic
 	if !retdic['success']
@@ -461,18 +462,18 @@ function! s:PW_write_vital() "{{{
 	endif
 
 	body = retdic['content']
-	if body =~ '<title>\_.\{-}¤òºï½ü¤·¤Ş¤·¤¿\_.\{-}<\/title>'
+	if body =~ '<title>\_.\{-}ã‚’å‰Šé™¤ã—ã¾ã—ãŸ\_.\{-}<\/title>'
 		let page = b:pukiwiki_page
 		call s:PW_get_edit_page(b:pukiwiki_site_name, top, 0)
-		echo page . ' ¤òºï½ü¤·¤Ş¤·¤¿'
+		echo page . ' ã‚’å‰Šé™¤ã—ã¾ã—ãŸ'
 		return
 	endif
 
 	return 0
 
-	" À®¸ù¤¹¤ë¤ÈPukiWiki¤¬location¥Ø¥Ã¥À¡¼¤òÅÇ¤¯¤Î¤Çresult¤¬ºîÀ®¤µ¤ì¤Ê¤¤¡£
-	" ºîÀ®¤µ¤ì¤Æ¤¤¤ë¾ì¹ç¤Ë¤Ï²¿¤é¤«¤Î¥¨¥é¡¼¤òHTML¤ÇÅÇ¤­½Ğ¤·¤Æ¤¤¤ë¡£
-		" ¼ºÇÔ
+	" æˆåŠŸã™ã‚‹ã¨PukiWikiãŒlocationãƒ˜ãƒƒãƒ€ãƒ¼ã‚’åãã®ã§resultãŒä½œæˆã•ã‚Œãªã„ã€‚
+	" ä½œæˆã•ã‚Œã¦ã„ã‚‹å ´åˆã«ã¯ä½•ã‚‰ã‹ã®ã‚¨ãƒ©ãƒ¼ã‚’HTMLã§åãå‡ºã—ã¦ã„ã‚‹ã€‚
+		" å¤±æ•—
 		execute ":undo"
 		execute ":set nomodified"
 		execute ":setlocal nomodifiable"
@@ -480,9 +481,9 @@ function! s:PW_write_vital() "{{{
 		let site_name = b:pukiwiki_site_name
 		let page      = b:pukiwiki_page
 
-		" ½ñ¤­¹ş¤ß¤·¤è¤¦¤È¤·¤¿¥Ğ¥Ã¥Õ¥¡¤ÎÌ¾Á°¤ÎÁ°¤Ë'¥í¡¼¥«¥ë'¤òÉÕ¤±¤Æ
-		" ¸½ºß¤Î¥µ¡¼¥Ğ¡¼¾å¤ÎÆâÍÆ¤ò¼èÆÀ¤·¤Æ'diffthis'¤ò¼Â¹Ô¤¹¤ë¡£
-		call s:PW_set_statusline(b:pukiwiki_site_name, '¥í¡¼¥«¥ë ' . b:pukiwiki_page)
+		" æ›¸ãè¾¼ã¿ã—ã‚ˆã†ã¨ã—ãŸãƒãƒƒãƒ•ã‚¡ã®åå‰ã®å‰ã«'ãƒ­ãƒ¼ã‚«ãƒ«'ã‚’ä»˜ã‘ã¦
+		" ç¾åœ¨ã®ã‚µãƒ¼ãƒãƒ¼ä¸Šã®å†…å®¹ã‚’å–å¾—ã—ã¦'diffthis'ã‚’å®Ÿè¡Œã™ã‚‹ã€‚
+		call s:PW_set_statusline(b:pukiwiki_site_name, 'ãƒ­ãƒ¼ã‚«ãƒ« ' . b:pukiwiki_page)
 		execute ":diffthis"
 		execute ":new"
 
@@ -493,9 +494,9 @@ function! s:PW_write_vital() "{{{
 			echo "&enc=" . &enc . ", enc=" . enc . ", page=" . b:pukiwiki_page
 			echo "s:VITAL.iconv=" . Byte2hex(s:VITAL.iconv(b:pukiwiki_page, &enc, enc))
 			echo "urlen=" . s:PW_urlencode( s:VITAL.iconv( b:pukiwiki_page, &enc, enc ) )
-			call s:VITAL.print_error('¹¹¿·¤Î¾×ÆÍ¤¬È¯À¸¤·¤¿¤«¡¢¤½¤ÎÂ¾¤Î¥¨¥é¡¼¤Ç½ñ¤­¹ş¤á¤Ş¤»¤ó¤Ç¤·¤¿¡£' . result)
+			call s:VITAL.print_error('æ›´æ–°ã®è¡çªãŒç™ºç”Ÿã—ãŸã‹ã€ãã®ä»–ã®ã‚¨ãƒ©ãƒ¼ã§æ›¸ãè¾¼ã‚ã¾ã›ã‚“ã§ã—ãŸã€‚' . result)
 		else
-			call s:VITAL.print_error('¹¹¿·¤Î¾×ÆÍ¤¬È¯À¸¤·¤¿¤«¡¢¤½¤ÎÂ¾¤Î¥¨¥é¡¼¤Ç½ñ¤­¹ş¤á¤Ş¤»¤ó¤Ç¤·¤¿¡£')
+			call s:VITAL.print_error('æ›´æ–°ã®è¡çªãŒç™ºç”Ÿã—ãŸã‹ã€ãã®ä»–ã®ã‚¨ãƒ©ãƒ¼ã§æ›¸ãè¾¼ã‚ã¾ã›ã‚“ã§ã—ãŸã€‚')
 			call delete(result)
 		endif
 		return 0
@@ -503,12 +504,12 @@ function! s:PW_write_vital() "{{{
 
 	call s:PW_get_edit_page(b:pukiwiki_site_name, b:pukiwiki_page, 0)
 
-	" ¸µ¤¤¤¿¹Ô¤Ë°ÜÆ°
+	" å…ƒã„ãŸè¡Œã«ç§»å‹•
 	execute "normal! " . lineno . "G"
 "	silent! echo 'update ' . b:pukiwiki_page
 	if g:pukiwiki_debug
-		" Ëè²ó¤¦¤Ã¤È¡¼¤·¤¤¤Î¤Ç debug ÍÑ¤Ë
-		call echo('¹¹¿·À®¸ù¡ª')
+		" æ¯å›ã†ã£ã¨ãƒ¼ã—ã„ã®ã§ debug ç”¨ã«
+		call echo('æ›´æ–°æˆåŠŸï¼')
 	endif
 
 
@@ -533,14 +534,14 @@ function! s:PW_write_org() "{{{
 	elseif g:pukiwiki_timestamp_update == 0
 		let notimestamp = 'true'
 	else
-		let last_confirm = input('¥¿¥¤¥à¥¹¥¿¥ó¥×¤òÊÑ¹¹¤·¤Ê¤¤¡£(y/N): ')
+		let last_confirm = input('ã‚¿ã‚¤ãƒ ã‚¹ã‚¿ãƒ³ãƒ—ã‚’å¤‰æ›´ã—ãªã„ã€‚(y/N): ')
 		if last_confirm =~ '^\cy'
 			let notimestamp = 'true'
 		endif
 	endif
 
-	" ¥Ø¥Ã¥À¤Îºï½ü. ¥æ¡¼¥¶¤¬¥Ø¥Ã¥À¤ò½¤Àµ¤¹¤ë¤È
-	" ½ñ¤­¹ş¤ß¤¬²õ¤ì¤ë¤À¤á¤Ê»ÅÍÍ
+	" ãƒ˜ãƒƒãƒ€ã®å‰Šé™¤. ãƒ¦ãƒ¼ã‚¶ãŒãƒ˜ãƒƒãƒ€ã‚’ä¿®æ­£ã™ã‚‹ã¨
+	" æ›¸ãè¾¼ã¿ãŒå£Šã‚Œã‚‹ã ã‚ãªä»•æ§˜
 	" @REG
 	let regbak = @"
 	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header
@@ -567,10 +568,10 @@ function! s:PW_write_org() "{{{
 		let cl = cl + 1
 	endwhile
 
-	" urlencode ¤·¤¿ËÜÊ¸Á°¤Ë¤½¤ÎÂ¾¤Î¾ğÊóÀßÄê
-	let cmd = "encode_hint=" . s:PW_urlencode( s:VITAL.iconv( '¤×', &enc, enc ) )
+	" urlencode ã—ãŸæœ¬æ–‡å‰ã«ãã®ä»–ã®æƒ…å ±è¨­å®š
+	let cmd = "encode_hint=" . s:PW_urlencode( s:VITAL.iconv( 'ã·', &enc, enc ) )
 	let cmd = cmd . "&cmd=edit&page=" . s:PW_urlencode( s:VITAL.iconv( b:pukiwiki_page, &enc, enc ) )
-	let cmd = cmd . "&digest=" . b:pukiwiki_digest . "&write=" . s:PW_urlencode( s:VITAL.iconv( '¥Ú¡¼¥¸¤Î¹¹¿·', &enc, enc ) )
+	let cmd = cmd . "&digest=" . b:pukiwiki_digest . "&write=" . s:PW_urlencode( s:VITAL.iconv( 'ãƒšãƒ¼ã‚¸ã®æ›´æ–°', &enc, enc ) )
 	let cmd = cmd . "&notimestamp=" . notimestamp
 	let cmd = cmd . "&original="
 	let cmd = cmd . "&msg="
@@ -579,8 +580,8 @@ function! s:PW_write_org() "{{{
 	let post = tempname()
 	call writefile(body, post, "b")
 
-	" ¤³¤³¤Ş¤Ç¤Ç¥¨¥é¡¼¤¬È¯À¸¤·¤¿¾õÂÖ¤Ç¥µ¡¼¥Ğ¤ÈÄÌ¿®¤µ¤ì¤Æ¤â¤³¤Ş¤ë.
-	" try/catch ¤¹¤Ù¤­¤«.
+	" ã“ã“ã¾ã§ã§ã‚¨ãƒ©ãƒ¼ãŒç™ºç”Ÿã—ãŸçŠ¶æ…‹ã§ã‚µãƒ¼ãƒã¨é€šä¿¡ã•ã‚Œã¦ã‚‚ã“ã¾ã‚‹.
+	" try/catch ã™ã¹ãã‹.
 
 	let result = tempname()
 	let cmd = "curl -s -o " . result . " -d @" . post . ' "' . url . '"'
@@ -592,19 +593,19 @@ function! s:PW_write_org() "{{{
 		call delete(post)
 	endif
 
-	" À®¸ù¤¹¤ë¤ÈPukiWiki¤¬location¥Ø¥Ã¥À¡¼¤òÅÇ¤¯¤Î¤Çresult¤¬ºîÀ®¤µ¤ì¤Ê¤¤¡£
-	" ºîÀ®¤µ¤ì¤Æ¤¤¤ë¾ì¹ç¤Ë¤Ï²¿¤é¤«¤Î¥¨¥é¡¼¤òHTML¤ÇÅÇ¤­½Ğ¤·¤Æ¤¤¤ë¡£
+	" æˆåŠŸã™ã‚‹ã¨PukiWikiãŒlocationãƒ˜ãƒƒãƒ€ãƒ¼ã‚’åãã®ã§resultãŒä½œæˆã•ã‚Œãªã„ã€‚
+	" ä½œæˆã•ã‚Œã¦ã„ã‚‹å ´åˆã«ã¯ä½•ã‚‰ã‹ã®ã‚¨ãƒ©ãƒ¼ã‚’HTMLã§åãå‡ºã—ã¦ã„ã‚‹ã€‚
 	if filereadable(result)
 		let bodyr = s:PW_fileread(result)
 		let bodyr = s:VITAL.iconv( bodyr, enc, &enc )
-		if bodyr =~ '<title>\_.\{-}¤òºï½ü¤·¤Ş¤·¤¿\_.\{-}<\/title>'
+		if bodyr =~ '<title>\_.\{-}ã‚’å‰Šé™¤ã—ã¾ã—ãŸ\_.\{-}<\/title>'
 			let page = b:pukiwiki_page
 			call s:PW_get_edit_page(b:pukiwiki_site_name, top, 0)
-			echo page . ' ¤òºï½ü¤·¤Ş¤·¤¿'
+			echo page . ' ã‚’å‰Šé™¤ã—ã¾ã—ãŸ'
 			return
 		endif
 
-		" ¼ºÇÔ
+		" å¤±æ•—
 		execute ":undo"
 		execute ":set nomodified"
 		execute ":setlocal nomodifiable"
@@ -612,9 +613,9 @@ function! s:PW_write_org() "{{{
 		let site_name = b:pukiwiki_site_name
 		let page      = b:pukiwiki_page
 
-		" ½ñ¤­¹ş¤ß¤·¤è¤¦¤È¤·¤¿¥Ğ¥Ã¥Õ¥¡¤ÎÌ¾Á°¤ÎÁ°¤Ë'¥í¡¼¥«¥ë'¤òÉÕ¤±¤Æ
-		" ¸½ºß¤Î¥µ¡¼¥Ğ¡¼¾å¤ÎÆâÍÆ¤ò¼èÆÀ¤·¤Æ'diffthis'¤ò¼Â¹Ô¤¹¤ë¡£
-		call s:PW_set_statusline(b:pukiwiki_site_name, '¥í¡¼¥«¥ë ' . b:pukiwiki_page)
+		" æ›¸ãè¾¼ã¿ã—ã‚ˆã†ã¨ã—ãŸãƒãƒƒãƒ•ã‚¡ã®åå‰ã®å‰ã«'ãƒ­ãƒ¼ã‚«ãƒ«'ã‚’ä»˜ã‘ã¦
+		" ç¾åœ¨ã®ã‚µãƒ¼ãƒãƒ¼ä¸Šã®å†…å®¹ã‚’å–å¾—ã—ã¦'diffthis'ã‚’å®Ÿè¡Œã™ã‚‹ã€‚
+		call s:PW_set_statusline(b:pukiwiki_site_name, 'ãƒ­ãƒ¼ã‚«ãƒ« ' . b:pukiwiki_page)
 		execute ":diffthis"
 		execute ":new"
 
@@ -625,9 +626,9 @@ function! s:PW_write_org() "{{{
 			echo "&enc=" . &enc . ", enc=" . enc . ", page=" . b:pukiwiki_page
 			echo "s:VITAL.iconv=" . Byte2hex(s:VITAL.iconv(b:pukiwiki_page, &enc, enc))
 			echo "urlen=" . s:PW_urlencode( s:VITAL.iconv( b:pukiwiki_page, &enc, enc ) )
-			call s:VITAL.print_error('¹¹¿·¤Î¾×ÆÍ¤¬È¯À¸¤·¤¿¤«¡¢¤½¤ÎÂ¾¤Î¥¨¥é¡¼¤Ç½ñ¤­¹ş¤á¤Ş¤»¤ó¤Ç¤·¤¿¡£' . result)
+			call s:VITAL.print_error('æ›´æ–°ã®è¡çªãŒç™ºç”Ÿã—ãŸã‹ã€ãã®ä»–ã®ã‚¨ãƒ©ãƒ¼ã§æ›¸ãè¾¼ã‚ã¾ã›ã‚“ã§ã—ãŸã€‚' . result)
 		else
-			call s:VITAL.print_error('¹¹¿·¤Î¾×ÆÍ¤¬È¯À¸¤·¤¿¤«¡¢¤½¤ÎÂ¾¤Î¥¨¥é¡¼¤Ç½ñ¤­¹ş¤á¤Ş¤»¤ó¤Ç¤·¤¿¡£')
+			call s:VITAL.print_error('æ›´æ–°ã®è¡çªãŒç™ºç”Ÿã—ãŸã‹ã€ãã®ä»–ã®ã‚¨ãƒ©ãƒ¼ã§æ›¸ãè¾¼ã‚ã¾ã›ã‚“ã§ã—ãŸã€‚')
 			call delete(result)
 		endif
 		return 0
@@ -635,12 +636,12 @@ function! s:PW_write_org() "{{{
 
 	call s:PW_get_edit_page(b:pukiwiki_site_name, b:pukiwiki_page, 0)
 
-	" ¸µ¤¤¤¿¹Ô¤Ë°ÜÆ°
+	" å…ƒã„ãŸè¡Œã«ç§»å‹•
 	execute "normal! " . lineno . "G"
 "	silent! echo 'update ' . b:pukiwiki_page
 	if g:pukiwiki_debug
-		" Ëè²ó¤¦¤Ã¤È¡¼¤·¤¤¤Î¤Ç debug ÍÑ¤Ë
-		call echo('¹¹¿·À®¸ù¡ª')
+		" æ¯å›ã†ã£ã¨ãƒ¼ã—ã„ã®ã§ debug ç”¨ã«
+		call echo('æ›´æ–°æˆåŠŸï¼')
 	endif
 
 
@@ -659,12 +660,12 @@ function! pukiwiki#get_back_page() "{{{
 endfunction "}}}
 
 function! pukiwiki#get_history_list() "{{{
-	" protected ¤Ç¤Ê¤¤¤Èº¤¤ë¤Î¤À¤¬.
+	" protected ã§ãªã„ã¨å›°ã‚‹ã®ã ãŒ.
 	return s:pukiwiki_history
 endfunction "}}}
 
-function! pukiwiki#bookmark()
-	" ¸½ºß¤Î¥Ú¡¼¥¸¤ò¥Ö¥Ã¥¯¥Ş¡¼¥¯¤¹¤ë
+function! pukiwiki#bookmark() " {{{
+	" ç¾åœ¨ã®ãƒšãƒ¼ã‚¸ã‚’ãƒ–ãƒƒã‚¯ãƒãƒ¼ã‚¯ã™ã‚‹
 	"
 	if !exists('b:pukiwiki_site_name')
 		return 
@@ -675,8 +676,8 @@ function! pukiwiki#bookmark()
 	if filereadable(g:pukiwiki_bookmark)
 		let lines = readfile(g:pukiwiki_bookmark)
 		if lines[0] != "pukiwiki.bookmark.v1."
-			" ¾å½ñ¤­¤·¤Æ¤¤¤¤¤â¤Î¤«...
-			call s:VITAL.print_error('»ØÄê¤µ¤ì¤¿¥Õ¥¡¥¤¥ë¤Ë¸í¤ê¤¬¤¢¤ê¤Ş¤¹')
+			" ä¸Šæ›¸ãã—ã¦ã„ã„ã‚‚ã®ã‹...
+			call s:VITAL.print_error('æŒ‡å®šã•ã‚ŒãŸãƒ•ã‚¡ã‚¤ãƒ«ã«èª¤ã‚ŠãŒã‚ã‚Šã¾ã™')
 			return 
 		endif
 	else
@@ -685,7 +686,7 @@ function! pukiwiki#bookmark()
 
 	call add(lines, b:pukiwiki_site_name . "," . b:pukiwiki_page)
 	call writefile(lines, g:pukiwiki_bookmark)
-endfunction
+endfunction " }}}
 
 " page open s:[top/attach/list/search] {{{
 function! s:PW_get_top_page(site_name) "{{{
@@ -699,15 +700,15 @@ endfunction "}}}
 
 function! s:PW_show_attach(site_name, page) "{{{
 "----------------------------------------------
-" ÅºÉÕ¥Õ¥¡¥¤¥ëÍÑ¤Î²èÌÌ¤òÉ½¼¨¤¹¤ë.
-" É½¼¨¤»¤º¤Ë¥³¥Ş¥ó¥É¤À¤±¡¦¡¦¡¦¤Î¤Û¤¦¤¬¤¤¤¤¤Î¤«¤Ê
+" æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ç”¨ã®ç”»é¢ã‚’è¡¨ç¤ºã™ã‚‹.
+" è¡¨ç¤ºã›ãšã«ã‚³ãƒãƒ³ãƒ‰ã ã‘ãƒ»ãƒ»ãƒ»ã®ã»ã†ãŒã„ã„ã®ã‹ãª
 "----------------------------------------------
 
 	let sitedict = g:pukiwiki_config[a:site_name]
 	let url = sitedict['url']
 	let enc = sitedict['encode']
 
-	" ÅºÉÕ¥Õ¥¡¥¤¥ë¤Î°ìÍ÷
+	" æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã®ä¸€è¦§
 	if 0
 		let enc_page = s:VITAL.iconv(a:page, &enc, enc)
 		let enc_page = s:PW_urlencode(enc_page)
@@ -737,7 +738,7 @@ function! s:PW_show_attach(site_name, page) "{{{
 	let body = substitute(body, ' </li>\n', '', 'g')
 	let body = substitute(body, ' <li><a.\{-} title="\(.\{-}\)">\(.\{-}\)</a>', '\2\t(\1)', 'g')
 
-	" [ÅºÉÕ¥Õ¥¡¥¤¥ë¤¬¤¢¤ê¤Ş¤»¤ó] ÂĞ±ş
+	" [æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ãŒã‚ã‚Šã¾ã›ã‚“] å¯¾å¿œ
 	let body = substitute(body, '<.\{-}>', '', 'g')
 	let body = substitute(body, '\n\n*', '\n', 'g')
 
@@ -747,7 +748,7 @@ function! s:PW_show_attach(site_name, page) "{{{
 	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header
 		execute "normal! i" . a:site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
 	endif
-	execute "normal! iÅºÉÕ¥Õ¥¡¥¤¥ë°ìÍ÷ [[" . b:pukiwiki_page . "]]\n"
+	execute "normal! iæ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ä¸€è¦§ [[" . b:pukiwiki_page . "]]\n"
 	execute "normal! i" . body
 
 	call s:PW_endpage(a:site_name, a:page, 1)
@@ -789,7 +790,7 @@ function! s:PW_show_page_list() "{{{
 
 	execute "normal! i" . body
 
-	" ¤¬¤ó¤Ğ¤Ã¤Æ²Ã¹©
+	" ãŒã‚“ã°ã£ã¦åŠ å·¥
 	" @REG
 	let regbak = @"
 	silent! %g/^$/d
@@ -804,8 +805,8 @@ function! s:PW_show_page_list() "{{{
 	silent! %s/\s*<li>\[\[\(.*\)\]\]$/\1/
 	let @" = regbak
 
-	" page Ì¾¤·¤«¤Ê¤¤¤Î¤Ç, decode ¤·¤Ê¤¯¤Æ¤âÎÉ¤¤µ¤¤¬¤¹¤ë.
-	" single quote &apos;  &#xxxx ¤Ê¤É¤Ï¤ä¤é¤Ê¤¤¤È¤¤¤±¤Ê¤¤¤é¤·¤¤.
+	" page åã—ã‹ãªã„ã®ã§, decode ã—ãªãã¦ã‚‚è‰¯ã„æ°—ãŒã™ã‚‹.
+	" single quote &apos;  &#xxxx ãªã©ã¯ã‚„ã‚‰ãªã„ã¨ã„ã‘ãªã„ã‚‰ã—ã„.
 	let cl = 1
 	while cl <= line('$')
 		let line = getline(cl)
@@ -830,7 +831,7 @@ function! s:PW_show_search() "{{{
 	let enc = sitedict['encode']
 	let top = sitedict['top']
 
-	let word = input('¥­¡¼¥ï¡¼¥É: ')
+	let word = input('ã‚­ãƒ¼ãƒ¯ãƒ¼ãƒ‰: ')
 	if word == ''
 		return
 	endif
@@ -842,7 +843,7 @@ function! s:PW_show_search() "{{{
 
 	if 0
 		let result = tempname()
-		let cmd = 'curl -s -o ' . result . ' -d encode_hint=' . s:PW_urlencode('¤×')
+		let cmd = 'curl -s -o ' . result . ' -d encode_hint=' . s:PW_urlencode('ã·')
 		let cmd = cmd . ' -d word=' . s:PW_urlencode(word)
 		let cmd = cmd . ' -d type=' . type . ' -d cmd=search ' . url
 		call s:PW_system(cmd)
@@ -851,7 +852,7 @@ function! s:PW_show_search() "{{{
 		let body = s:VITAL.iconv(body, enc, &enc)
 	else
 		let param = {}
-		let param['encode_hint'] = '¤×'
+		let param['encode_hint'] = 'ã·'
 		let param['word'] = word
 		let param['type'] = type
 		let param['cmd'] = 'search'
@@ -871,7 +872,7 @@ function! s:PW_show_search() "{{{
 "	let body = substitute(body, '^<div class=[^\n]\{-}$', '', '')
 	execute "normal! i" . body
 
-	" ¤¬¤ó¤Ğ¤Ã¤Æ²Ã¹©
+	" ãŒã‚“ã°ã£ã¦åŠ å·¥
 	" @REG
 	let regbak = @"
 	silent! %g/<div/d
@@ -882,8 +883,8 @@ function! s:PW_show_search() "{{{
 	silent! %s/<strong>//g
 	silent! %s/^.*<li><a.*>\(.*\)<\/a>\(.*\)<\/li>$/\t\[\[\1\]\] \2/
 
-	" ºÇ½ª¹Ô¤Ë [... 10 ¥Ú¡¼¥¸¸«¤Ä¤«¤ê¤Ş¤·¤¿] ¥á¥Ã¥»¡¼¥¸
-	" ¤½¤ì¤òºÇ½é¤Ë¤À¤¹
+	" æœ€çµ‚è¡Œã« [... 10 ãƒšãƒ¼ã‚¸è¦‹ã¤ã‹ã‚Šã¾ã—ãŸ] ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
+	" ãã‚Œã‚’æœ€åˆã«ã ã™
 	" @REG
 	execute "normal! GddggP0"
 	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header
@@ -906,21 +907,21 @@ function! pukiwiki#fileupload() range "{{{
 	let enc = sitedict['encode']
 	let top = sitedict['top']
 
-	let pass = input('¥Ñ¥¹¥ï¡¼¥É: ')
+	let pass = input('ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰: ')
 
 	let enc_page = s:VITAL.iconv(b:pukiwiki_page, &enc, enc)
 
 	if 1
 		let enc_page = s:PW_urlencode(enc_page)
 		let tmpfile = tempname()
-		let cmd = 'curl -s -o ' . tmpfile . ' -F encode_hint=' . s:PW_urlencode('¤×')
+		let cmd = 'curl -s -o ' . tmpfile . ' -F encode_hint=' . s:PW_urlencode('ã·')
 		let cmd = cmd . ' -F plugin=attach'
 		let cmd = cmd . ' -F pcmd=post'
 		let cmd = cmd . ' -F refer=' . enc_page
 		let cmd = cmd . ' -F pass=' . pass
 	else
 		let param = {}
-		let param['encode_hint'] = '¤×'
+		let param['encode_hint'] = 'ã·'
 		let param['plugin'] = 'attach'
 		let param['pcmd'] = 'post'
 		let param['refer'] = enc_page
@@ -931,8 +932,8 @@ function! pukiwiki#fileupload() range "{{{
         "Replace loose ampersands (as in DeAmperfy())...
         let curr_line   = getline(linenum)
 
-		" ¤¤¤¯¤Ä¤«¼«Ê¬¤Ç¥Á¥§¥Ã¥¯¤¹¤ë¤«.
-		" file ¤¬ÆÉ¤á¤ë¤«. directory ¤Ç¤Ê¤¤¤«.
+		" ã„ãã¤ã‹è‡ªåˆ†ã§ãƒã‚§ãƒƒã‚¯ã™ã‚‹ã‹.
+		" file ãŒèª­ã‚ã‚‹ã‹. directory ã§ãªã„ã‹.
 		if isdirectory(curr_line)
 			let msg = "\tdirectory"
 			call setline(linenum, curr_line . msg)
@@ -987,30 +988,30 @@ function! pukiwiki#jump_menu(pname)
 		return
 	endif
 
-	if a:pname == '¥È¥Ã¥×' || a:pname == 'top'
+	if a:pname == 'ãƒˆãƒƒãƒ—' || a:pname == 'top'
 		call s:PW_get_top_page(b:pukiwiki_site_name)
-	elseif a:pname == '¥ê¥í¡¼¥É' || a:pname == 'reload'
+	elseif a:pname == 'ãƒªãƒ­ãƒ¼ãƒ‰' || a:pname == 'reload'
 		if b:pukiwiki_page == 'FormattingRules' || b:pukiwiki_page == 'RecentChanges'
 			call s:PW_get_source_page(b:pukiwiki_site_name, b:pukiwiki_page)
 		else
 			call s:PW_get_edit_page(b:pukiwiki_site_name, b:pukiwiki_page, 0)
 		endif
-	elseif a:pname == '¿·µ¬' || a:pname == 'new'
-		let page = input('¿·µ¬¥Ú¡¼¥¸Ì¾: ')
+	elseif a:pname == 'æ–°è¦' || a:pname == 'new'
+		let page = input('æ–°è¦ãƒšãƒ¼ã‚¸å: ')
 		if page == ''
 			return
 		endif
 		call s:PW_get_edit_page(b:pukiwiki_site_name, page, 1)
-	elseif a:pname == '°ìÍ÷' || a:pname == 'list'
+	elseif a:pname == 'ä¸€è¦§' || a:pname == 'list'
 		call s:PW_show_page_list()
-	elseif a:pname == 'Ã±¸ì¸¡º÷' || a:pname == 'search'
+	elseif a:pname == 'å˜èªæ¤œç´¢' || a:pname == 'search'
 		call s:PW_show_search()
-	elseif a:pname == 'ÅºÉÕ' || a:pname == 'attach'
+	elseif a:pname == 'æ·»ä»˜' || a:pname == 'attach'
 		call s:PW_show_attach(b:pukiwiki_site_name, b:pukiwiki_page)
-	elseif a:pname == 'ºÇ½ª¹¹¿·' || a:pname == 'recent'
+	elseif a:pname == 'æœ€çµ‚æ›´æ–°' || a:pname == 'recent'
 		let page = 'RecentChanges'
 		call s:PW_get_source_page(b:pukiwiki_site_name, page)
-	elseif a:pname == '¥Ø¥ë¥×' || a:pname == 'help'
+	elseif a:pname == 'ãƒ˜ãƒ«ãƒ—' || a:pname == 'help'
 		let page = 'FormattingRules'
 		call s:PW_get_source_page(b:pukiwiki_site_name, page)
 	endif
@@ -1023,7 +1024,7 @@ function! pukiwiki#jump()  "{{{
 		return
 	endif
 	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header && line('.') < 4
-		" ¥Ø¥Ã¥ÀÉôÊ¬
+		" ãƒ˜ãƒƒãƒ€éƒ¨åˆ†
 		let cur = s:PW_matchstr_undercursor('\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]')
 	else
 		let cur = s:PW_matchstr_undercursor(s:bracket_name)
@@ -1039,7 +1040,7 @@ function! pukiwiki#jump()  "{{{
 	endif
 
 	if &modified
-		call s:VITAL.print_error('ÊÑ¹¹¤¬ÊİÂ¸¤µ¤ì¤Æ¤¤¤Ş¤»¤ó¡£')
+		call s:VITAL.print_error('å¤‰æ›´ãŒä¿å­˜ã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚')
 		return
 	endif
 
@@ -1048,8 +1049,8 @@ function! pukiwiki#jump()  "{{{
 		return pukiwiki#jump_menu(cur)
 	endif
 
-	" InterWikiName¤Î¥¨¥¤¥ê¥¢¥¹¤Ç¤Ï¤Ê¤¤¥¨¥¤¥ê¥¢¥¹
-	" ¤Ä¤Ş¤ê¡¢¤¿¤À¤Î¥¨¥¤¥ê¥¢¥¹
+	" InterWikiNameã®ã‚¨ã‚¤ãƒªã‚¢ã‚¹ã§ã¯ãªã„ã‚¨ã‚¤ãƒªã‚¢ã‚¹
+	" ã¤ã¾ã‚Šã€ãŸã ã®ã‚¨ã‚¤ãƒªã‚¢ã‚¹
 	if cur =~ '>'
 		let cur = substitute(cur, '^.*>\([^:]*\)$', '\1', '')
 	endif
@@ -1082,10 +1083,10 @@ endfunction "}}}
 " s:alice.vim {{{
 
 function! s:PW_urlencode(str) "{{{
-" 1) [._-] ¤Ï¤½¤Î¤Ş¤Ş
-" 2) [A-Za-z0-9] ¤â¤½¤Î¤Ş¤Ş¡£
+" 1) [._-] ã¯ãã®ã¾ã¾
+" 2) [A-Za-z0-9] ã‚‚ãã®ã¾ã¾ã€‚
 " 3) 0x20[ ] ==> 0x2B[+]
-"    °Ê¾å¤Î3¤Ä¤Îµ¬Â§¤ËÅö¤Æ¤Ï¤Ş¤é¤Ê¤¤Ê¸»ú¤Ï¡¢ Á´¤Æ¡¢ "%16¿Ê¿ôÉ½µ­"¤ËÊÑ´¹¤¹¤ë¡£
+"    ä»¥ä¸Šã®3ã¤ã®è¦å‰‡ã«å½“ã¦ã¯ã¾ã‚‰ãªã„æ–‡å­—ã¯ã€ å…¨ã¦ã€ "%16é€²æ•°è¡¨è¨˜"ã«å¤‰æ›ã™ã‚‹ã€‚
   " Return URL encoded string
 
   let result = ''
