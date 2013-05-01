@@ -21,13 +21,12 @@
 "     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 " }}}
 "=============================================================================
-scriptencoding utf-8
 
 let s:save_cpo = &cpo
 set cpo&vim
 
 " pukiwiki/history {{{
-" source を用意
+" source $B$rMQ0U(B
 let s:uni_puki = {
 	\ 'name': 'pukiwiki/history',
 	\ 'default_action' : 'open_page',
@@ -35,17 +34,17 @@ let s:uni_puki = {
 	\ 'alias_table' : { 'execute' : 'open_page' },
 	\ 'default_kind' : 'command',
 	\}
-" これだと動かない
+" $B$3$l$@$HF0$+$J$$(B
 "	\ 'alias_table' : { 'open' : 'open_page' },
 "	\ 'default_kind' : 'openable',
 
 function! s:uni_puki.gather_candidates(args, context) "{{{
-" 候補は history のリスト
-" history の要素はリストで [site, page, others]
+" $B8uJd$O(B history $B$N%j%9%H(B
+" history $B$NMWAG$O%j%9%H$G(B [site, page, others]
 	let history = pukiwiki#get_history_list()
 
-	" copy しないとリストが壊れる.
-	" 関数渡すために v:val も保存
+	" copy $B$7$J$$$H%j%9%H$,2u$l$k(B.
+	" $B4X?tEO$9$?$a$K(B v:val $B$bJ]B8(B
     return map(copy(history), "{
 	\ 'word' :  v:key . ' ' . v:val[0] . ' -- ' . v:val[1],
 	\ 'action__command' : 'PukiWiki ' . v:val[0] . ' ' . v:val[1],
@@ -55,7 +54,7 @@ function! s:uni_puki.gather_candidates(args, context) "{{{
 	\}")
 endfunction "}}}
 
-" open_page の action の定義
+" open_page $B$N(B action $B$NDj5A(B
 let s:uni_puki.action_table.open_page = {
 	\ 'description' : 'open the selected page',
 	\ 'is_quit' : 1,
@@ -63,8 +62,8 @@ let s:uni_puki.action_table.open_page = {
 	\}
 
 function! s:uni_puki.action_table.open_page.func(candidates) "{{{
-	" pukiwiki#PukiWiki() でページを開く
-	" ページ名に空白が含まれたときに今の action__command の設定では動作しない.
+	" pukiwiki#PukiWiki() $B$G%Z!<%8$r3+$/(B
+	" $B%Z!<%8L>$K6uGr$,4^$^$l$?$H$-$K:#$N(B action__command $B$N@_Dj$G$OF0:n$7$J$$(B.
 	let history = a:candidates.pukiwiki_history
 	call pukiwiki#PukiWiki(history[0], history[1])
 "	let command = a:candidates.action__command
@@ -72,7 +71,7 @@ function! s:uni_puki.action_table.open_page.func(candidates) "{{{
 "	execute type . comand
 endfunction "}}}
 
-" delete は複数選択可能 (is_selectable=1)
+" delete $B$OJ#?tA*Br2DG=(B (is_selectable=1)
 let s:uni_puki.action_table.delete = {
 	\ 'description' : 'delete the selected page from the history',
 	\ 'is_quit' : 0,
@@ -81,11 +80,11 @@ let s:uni_puki.action_table.delete = {
 	\}
 
 function! s:uni_puki.action_table.delete.func(candidates) "{{{
-	" is_selectable = 1 の場合は candidates がリストになるらしい.
+	" is_selectable = 1 $B$N>l9g$O(B candidates $B$,%j%9%H$K$J$k$i$7$$(B.
 	let idx = len(a:candidates) - 1
 	let history = pukiwiki#get_history_list()
 
-	" candidates は選択順序に依存せず、昇順でくると仮定.
+	" candidates $B$OA*Br=g=x$K0MB8$;$:!">:=g$G$/$k$H2>Dj(B.
 	while idx >= 0
 		let index = a:candidates[idx].pukiwiki_index
 		call remove(history, index)
@@ -104,8 +103,8 @@ let s:uni_menu = {
 \}
 
 function! s:uni_menu.gather_candidates(args, context) "{{{
-" 候補は pukiwiki のメニュー固定
-" [[トップ]] [[添付]] [[リロード]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]
+" $B8uJd$O(B pukiwiki $B$N%a%K%e!<8GDj(B
+" [[$B%H%C%W(B]] [[$BE:IU(B]] [[$B%j%m!<%I(B]] [[$B?75,(B]] [[$B0lMw(B]] [[$BC18l8!:w(B]] [[$B:G=*99?7(B]] [[$B%X%k%W(B]]
 	let cand = []
 	call add(cand, {
 	\	'word' : 'top page',
@@ -171,7 +170,7 @@ let s:uni_bm.action_table.delete = {
 	\}
 
 function! s:uni_bm.action_table.delete.func(candidates) "{{{
-	" is_selectable = 1 の場合は candidates がリストになるらしい.
+	" is_selectable = 1 $B$N>l9g$O(B candidates $B$,%j%9%H$K$J$k$i$7$$(B.
 
 	if !exists('g:pukiwiki_bookmark')
 		return
@@ -182,7 +181,7 @@ function! s:uni_bm.action_table.delete.func(candidates) "{{{
 		return
 	endif
 
-	" candidates は選択順序に依存せず、昇順でくると仮定.
+	" candidates $B$OA*Br=g=x$K0MB8$;$:!">:=g$G$/$k$H2>Dj(B.
 	let idx = len(a:candidates) - 1
 	while idx >= 0
 		let index = a:candidates[idx].pukiwiki_index
@@ -218,7 +217,7 @@ function! s:uni_bm.gather_candidates(args, context) "{{{
 		let page = substitute(v, '^[^,]*,', '', '')
 		let l = {}
 		let l.word = page . ' @ ' . site
-		" スペースをエスケープする
+		" $B%9%Z!<%9$r%(%9%1!<%W$9$k(B
 		let l.action__command= 'PukiWiki ' . site . ' ' . escape(page, ' ')
 		let l.source = 'pukiwiki/bookmark'
 		let l.pukiwiki_index = i + 1
@@ -232,8 +231,8 @@ endfunction
 " }}}
 
 function! unite#sources#pukiwiki#define() "{{{
-	" 登録. g:pukiwiki_config が定義されていない場合には
-	" 動作していないはずなので登録しない
+	" $BEPO?(B. g:pukiwiki_config $B$,Dj5A$5$l$F$$$J$$>l9g$K$O(B
+	" $BF0:n$7$F$$$J$$$O$:$J$N$GEPO?$7$J$$(B
 	if !exists('g:pukiwiki_config')
 		return {}
 	endif
