@@ -1,6 +1,6 @@
 *pukiwiki.txt*	A vim client for the PukiWiki 1.4.7 for Japanese
 
-Version: 0.14
+Version: 0.15
 Author : syngan
 License: MIT license  {{{
     Permission is hereby granted, free of charge, to any person obtaining
@@ -123,10 +123,21 @@ Example >
 コマンド					*pukiwiki-commands*
 
 :PukiWiki [{site-name} [{page-name}]]
+	PukiWiki サイトを開きます。
 
 :Unite pukiwiki/history
+	履歴を開きます。
+	execute アクションでサイトを開く
+	delete アクションで履歴を消去
 
 :Unite pukiwiki/menu
+	メニューを開きます。
+	execute アクションでサイトを開く
+
+:Unite pukiwiki/bookmark
+	ブックマークを開きます。
+	execute アクションでサイトを開く
+	delete アクションでブックマークを消去する
 
 :Unite outline
 
@@ -137,16 +148,29 @@ pukiwiki#PukiWiki([{site-name} [, {page-name}]])
 			|:PukiWiki| の関数版です。
 
 pukiwiki#get_back_page() 
+			戻る
 
 pukiwiki#fileupload() range
+			選択された行にあるファイルを添付する
 
 pukiwiki#jump() 
+			カーソル位置にあるページを開きます。
 
 pukiwiki#jump_menu(menu) 
+			メニュー
+			以下のうちいずれかを指定します。
+			"top"		トップページ
 
 pukiwiki#move_next_bracket()
 
 pukiwiki#move_prev_bracket()
+
+pukiwiki#bookmark()
+			開いているページをブックマークに登録します。
+			g:pukiwiki_bookmark が指定されている必要があります。
+			ブックマーク以外のファイルを指定した場合にはエラーになります。
+			異なる文字コードを扱う PukiWiki
+			サイトを複数扱う場合での動作確認はしていません。
 
 ==============================================================================
 カスタマイズ					*pukiwiki-customizing*
@@ -159,6 +183,9 @@ g:pukiwiki_timestamp_update			*g:pukiwiki_timestamp_update*
 
 g:pukiwiki_config				*g:pukiwiki_config*
 	アクセスする PukiWiki サイトに関する情報を設定します。
+
+g:pukiwiki_bookmark				g:pukiwiki_bookmark
+	ブックマークを保存するファイル名を設定します。
 
 g:pukiwiki_show_header				g:pukiwiki_show_header
 	PukiWiki のヘッダ部を表示する場合に 1 を指定します。デフォルトは 0 （
@@ -181,6 +208,12 @@ g:pukiwiki_no_default_key_mappings
 
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
+
+2013-05-01 syngan  v0.15
+
+	* ブックマーク機能を追加
+	  - unite-pukiwiki/bookmark
+	  - pukiwiki#bookmark()
 
 2013-04-30 syngan  v0.14
 

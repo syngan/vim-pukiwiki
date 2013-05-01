@@ -25,8 +25,6 @@
 let s:save_cpo = &cpo
 set cpo&vim
 
-
-
 " option {{{
 
 scriptencoding euc-jp
@@ -71,7 +69,7 @@ let s:HTTP = s:VITAL.import('Web.Http')
 " debug {{{
 function! pukiwiki#buf_vars() "{{{
 	" デバッグ用
-	if exists('b:pukiwiki_sitename')
+	if exists('b:pukiwiki_site_name')
 		call s:PW_echokv('site_name' , b:pukiwiki_site_name)
 		let sitedict = g:pukiwiki_config[a:site_name]
 		call s:PW_echokv('url' , sitedict['url'])
@@ -664,6 +662,30 @@ function! pukiwiki#get_history_list() "{{{
 	" protected でないと困るのだが.
 	return s:pukiwiki_history
 endfunction "}}}
+
+function! pukiwiki#bookmark()
+	" 現在のページをブックマークする
+	"
+	if !exists('b:pukiwiki_site_name')
+		return 
+	endif
+	if !exists('g:pukiwiki_bookmark')
+		return
+	endif
+	if filereadable(g:pukiwiki_bookmark)
+		let lines = readfile(g:pukiwiki_bookmark)
+		if lines[0] != "pukiwiki.bookmark.v1."
+			" 上書きしていいものか...
+			call s:VITAL.print_error('指定されたファイルに誤りがあります')
+			return 
+		endif
+	else
+		let lines = ["pukiwiki.bookmark.v1."]
+	endif
+
+	call add(lines, b:pukiwiki_site_name . "," . b:pukiwiki_page)
+	call writefile(lines, g:pukiwiki_bookmark)
+endfunction
 
 " page open s:[top/attach/list/search] {{{
 function! s:PW_get_top_page(site_name) "{{{

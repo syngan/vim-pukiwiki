@@ -74,8 +74,9 @@ endfunction "}}}
 " delete は複数選択可能 (is_selectable=1)
 let s:uni_puki.action_table.delete = {
 	\ 'description' : 'delete the selected page from the history',
-	\ 'is_quit' : 1,
+	\ 'is_quit' : 0,
 	\ 'is_selectable' : 1,
+	\ 'is_invalidate_cache' : 1,
 	\}
 
 function! s:uni_puki.action_table.delete.func(candidates) "{{{
@@ -150,13 +151,92 @@ endfunction
 
 " }}}
 
+" }}}
+
+" pukiwiki/bookmark {{{
+let s:uni_bm = {
+	\ 'name': 'pukiwiki/bookmark',
+	\ 'description': 'bookmark of PukiWiki',
+	\ 'default_action' : 'execute',
+	\ 'action_table' : {},
+	\ 'default_kind' : 'command',
+\}
+
+let s:uni_bm.action_table.delete = {
+	\ 'description' : 'delete the selected page from the bookmark',
+	\ 'is_quit' : 0,
+	\ 'is_selectable' : 1,
+	\ 'is_invalidate_cache' : 1,
+	\}
+
+function! s:uni_bm.action_table.delete.func(candidates) "{{{
+	" is_selectable = 1 の場合は candidates がリストになるらしい.
+
+	if !exists('g:pukiwiki_bookmark')
+		return
+	endif
+
+	let lines = readfile(g:pukiwiki_bookmark)
+	if lines[0] != "pukiwiki.bookmark.v1."
+		return
+	endif
+
+	" candidates は選択順序に依存せず、昇順でくると仮定.
+	let idx = len(a:candidates) - 1
+	while idx >= 0
+		let index = a:candidates[idx].pukiwiki_index
+		call remove(lines, index)
+		let idx = idx - 1
+	 endwhile
+
+	 call writefile(lines, g:pukiwiki_bookmark)
+endfunction "}}}
+
+
+function! s:uni_bm.gather_candidates(args, context) "{{{
+	if !exists('g:pukiwiki_bookmark')
+		return []
+	endif
+
+	if !filereadable(g:pukiwiki_bookmark)
+		return []
+	endif
+
+	let lines = readfile(g:pukiwiki_bookmark)
+	if len(lines) < 2
+		return []
+	endif
+	if lines[0] != "pukiwiki.bookmark.v1."
+		return []
+	endif
+
+	let lines = lines[1:]
+	for i in range(0, len(lines)-1)
+		let v = lines[i]
+		let site = substitute(v, ',.*', '', '')
+		let page = substitute(v, '^[^,]*,', '', '')
+		let l = {}
+		let l.word = page . ' @ ' . site
+		" スペースをエスケープする
+		let l.action__command= 'PukiWiki ' . site . ' ' . escape(page, ' ')
+		let l.source = 'pukiwiki/bookmark'
+		let l.pukiwiki_index = i + 1
+		let lines[i] = l
+	endfor
+
+	return lines
+endfunction
+" }}}
+
+" }}}
+
 function! unite#sources#pukiwiki#define() "{{{
 	" 登録. g:pukiwiki_config が定義されていない場合には
 	" 動作していないはずなので登録しない
 	if !exists('g:pukiwiki_config')
 		return {}
 	endif
-	return [s:uni_puki, s:uni_menu]
+	return [s:uni_puki, s:uni_menu, s:uni_bm]
 endfunction "}}}
 
 let &cpo = s:save_cpo
