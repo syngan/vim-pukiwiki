@@ -71,7 +71,7 @@ function! pukiwiki#buf_vars() "{{{
 	" デバッグ用
 	if exists('b:pukiwiki_site_name')
 		call s:PW_echokv('site_name' , b:pukiwiki_site_name)
-		let sitedict = g:pukiwiki_config[a:site_name]
+		let sitedict = g:pukiwiki_config[b:pukiwiki_site_name]
 		call s:PW_echokv('url' , sitedict['url'])
 		call s:PW_echokv('top' , sitedict['top'])
 		call s:PW_echokv('enc' , sitedict['encode'])
@@ -360,7 +360,8 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 	silent! execute "normal! i" . msg
 
 
-	let b:pukiwiki_digest    = digest
+	let b:pukiwiki_digest = digest
+	let b:pukiwiki_page   = a:page
 
 	let status_line = s:PW_set_statusline(b:pukiwiki_site_name, b:pukiwiki_page)
 
@@ -380,6 +381,9 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 		call s:PW_endpage(a:site_name, a:page, 0)
 	endif
 	if a:pwcmd == 'source'
+		augroup PukiWikiEdit
+			execute "autocmd!"
+		augroup END
 		call s:PW_endpage(a:site_name, a:page, 1)
 	endif
 
@@ -514,6 +518,7 @@ function! s:PW_write_vital() "{{{
 
 endfunction "}}}
 
+" Vital.vim 使わないバージョン
 function! s:PW_write_org() "{{{
 
 	if ! &modified
@@ -533,7 +538,7 @@ function! s:PW_write_org() "{{{
 	elseif g:pukiwiki_timestamp_update == 0
 		let notimestamp = 'true'
 	else
-		let last_confirm = input('タイムスタンプを変更しない。(y/N): ')
+		let last_confirm = input('タイムスタンプを変更する？(Y/n): ')
 		if last_confirm =~ '^\cy'
 			let notimestamp = 'true'
 		endif
@@ -663,7 +668,7 @@ function! pukiwiki#get_history_list() "{{{
 	return s:pukiwiki_history
 endfunction "}}}
 
-function! pukiwiki#bookmark()
+function! pukiwiki#bookmark() " {{{
 	" 現在のページをブックマークする
 	"
 	if !exists('b:pukiwiki_site_name')
@@ -685,7 +690,7 @@ function! pukiwiki#bookmark()
 
 	call add(lines, b:pukiwiki_site_name . "," . b:pukiwiki_page)
 	call writefile(lines, g:pukiwiki_bookmark)
-endfunction
+endfunction " }}}
 
 " page open s:[top/attach/list/search] {{{
 function! s:PW_get_top_page(site_name) "{{{

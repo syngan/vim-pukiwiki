@@ -60,7 +60,7 @@ runtimepath が指定されているディレクトリ（通常 ~/.vim か $HOME/vimfiles) 配下
 また，下記のプラグインの導入により利便性があがります。
 
 - unite.vim
--- メニューや履歴の表示
+-- メニューや履歴、ブックマークの表示
 
 - unite-outline.vim
 -- アウトラインの表示
@@ -126,7 +126,7 @@ Example >
 	PukiWiki サイトを開きます。
 
 :Unite pukiwiki/history
-	履歴を開きます。
+	履歴を開きます。メモリ上にある履歴のみを扱います。
 	execute アクションでサイトを開く
 	delete アクションで履歴を消去
 
@@ -136,6 +136,7 @@ Example >
 
 :Unite pukiwiki/bookmark
 	ブックマークを開きます。
+	複数の vim で同時に編集した場合の動作は保証していません.
 	execute アクションでサイトを開く
 	delete アクションでブックマークを消去する
 
@@ -159,7 +160,13 @@ pukiwiki#jump()
 pukiwiki#jump_menu(menu) 
 			メニュー
 			以下のうちいずれかを指定します。
-			"top"		トップページ
+			"top"		トップページを開く
+			"new"		新規ページを作成する
+			"list"		ページ一覧を開く
+			"search"	検索する
+			"attach"	添付ファイル一覧を表示する
+			"recent"	最終更新を表示する
+			"help"		整形ルールのヘルプを表示する
 
 pukiwiki#move_next_bracket()
 
@@ -184,10 +191,10 @@ g:pukiwiki_timestamp_update			*g:pukiwiki_timestamp_update*
 g:pukiwiki_config				*g:pukiwiki_config*
 	アクセスする PukiWiki サイトに関する情報を設定します。
 
-g:pukiwiki_bookmark				g:pukiwiki_bookmark
+g:pukiwiki_bookmark				*g:pukiwiki_bookmark*
 	ブックマークを保存するファイル名を設定します。
 
-g:pukiwiki_show_header				g:pukiwiki_show_header
+g:pukiwiki_show_header				*g:pukiwiki_show_header*
 	PukiWiki のヘッダ部を表示する場合に 1 を指定します。デフォルトは 0 （
 	ヘッダ部を表示しない）です。
 	本オプションで 1 を指定時にはファイルの最初の 3 行は編集しないでください。
