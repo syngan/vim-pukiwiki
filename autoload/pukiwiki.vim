@@ -22,6 +22,8 @@
 " }}}
 "=============================================================================
 
+scriptencoding euc-jp
+
 let s:save_cpo = &cpo
 set cpo&vim
 
@@ -587,7 +589,7 @@ function! s:PW_write_org() "{{{
 			echo "digest=[" . b:pukiwiki_digest . "] cmd=[" . cmd . "]"
 			echo "&enc=" . &enc . ", enc=" . enc . ", page=" . b:pukiwiki_page
 			echo "s:VITAL.iconv=" . Byte2hex(s:VITAL.iconv(b:pukiwiki_page, &enc, enc))
-			echo "urlen=" . s:PW_urlencode( s:VITAL.iconv( b:pukiwiki_page, &enc, enc ) )
+			echo "urlen=" . s:PW_urlencode(s:VITAL.iconv( b:pukiwiki_page, &enc, enc))
 			call s:VITAL.print_error('更新の衝突が発生したか、その他のエラーで書き込めませんでした。' . result)
 		else
 			call s:VITAL.print_error('更新の衝突が発生したか、その他のエラーで書き込めませんでした。')
@@ -601,6 +603,8 @@ function! s:PW_write_org() "{{{
 
 	" 元いた行に移動
 	execute "normal! " . lineno . "G"
+
+	" 理解不能. echo だと hit-enter がでる.
 	echon 'update ' . b:pukiwiki_page . ' @ ' . b:pukiwiki_site_name
 
 endfunction "}}}

@@ -1,6 +1,6 @@
 *pukiwiki.txt*	A vim client for the PukiWiki 1.4.7 for Japanese
 
-Version: 0.15
+Version: 0.16
 Author : syngan
 License: MIT license  {{{
     Permission is hereby granted, free of charge, to any person obtaining
@@ -139,6 +139,8 @@ Example >
 	複数の vim で同時に編集した場合の動作は保証していません.
 	execute アクションでサイトを開く
 	delete アクションでブックマークを消去する
+	moveup アクションで選択されたブックマークを一つ上へ移動する
+	movedown アクションで選択されたブックマークを一つ下へ移動する
 
 :Unite outline
 
@@ -215,6 +217,11 @@ g:pukiwiki_no_default_key_mappings
 
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
+
+2013-05-01 syngan  v0.16
+
+	* ブックマークの編集機能を追加
+	  - unite-pukiwiki/bookmark moveup/movedown
 
 2013-05-01 syngan  v0.15
 

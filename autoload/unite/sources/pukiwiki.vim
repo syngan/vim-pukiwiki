@@ -169,6 +169,20 @@ let s:uni_bm.action_table.delete = {
 	\ 'is_invalidate_cache' : 1,
 	\}
 
+let s:uni_bm.action_table.moveup = {
+	\ 'description' : 'move up the selected page',
+	\ 'is_quit' : 0,
+	\ 'is_selectable' : 0,
+	\ 'is_invalidate_cache' : 1,
+	\}
+
+let s:uni_bm.action_table.movedown = {
+	\ 'description' : 'move down the selected page',
+	\ 'is_quit' : 0,
+	\ 'is_selectable' : 0,
+	\ 'is_invalidate_cache' : 1,
+	\}
+
 function! s:uni_bm.action_table.delete.func(candidates) "{{{
 	" is_selectable = 1 の場合は candidates がリストになるらしい.
 
@@ -192,6 +206,34 @@ function! s:uni_bm.action_table.delete.func(candidates) "{{{
 	 call writefile(lines, g:pukiwiki_bookmark)
 endfunction "}}}
 
+function! s:movecand(from, to) "{{{
+	if !exists('g:pukiwiki_bookmark')
+		return
+	endif
+
+	let lines = readfile(g:pukiwiki_bookmark)
+	if lines[0] != "pukiwiki.bookmark.v1."
+		return
+	endif
+
+	" candidates は選択順序に依存せず、昇順でくると仮定.
+	let v = remove(lines, a:from)
+	if a:to >= 0
+		call insert(lines, v, a:to)
+	endif
+
+	call writefile(lines, g:pukiwiki_bookmark)
+endfunction "}}}
+
+function! s:uni_bm.action_table.moveup.func(candidates) "{{{
+	let index = a:candidates.pukiwiki_index
+	call s:movecand(index, index-1)
+endfunction "}}}
+
+function! s:uni_bm.action_table.movedown.func(candidates) "{{{
+	let index = a:candidates.pukiwiki_index
+	call s:movecand(index+1, index)
+endfunction "}}}
 
 function! s:uni_bm.gather_candidates(args, context) "{{{
 	if !exists('g:pukiwiki_bookmark')
@@ -227,7 +269,6 @@ function! s:uni_bm.gather_candidates(args, context) "{{{
 	return lines
 endfunction
 " }}}
-
 " }}}
 
 function! unite#sources#pukiwiki#define() "{{{

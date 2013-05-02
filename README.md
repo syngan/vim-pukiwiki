@@ -31,7 +31,7 @@ Example >
 
 として起動し、|g:pukiwiki_config| で指定したサイト名を入力するか、
 
-:PukiWiki "サイト名" 
+:PukiWiki "サイト名"
 (:PukiWiki LocalWiki)
 
 などとして起動します。
@@ -52,7 +52,9 @@ TODO:
   - 凍結/凍結解除機能
   - ドキュメント
   - vitalize (network 周り)
-  - ブックマークの編集
+  - 履歴をファイルに保存する. 不要か.
+  - 文字コードを utf-8 にしたい.
+  -- README のみ utf-8 で不統一
 
 BUG:
   - S-TAB のキーマップが動作しない.
@@ -60,7 +62,7 @@ BUG:
 
 オリジナル
   http://vimwiki.net/?scripts%2F10
-  20080727版 
+  20080727版
 
 改変版
   - d.hatena.ne.jp/ampmmn/20090401/1238536800
