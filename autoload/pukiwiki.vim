@@ -256,8 +256,8 @@ function! s:PW_endpage(site_name, page, readonly) "{{{
 endfunction "}}}
 
 function! s:PW_set_statusline(site_name, page) "{{{
-"	let status_line = a:page . ' ' . a:site_name
-	let status_line = a:page
+	let status_line = a:page . ' ' . a:site_name
+"	let status_line = a:page
 	let status_line = escape(status_line, ' ')
 	silent! execute ":f " . status_line
 	return status_line
@@ -474,48 +474,6 @@ function! s:PW_write_vital() "{{{
 
 	return 0
 
-	" 成功するとPukiWikiがlocationヘッダーを吐くのでresultが作成されない。
-	" 作成されている場合には何らかのエラーをHTMLで吐き出している。
-		" 失敗
-		execute ":undo"
-		execute ":set nomodified"
-		execute ":setlocal nomodifiable"
-		execute ":setlocal readonly"
-		let site_name = b:pukiwiki_site_name
-		let page      = b:pukiwiki_page
-
-		" 書き込みしようとしたバッファの名前の前に'ローカル'を付けて
-		" 現在のサーバー上の内容を取得して'diffthis'を実行する。
-		call s:PW_set_statusline(b:pukiwiki_site_name, 'ローカル ' . b:pukiwiki_page)
-		execute ":diffthis"
-		execute ":new"
-
-		call s:PW_get_edit_page(site_name, page, 0)
-		execute ":diffthis"
-		if g:pukiwiki_debug
-			echo "digest=[" . b:pukiwiki_digest . "] cmd=[" . cmd . "]"
-			echo "&enc=" . &enc . ", enc=" . enc . ", page=" . b:pukiwiki_page
-			echo "s:VITAL.iconv=" . Byte2hex(s:VITAL.iconv(b:pukiwiki_page, &enc, enc))
-			echo "urlen=" . s:PW_urlencode( s:VITAL.iconv( b:pukiwiki_page, &enc, enc ) )
-			call s:VITAL.print_error('更新の衝突が発生したか、その他のエラーで書き込めませんでした。' . result)
-		else
-			call s:VITAL.print_error('更新の衝突が発生したか、その他のエラーで書き込めませんでした。')
-			call delete(result)
-		endif
-		return 0
-	endif
-
-	call s:PW_get_edit_page(b:pukiwiki_site_name, b:pukiwiki_page, 0)
-
-	" 元いた行に移動
-	execute "normal! " . lineno . "G"
-"	silent! echo 'update ' . b:pukiwiki_page
-	if g:pukiwiki_debug
-		" 毎回うっとーしいので debug 用に
-		call echo('更新成功！')
-	endif
-
-
 endfunction "}}}
 
 " Vital.vim 使わないバージョン
@@ -640,14 +598,10 @@ function! s:PW_write_org() "{{{
 
 	call s:PW_get_edit_page(b:pukiwiki_site_name, b:pukiwiki_page, 0)
 
+
 	" 元いた行に移動
 	execute "normal! " . lineno . "G"
-"	silent! echo 'update ' . b:pukiwiki_page
-	if g:pukiwiki_debug
-		" 毎回うっとーしいので debug 用に
-		call echo('更新成功！')
-	endif
-
+	echon 'update ' . b:pukiwiki_page . ' @ ' . b:pukiwiki_site_name
 
 endfunction "}}}
 
@@ -672,17 +626,16 @@ function! pukiwiki#bookmark() " {{{
 	" 現在のページをブックマークする
 	"
 	if !exists('b:pukiwiki_site_name')
-		return 
+		throw "PukiWiki が実行されていません"
 	endif
 	if !exists('g:pukiwiki_bookmark')
-		return
+		throw "g:pukiwiki_bookmark が指定されていません"
 	endif
 	if filereadable(g:pukiwiki_bookmark)
 		let lines = readfile(g:pukiwiki_bookmark)
 		if lines[0] != "pukiwiki.bookmark.v1."
 			" 上書きしていいものか...
-			call s:VITAL.print_error('指定されたファイルに誤りがあります')
-			return 
+			throw "指定されたファイルに誤りがあります"
 		endif
 	else
 		let lines = ["pukiwiki.bookmark.v1."]
@@ -690,6 +643,7 @@ function! pukiwiki#bookmark() " {{{
 
 	call add(lines, b:pukiwiki_site_name . "," . b:pukiwiki_page)
 	call writefile(lines, g:pukiwiki_bookmark)
+	echo "success"
 endfunction " }}}
 
 " page open s:[top/attach/list/search] {{{
