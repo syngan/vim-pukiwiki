@@ -377,15 +377,14 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 
 	if a:pwcmd == 'edit'
 		augroup PukiWikiEdit
-			execute "autocmd!"
-			execute "autocmd! BufWriteCmd " . status_line . " call s:PW_write()"
+			execute "autocmd BufWriteCmd " . status_line . " call s:PW_write()"
 		augroup END
 		call s:PW_endpage(a:site_name, a:page, 0)
 	endif
 	if a:pwcmd == 'source'
-		augroup PukiWikiEdit
-			execute "autocmd!"
-		augroup END
+"		augroup PukiWikiEdit
+"			execute "autocmd!"
+"		augroup END
 		call s:PW_endpage(a:site_name, a:page, 1)
 	endif
 

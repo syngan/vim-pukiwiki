@@ -1,6 +1,6 @@
 *pukiwiki.txt*	A vim client for the PukiWiki 1.4.7 for Japanese
 
-Version: 0.16
+Version: 0.17
 Author : syngan
 License: MIT license  {{{
     Permission is hereby granted, free of charge, to any person obtaining
@@ -217,6 +217,12 @@ g:pukiwiki_no_default_key_mappings
 
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
+
+2013-05-06 syngan  v0.17
+
+	* ウィンドウ分割時に pukiwiki が更新されなくなるバグの修正
+	  - autocmd の消去部分を削除.
+	  - 現状は常に追加されるので不要な autocmd が残る
 
 2013-05-01 syngan  v0.16
 
