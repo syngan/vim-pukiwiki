@@ -188,16 +188,25 @@ function! s:PW_init_check() "{{{
 endfunction "}}}
 
 function! s:PW_request(funcname, param, page, method) " {{{
+" Web サーバにリクエストを送り、結果を受け取る.
+" @return success をキーに持つ辞書
 	let sitedict = g:pukiwiki_config[b:pukiwiki_site_name]
 	let url = sitedict['url']
 	let enc = sitedict['encode']
 
 	let settings = {}
+"	let settings['client'] = 'wget'
 	let settings['url'] = url
 	let settings['method'] = a:method
+	let settings['maxRedirect'] = 0
 "	let a:param['page'] = s:PW_urlencode(enc_page)
+	let pm = a:param
 	if a:page != ''
-		let a:param['page'] = s:VITAL.iconv(a:page, &enc, enc)
+		if s:VITAL.is_dict(a:param) 
+			let pm['page'] = s:VITAL.iconv(a:page, &enc, enc)
+		else
+			let pm .= '&page=' . s:VITAL.iconv(a:page, &enc, enc)
+		endif
 	endif
 	if a:method == 'POST'
 		let settings['data'] = a:param
@@ -210,8 +219,17 @@ function! s:PW_request(funcname, param, page, method) " {{{
 		call s:VITAL.print_error(a:funcname . '() failed: ' . v:exception)
 		return {'success' : 0}
 	endtry
+	if !has_key(retdic, 'success')
+		call s:VITAL.print_error(a:funcname . '() failed: ')
+		return {'success' : 0}
+	endif
 	if !retdic['success']
-		call s:VITAL.print_error(a:funcname . '() failed: ' . retdic['status'] . ' ' . retdic['statusText'])
+		if retdic['status'] == 302
+			let retdic['success'] = 1
+		else
+			call s:VITAL.print_error(a:funcname . '() failed: ' . retdic['status'] . ' ' . retdic['statusText'])
+			return retdic
+		endif
 	endif
 	let retdic['content'] = s:VITAL.iconv(retdic['content'], enc, &enc)
 	return retdic
@@ -257,10 +275,15 @@ function! s:PW_endpage(site_name, page, readonly) "{{{
 	silent! execute ":redraws!"
 endfunction "}}}
 
-function! s:PW_set_statusline(site_name, page) "{{{
+function! s:PW_gen_statusline_str(site_name, page) "{{{
 	let status_line = a:page . ' ' . a:site_name
 "	let status_line = a:page
 	let status_line = escape(status_line, ' ')
+	return status_line
+endfunction "}}}
+
+function! s:PW_set_statusline(site_name, page) "{{{
+	let status_line = s:PW_gen_statusline_str(a:site_name, a:page)
 	silent! execute ":f " . status_line
 	return status_line
 endfunction "}}}
@@ -395,90 +418,6 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 endfunction "}}}
 
 function! s:PW_write() "{{{
-	return s:PW_write_org()
-endfunction "}}}
-
-function! s:PW_write_vital() "{{{
-
-	if ! &modified
-		return
-	endif
-
-	let sitedict = g:pukiwiki_config[b:pukiwiki_site_name]
-	let url = sitedict['url']
-	let enc = sitedict['encode']
-	let top = sitedict['top']
-
-	let notimestamp = ''
-	let lineno = line('.')
-
-	if g:pukiwiki_timestamp_update == 1
-	  let notimestamp = ''
-	elseif g:pukiwiki_timestamp_update == 0
-		let notimestamp = 'true'
-	else
-		let last_confirm = input('タイムスタンプを変更する？(Y/n): ')
-		if last_confirm =~ '^\cy'
-			let notimestamp = 'true'
-		endif
-	endif
-
-	" ヘッダの削除. ユーザがヘッダを修正すると
-	" 書き込みが壊れるだめな仕様
-	" @REG
-	let regbak = @"
-	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header
-		silent! execute "normal! gg3D"
-	else
-		silent! execute "normal! gg"
-	endif
-	let @" = regbak
-
-	" urlencode
-	let body = ''
-	let cl = 1
-	while cl <= line('$')
-		let line = getline(cl)
-		if cl == line('$')
-			let body .= line
-		else
-			let body .= line . "\n"
-		endif
-		let cl = cl + 1
-	endwhile
-
-	let param = {}
-	let param['encode_hint'] = 'ぷ'
-	let param['cmd'] = 'edit'
-	let param['page'] = s:VITAL.iconv(b:pukiwiki_page, &enc, enc)
-	let param['digest'] = b:pukiwiki_digest
-	let param['write'] = s:VITAL.iconv('ページの更新', &enc, enc)
-	let param["notimestamp"] = notimestamp
-	let param["original"] = ''
-	let param["msg"] = body
-
-	" ここまででエラーが発生した状態でサーバと通信されてもこまる.
-	" try/catch すべきか.
-	let retdic = s:PW_request('write', param, b:pukiwiki_page, 'POST')
-	let g:hoge2 = retdic
-	if !retdic['success']
-		return 0
-	endif
-
-	body = retdic['content']
-	if body =~ '<title>\_.\{-}を削除しました\_.\{-}<\/title>'
-		let page = b:pukiwiki_page
-		call s:PW_get_edit_page(b:pukiwiki_site_name, top, 0)
-		echo page . ' を削除しました'
-		return
-	endif
-
-	return 0
-
-endfunction "}}}
-
-" Vital.vim 使わないバージョン
-function! s:PW_write_org() "{{{
 
 	if ! &modified
 		return
@@ -517,22 +456,91 @@ function! s:PW_write_org() "{{{
 
 	" urlencode
 	let body = []
-	let cl = 1
 
+	let cl = 1
 	while cl <= line('$')
 		let line = getline(cl)
 		let line = s:VITAL.iconv(line, &enc, enc)
 		let line = s:PW_urlencode(line)
-		if cl < line('$')
-			call add(body, line . '%0A')
-		else
-			call add(body, line)
-		endif
+		call add(body, line)
 		let cl = cl + 1
 	endwhile
 
 	" urlencode した本文前にその他の情報設定
-	let cmd = "encode_hint=" . s:PW_urlencode( s:VITAL.iconv( 'ぷ', &enc, enc ) )
+	if 1
+		let param = {}
+		let cmd = "encode_hint=" . s:PW_urlencode(s:VITAL.iconv('ぷ', &enc, enc))
+		let param['cmd'] = 'edit'
+		let param['page'] = s:PW_urlencode(s:VITAL.iconv(b:pukiwiki_page, &enc, enc))
+		let param['digest'] = b:pukiwiki_digest
+		let param['write'] = s:VITAL.iconv('ページの更新', &enc, enc)
+		let param["notimestamp"] = notimestamp
+		let param["original"] = ''
+		let param["msg"] = join(body, '%0A')
+		let paramstr = s:PW_joindictstr(param)
+		unlet param
+
+		let retdic = s:PW_request('write', paramstr, b:pukiwiki_page, 'POST')
+		unlet paramstr
+		if !retdic['success']
+			return 0
+		endif
+
+		" 成功するとPukiWikiがlocationヘッダーを吐く
+		if retdic['status'] == 302
+			call s:PW_get_edit_page(b:pukiwiki_site_name, b:pukiwiki_page, 0)
+
+			" 元いた行に移動
+			execute "normal! " . lineno . "G"
+
+			" 理解不能. echo だと hit-enter がでる.
+			echon 'update ' . b:pukiwiki_page . ' @ ' . b:pukiwiki_site_name
+
+			return 0
+		endif
+
+		" pukiwiki 上で何かのイベントが起こった.
+		"  - ページの削除
+		"  - 更新の衝突
+		let bodyr = retdic['content']
+
+		" もう少しまともな判定方法はないのか?
+		if bodyr =~ '<title>\_.\{-}を削除しました\_.\{-}<\/title>'
+			let page = b:pukiwiki_page
+			call s:PW_get_edit_page(b:pukiwiki_site_name, top, 0)
+			echon page . ' を削除しました'
+			return
+		endif
+
+		" 失敗
+		execute ":undo"
+		execute ":set nomodified"
+		execute ":setlocal nomodifiable"
+		execute ":setlocal readonly"
+		let site_name = b:pukiwiki_site_name
+		let page      = b:pukiwiki_page
+
+		" 書き込みしようとしたバッファの名前の前に'ローカル'を付けて
+		" 現在のサーバー上の内容を取得して'diffthis'を実行する。
+		call s:PW_set_statusline(b:pukiwiki_site_name, 'ローカル ' . b:pukiwiki_page)
+		execute ":diffthis"
+		execute ":new"
+
+		call s:PW_get_edit_page(site_name, page, 0)
+		execute ":diffthis"
+		if g:pukiwiki_debug
+			echo "digest=[" . b:pukiwiki_digest . "] cmd=[" . cmd . "]"
+			echo "&enc=" . &enc . ", enc=" . enc . ", page=" . b:pukiwiki_page
+			echo "s:VITAL.iconv=" . Byte2hex(s:VITAL.iconv(b:pukiwiki_page, &enc, enc))
+			echo "urlen=" . s:PW_urlencode(s:VITAL.iconv( b:pukiwiki_page, &enc, enc))
+			call s:VITAL.print_error('更新の衝突が発生したか、その他のエラーで書き込めませんでした。')
+		else
+			call s:VITAL.print_error('更新の衝突が発生したか、その他のエラーで書き込めませんでした。')
+		endif
+		return 0
+	endif
+
+	let cmd = "encode_hint=" . s:PW_urlencode(s:VITAL.iconv('ぷ', &enc, enc))
 	let cmd = cmd . "&cmd=edit&page=" . s:PW_urlencode( s:VITAL.iconv( b:pukiwiki_page, &enc, enc ) )
 	let cmd = cmd . "&digest=" . b:pukiwiki_digest . "&write=" . s:PW_urlencode( s:VITAL.iconv( 'ページの更新', &enc, enc ) )
 	let cmd = cmd . "&notimestamp=" . notimestamp
@@ -544,7 +552,7 @@ function! s:PW_write_org() "{{{
 	call writefile(body, post, "b")
 
 	" ここまででエラーが発生した状態でサーバと通信されてもこまる.
-	" try/catch すべきか.
+	" try/catch すべきか.  write_org
 
 	let result = tempname()
 	let cmd = "curl -s -o " . result . " -d @" . post . ' "' . url . '"'
@@ -605,7 +613,6 @@ function! s:PW_write_org() "{{{
 
 	" 理解不能. echo だと hit-enter がでる.
 	echon 'update ' . b:pukiwiki_page . ' @ ' . b:pukiwiki_site_name
-
 endfunction "}}}
 
 function! pukiwiki#get_back_page() "{{{
@@ -873,6 +880,7 @@ function! pukiwiki#fileupload() range "{{{
 	let enc_page = s:VITAL.iconv(b:pukiwiki_page, &enc, enc)
 
 	if 1
+		" fileupload
 		let enc_page = s:PW_urlencode(enc_page)
 		let tmpfile = tempname()
 		let cmd = 'curl -s -o ' . tmpfile . ' -F encode_hint=' . s:PW_urlencode('ぷ')
@@ -892,6 +900,9 @@ function! pukiwiki#fileupload() range "{{{
     for linenum in range(a:firstline, a:lastline)
         "Replace loose ampersands (as in DeAmperfy())...
         let curr_line   = getline(linenum)
+		if curr_line =~ '^\s\*$' || curr_line == ""
+			continue
+		endif
 
 		" いくつか自分でチェックするか.
 		" file が読めるか. directory でないか.
@@ -927,11 +938,20 @@ function! pukiwiki#fileupload() range "{{{
 			let body = s:PW_fileread(tmpfile)
 			let body = s:VITAL.iconv(body, enc, &enc)
 		else
-			let param['attach_file'] = '@' . curr_line
-			let retdic = s:PW_request('get_page', param, b:pukiwiki_page, 'GET')
+			try
+				let attach_body = readfile(curr_line, 'b')
+				let attach_str = join(attach_body, '\n')
+				unlet attach_body
+				let param['attach_file'] = attach_str
+			catch
+				call setline(linenum, curr_line . "\t--" . v:exception)
+				continue
+			endtry
+			let retdic = s:PW_request('get_page', param, b:pukiwiki_page, 'POST')
 			if !retdic['success']
 				return 0
 			endif
+
 
 			let body = retdic['content']
 		endif
@@ -1042,6 +1062,15 @@ endfunction "}}}
 " }}}
 
 " s:alice.vim {{{
+
+function! s:PW_joindictstr(dict)
+	let ret = ''
+	for key in keys(a:dict)
+		if strlen(ret) | let ret .= "&" | endif
+		let ret .= key . "=" . a:dict[key]
+	endfor
+	return ret
+endfunction
 
 function! s:PW_urlencode(str) "{{{
 " 1) [._-] はそのまま

@@ -116,7 +116,11 @@ function! s:request(...)
     let settings.headers['Content-Type'] = settings.contentType
   endif
   if has_key(settings, 'param')
-    let getdatastr = s:encodeURI(settings.param)
+	if s:Prelude.is_dict(settings.param)
+		let getdatastr = s:encodeURI(settings.param)
+	else
+		let getdatastr = settings.param
+	endif
     if strlen(getdatastr)
       let settings.url .= '?' . getdatastr
     endif
@@ -151,6 +155,9 @@ function! s:clients.curl(settings, quote)
   let command .= ' --dump-header ' . a:quote . a:settings._file.header . a:quote
   let command .= ' --output ' . a:quote . a:settings._file.content . a:quote
   let command .= ' -L -s -k -X ' . a:settings.method
+  if has_key(a:settings, 'maxRedirect')
+    let command .= ' --max-redirs ' . a:settings.maxRedirect
+  endif
   let command .= s:_make_header_args(a:settings.headers, '-H ', a:quote)
   let timeout = get(a:settings, 'timeout', '')
   if timeout =~# '^\d\+$'
@@ -190,6 +197,9 @@ function! s:clients.wget(settings, quote)
   let command .= ' -o ' . a:quote . a:settings._file.header . a:quote
   let command .= ' -O ' . a:quote . a:settings._file.content . a:quote
   let command .= ' --server-response -q -L '
+  if has_key(a:settings, 'maxRedirect')
+    let command .= ' --max-redirect=' . a:settings.maxRedirect
+  endif
   let command .= s:_make_header_args(a:settings.headers, '--header=', a:quote)
   let timeout = get(a:settings, 'timeout', '')
   if timeout =~# '^\d\+$'
@@ -204,7 +214,7 @@ function! s:clients.wget(settings, quote)
   let command .= ' ' . a:quote . a:settings.url . a:quote
   if has_key(a:settings._file, 'post')
     let file = a:settings._file.post
-    let command .= ' --post-data @' . a:quote . file . a:quote
+    let command .= ' --post-file ' . a:quote . file . a:quote
   endif
 
   call s:Prelude.system(command)
