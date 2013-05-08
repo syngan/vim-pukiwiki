@@ -22,11 +22,13 @@
 " }}}
 "=============================================================================
 
+scriptencoding euc-jp
+
 let s:save_cpo = &cpo
 set cpo&vim
 
 " pukiwiki/history {{{
-" source $B$rMQ0U(B
+" source ¤òÍÑ°Õ
 let s:uni_puki = {
 	\ 'name': 'pukiwiki/history',
 	\ 'default_action' : 'open_page',
@@ -34,17 +36,17 @@ let s:uni_puki = {
 	\ 'alias_table' : { 'execute' : 'open_page' },
 	\ 'default_kind' : 'command',
 	\}
-" $B$3$l$@$HF0$+$J$$(B
+" ¤³¤ì¤À¤ÈÆ°¤«¤Ê¤¤
 "	\ 'alias_table' : { 'open' : 'open_page' },
 "	\ 'default_kind' : 'openable',
 
 function! s:uni_puki.gather_candidates(args, context) "{{{
-" $B8uJd$O(B history $B$N%j%9%H(B
-" history $B$NMWAG$O%j%9%H$G(B [site, page, others]
+" ¸õÊä¤Ï history ¤Î¥ê¥¹¥È
+" history ¤ÎÍ×ÁÇ¤Ï¥ê¥¹¥È¤Ç [site, page, others]
 	let history = pukiwiki#get_history_list()
 
-	" copy $B$7$J$$$H%j%9%H$,2u$l$k(B.
-	" $B4X?tEO$9$?$a$K(B v:val $B$bJ]B8(B
+	" copy ¤·¤Ê¤¤¤È¥ê¥¹¥È¤¬²õ¤ì¤ë.
+	" ´Ø¿ôÅÏ¤¹¤¿¤á¤Ë v:val ¤âÊÝÂ¸
     return map(copy(history), "{
 	\ 'word' :  v:key . ' ' . v:val[0] . ' -- ' . v:val[1],
 	\ 'action__command' : 'PukiWiki ' . v:val[0] . ' ' . v:val[1],
@@ -54,7 +56,7 @@ function! s:uni_puki.gather_candidates(args, context) "{{{
 	\}")
 endfunction "}}}
 
-" open_page $B$N(B action $B$NDj5A(B
+" open_page ¤Î action ¤ÎÄêµÁ
 let s:uni_puki.action_table.open_page = {
 	\ 'description' : 'open the selected page',
 	\ 'is_quit' : 1,
@@ -62,8 +64,8 @@ let s:uni_puki.action_table.open_page = {
 	\}
 
 function! s:uni_puki.action_table.open_page.func(candidates) "{{{
-	" pukiwiki#PukiWiki() $B$G%Z!<%8$r3+$/(B
-	" $B%Z!<%8L>$K6uGr$,4^$^$l$?$H$-$K:#$N(B action__command $B$N@_Dj$G$OF0:n$7$J$$(B.
+	" pukiwiki#PukiWiki() ¤Ç¥Ú¡¼¥¸¤ò³«¤¯
+	" ¥Ú¡¼¥¸Ì¾¤Ë¶õÇò¤¬´Þ¤Þ¤ì¤¿¤È¤­¤Ëº£¤Î action__command ¤ÎÀßÄê¤Ç¤ÏÆ°ºî¤·¤Ê¤¤.
 	let history = a:candidates.pukiwiki_history
 	call pukiwiki#PukiWiki(history[0], history[1])
 "	let command = a:candidates.action__command
@@ -71,7 +73,7 @@ function! s:uni_puki.action_table.open_page.func(candidates) "{{{
 "	execute type . comand
 endfunction "}}}
 
-" delete $B$OJ#?tA*Br2DG=(B (is_selectable=1)
+" delete ¤ÏÊ£¿ôÁªÂò²ÄÇ½ (is_selectable=1)
 let s:uni_puki.action_table.delete = {
 	\ 'description' : 'delete the selected page from the history',
 	\ 'is_quit' : 0,
@@ -80,11 +82,11 @@ let s:uni_puki.action_table.delete = {
 	\}
 
 function! s:uni_puki.action_table.delete.func(candidates) "{{{
-	" is_selectable = 1 $B$N>l9g$O(B candidates $B$,%j%9%H$K$J$k$i$7$$(B.
+	" is_selectable = 1 ¤Î¾ì¹ç¤Ï candidates ¤¬¥ê¥¹¥È¤Ë¤Ê¤ë¤é¤·¤¤.
 	let idx = len(a:candidates) - 1
 	let history = pukiwiki#get_history_list()
 
-	" candidates $B$OA*Br=g=x$K0MB8$;$:!">:=g$G$/$k$H2>Dj(B.
+	" candidates ¤ÏÁªÂò½ç½ø¤Ë°ÍÂ¸¤»¤º¡¢¾º½ç¤Ç¤¯¤ë¤È²¾Äê.
 	while idx >= 0
 		let index = a:candidates[idx].pukiwiki_index
 		call remove(history, index)
@@ -103,8 +105,8 @@ let s:uni_menu = {
 \}
 
 function! s:uni_menu.gather_candidates(args, context) "{{{
-" $B8uJd$O(B pukiwiki $B$N%a%K%e!<8GDj(B
-" [[$B%H%C%W(B]] [[$BE:IU(B]] [[$B%j%m!<%I(B]] [[$B?75,(B]] [[$B0lMw(B]] [[$BC18l8!:w(B]] [[$B:G=*99?7(B]] [[$B%X%k%W(B]]
+" ¸õÊä¤Ï pukiwiki ¤Î¥á¥Ë¥å¡¼¸ÇÄê
+" [[¥È¥Ã¥×]] [[ÅºÉÕ]] [[¥ê¥í¡¼¥É]] [[¿·µ¬]] [[°ìÍ÷]] [[Ã±¸ì¸¡º÷]] [[ºÇ½ª¹¹¿·]] [[¥Ø¥ë¥×]]
 	let cand = []
 	call add(cand, {
 	\	'word' : 'top page',
@@ -184,7 +186,7 @@ let s:uni_bm.action_table.movedown = {
 	\}
 
 function! s:uni_bm.action_table.delete.func(candidates) "{{{
-	" is_selectable = 1 $B$N>l9g$O(B candidates $B$,%j%9%H$K$J$k$i$7$$(B.
+	" is_selectable = 1 ¤Î¾ì¹ç¤Ï candidates ¤¬¥ê¥¹¥È¤Ë¤Ê¤ë¤é¤·¤¤.
 
 	if !exists('g:pukiwiki_bookmark')
 		return
@@ -195,7 +197,7 @@ function! s:uni_bm.action_table.delete.func(candidates) "{{{
 		return
 	endif
 
-	" candidates $B$OA*Br=g=x$K0MB8$;$:!">:=g$G$/$k$H2>Dj(B.
+	" candidates ¤ÏÁªÂò½ç½ø¤Ë°ÍÂ¸¤»¤º¡¢¾º½ç¤Ç¤¯¤ë¤È²¾Äê.
 	let idx = len(a:candidates) - 1
 	while idx >= 0
 		let index = a:candidates[idx].pukiwiki_index
@@ -216,7 +218,7 @@ function! s:movecand(from, to) "{{{
 		return
 	endif
 
-	" candidates $B$OA*Br=g=x$K0MB8$;$:!">:=g$G$/$k$H2>Dj(B.
+	" candidates ¤ÏÁªÂò½ç½ø¤Ë°ÍÂ¸¤»¤º¡¢¾º½ç¤Ç¤¯¤ë¤È²¾Äê.
 	let v = remove(lines, a:from)
 	if a:to >= 0
 		call insert(lines, v, a:to)
@@ -259,7 +261,7 @@ function! s:uni_bm.gather_candidates(args, context) "{{{
 		let page = substitute(v, '^[^,]*,', '', '')
 		let l = {}
 		let l.word = page . ' @ ' . site
-		" $B%9%Z!<%9$r%(%9%1!<%W$9$k(B
+		" ¥¹¥Ú¡¼¥¹¤ò¥¨¥¹¥±¡¼¥×¤¹¤ë
 		let l.action__command= 'PukiWiki ' . site . ' ' . escape(page, ' ')
 		let l.source = 'pukiwiki/bookmark'
 		let l.pukiwiki_index = i + 1
@@ -272,8 +274,8 @@ endfunction
 " }}}
 
 function! unite#sources#pukiwiki#define() "{{{
-	" $BEPO?(B. g:pukiwiki_config $B$,Dj5A$5$l$F$$$J$$>l9g$K$O(B
-	" $BF0:n$7$F$$$J$$$O$:$J$N$GEPO?$7$J$$(B
+	" ÅÐÏ¿. g:pukiwiki_config ¤¬ÄêµÁ¤µ¤ì¤Æ¤¤¤Ê¤¤¾ì¹ç¤Ë¤Ï
+	" Æ°ºî¤·¤Æ¤¤¤Ê¤¤¤Ï¤º¤Ê¤Î¤ÇÅÐÏ¿¤·¤Ê¤¤
 	if !exists('g:pukiwiki_config')
 		return {}
 	endif
