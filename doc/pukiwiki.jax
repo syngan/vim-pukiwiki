@@ -53,8 +53,7 @@ https://github.com/syngan/vim-pukiwiki/
 runtimepath が指定されているディレクトリ（通常 ~/.vim か $HOME/vimfiles) 配下
 に配置してください。
 
-- curl がインストールされている必要があります。
-
+- curl または wget がパスが通った場所にインストールされている必要があります。
 
 
 また，下記のプラグインの導入により利便性があがります。
@@ -226,6 +225,8 @@ g:pukiwiki_no_default_key_mappings
 
 	* PW_write() を vitalize
 	* PW_fileupload() を vitalize
+	* vitalize により使用しなくなったコードを削除
+	  - これにより wget が利用可能になった
 
 2013-05-06 syngan  v0.17
 

@@ -51,12 +51,14 @@ Example >
 TODO:
   - 凍結/凍結解除機能
   - ドキュメント
-  - vitalize (network 周り)
   - 履歴をファイルに保存する. 不要か.
   - 文字コードを utf-8 にしたい.
   -- README のみ utf-8 で不統一
   - [[page#link]] に対応
   - augroup PukiWikiEdit の扱い. 削除できていない.
+  - unite-pukiwki/attach
+  - "ぷ" 周りの動作がおかしい気がする. (オリジナル版から)
+     そもそも encoding-hint を与えているのに iconv しなくて良いはず.
 
 BUG:
   - S-TAB のキーマップが動作しない.
@@ -70,9 +72,9 @@ BUG:
   - d.hatena.ne.jp/ampmmn/20090401/1238536800
   - o 書き込み時に文字化けする現象の修正
   - x ユーザ認証への対応
-  - x PukiWiki Plusでのセッションチケットへの対処
+  - x PukiWiki Plus でのセッションチケットへの対処
   - x 凍結/凍結解除機能
-  - o :PukiVimコマンドの拡張
+  - o :PukiVim コマンドの拡張
   - o 1ファイル化(alice.vim含む)
 
 x はまだ対応していない.
