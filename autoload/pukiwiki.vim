@@ -586,9 +586,155 @@ function! pukiwiki#get_history_list() "{{{
 	return s:pukiwiki_history
 endfunction "}}}
 
+function! pukiwiki#info_attach_file(site_name, page, file) " {{{
+
+	let ret = {'success' : 0}
+
+	if !exists('g:pukiwiki_config') || !has_key(g:pukiwiki_config, a:site_name)
+		ret['errmsg'] = a:sitename . ' is not defined'
+		return ret
+	endif
+
+	let sitedict = g:pukiwiki_config[a:site_name]
+	let url = sitedict['url']
+	let enc = sitedict['encode']
+	let top = sitedict['top']
+	let enc_page = a:page
+
+	let param = {}
+	let param['encode_hint'] = 'ぷ'
+	let param['plugin'] = 'attach'
+	let param['pcmd'] = 'info'
+	let param['refer'] = enc_page
+	let param['file'] = a:file
+
+	let site_bak = b:pukiwiki_site_name
+	let b:pukiwiki_site_name = a:site_name
+	let retdic = s:PW_request('info_attach_file', param, a:page, 'POST')
+	let b:pukiwiki_site_name = site_bak
+	if !retdic['success']
+		ret['errmsg'] = 'get infomation of attach file ' . a:file . ' failed'
+		return ret
+	endif
+
+	let body = split(retdic['content'], '\n')
+	let title = filter(copy(body), 'v:val =~ "<title>.*</title>"')
+	if len(title) == 0
+		let ret['errmsg'] = '<title> not found'
+		return ret
+	endif
+
+	if title[0] !~ ".*添付ファイルの情報.*"
+		if title[0] =~ ".*そのファイルは見つかりません.*"
+			let ret['errmsg'] = 'file not attached: ' . a:file
+		else
+			let ret['errmsg'] = 'title is not attach file info'
+		endif
+		return ret
+	endif
+
+	let body = filter(body, "v:val =~ '.*<input type=.hidden. name=.*'")
+	for vv in body
+		let key = substitute(vv, '.*name="', '', '')
+		let key = substitute(key, '".*', '', '')
+		let val = substitute(vv, '.*value="', '', '')
+		let val = substitute(val, '".*', '', '')
+
+		if len(key) > 0
+			let ret[key] = val
+		endif
+	endfor
+
+	let ret['success'] = 1
+	return ret
+endfunction " }}}
+
+function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
+
+	let attach_info = pukiwiki#info_attach_file(a:site_name, a:page, a:file)
+	if attach_info['success'] == 0
+		call s:VITAL.print_error(attach_info['errmsg'])
+		return -1
+	endif
+
+	let attach_info['pcmd'] = 'delete'
+
+	let sitedict = g:pukiwiki_config[a:site_name]
+	let pass = s:get_password(sitedict)
+	let attach_info['pass'] = pass
+
+	let site_bak = b:pukiwiki_site_name
+	let b:pukiwiki_site_name = a:site_name
+	let retdic = s:PW_request('delete_attach_file', attach_info, a:page, 'POST')
+	let b:pukiwiki_site_name = site_bak
+	if !retdic['success']
+		call s:VITAL.print_error('delete attach file filed: ' . a:file)
+		return -1
+	endif
+
+	let body = split(retdic['content'], '\n')
+	let title = substitute(retdic['content'], '^.*<title>\([^\n]*\)</title>.*$', '\1', '')
+	if title =~ ".*添付ファイルの情報.*"
+		" パスワード間違いとかエラー.
+		"
+		let body = filter(body, 'v:val =~ "^<p style=\"font-weight:bold\">"')
+		if len(body) > 0
+			let title = substitute(body[0], '<[^>]*>', '', 'g')
+		else
+			let title = "delete attach file failed"
+		endif
+		call s:VITAL.print_error(title)
+		return -1
+	endif
+	unlet body
+	if title =~ '.*からファイルを削除しました'
+		let g:pukiwiki_config['password'] = pass
+		return 0
+	else
+		call s:VITAL.print_error(title)
+		return -1
+	endif
+
+"	let param = attach_info
+"
+"	let retdic = s:PW_request('delete_attach_file', param, a:page, 'POST')
+"	" a:page にそのファイルは見つかりません
+"	echo retdic
+"	return 0
+endfunction " }}}
+
+function! pukiwiki#get_attach_files() "{{{
+
+	if !exists('b:pukiwiki_site_name') ||
+	\	!has_key(g:pukiwiki_config, b:pukiwiki_site_name)
+		return []
+	endif
+
+	" 添付ファイルの一覧
+	let page = b:pukiwiki_page
+	let sitedict = g:pukiwiki_config[b:pukiwiki_site_name]
+	let url = sitedict['url']
+	let enc = sitedict['encode']
+
+	let param = {}
+	let param['plugin'] = 'attach'
+	let param['pcmd'] = 'list'
+	let enc_page = s:VITAL.iconv(page, &enc, enc)
+	let param['refer'] = enc_page
+
+	let retdic = s:PW_request('show_attach', param, enc_page, 'GET')
+	if !retdic['success']
+		return 0
+	endif
+	let body = split(retdic['content'], '\n')
+	let body = filter(body, 'v:val =~ "<li><a href=\".*</a>$"')
+	let body = map(body, 'substitute(v:val, "\\s*<li><a href=[^>]*>", "", "")')
+	let body = map(body, 'substitute(v:val, "</a>", "", "")')
+	return body
+endfunction "}}}
+
 function! pukiwiki#bookmark() " {{{
 	" 現在のページをブックマークする
-	"
 	if !exists('b:pukiwiki_site_name')
 		throw "PukiWiki が実行されていません"
 	endif
@@ -777,6 +923,16 @@ function! s:PW_show_search() "{{{
 endfunction "}}}
 " }}}
 
+function! s:get_password(sitedict)
+	if !has_key(a:sitedict, 'password')
+		let pass = input('パスワード: ')
+	else
+		let pass = a:sitedict['password']
+	endif
+
+	return pass
+endfunction
+
 function! pukiwiki#fileupload() range "{{{
 
 	if !exists('b:pukiwiki_site_name')
@@ -788,12 +944,7 @@ function! pukiwiki#fileupload() range "{{{
 	let enc = sitedict['encode']
 	let top = sitedict['top']
 
-	if !has_key(sitedict, 'password')
-		let pass = input('パスワード: ')
-	else
-		let pass = sitedict['password']
-	endif
-
+	let pass = s:get_password(sitedict)
 	let enc_page = s:VITAL.iconv(b:pukiwiki_page, &enc, enc)
 
 	let param = {}
@@ -852,6 +1003,7 @@ endfunction "}}}
 function! pukiwiki#jump_menu(pname)
 
 	if !exists('b:pukiwiki_site_name')
+		call s:VITAL.print_error('vim-pukiwiki has not initialized')
 		return
 	endif
 

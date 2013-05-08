@@ -1,6 +1,6 @@
 *pukiwiki.txt*	A vim client for the PukiWiki 1.4.7 for Japanese
 
-Version: 0.18
+Version: 0.19
 Author : syngan
 License: MIT license  {{{
     Permission is hereby granted, free of charge, to any person obtaining
@@ -184,6 +184,18 @@ pukiwiki#bookmark()
 			異なる文字コードを扱う PukiWiki
 			サイトを複数扱う場合での動作確認はしていません。
 
+pukiwiki#get_attach_files()
+			指定したページの添付ファイル名一覧を取得します。
+			文字列のリストを復帰します。
+			
+pukiwiki#delete_attach_files(site, page, file)
+			指定したページの添付ファイルを削除します。
+			正常終了時には 0, 異常終了時には -1 を復帰します。
+
+pukiwiki#info_attach_files(site, page, file)
+			指定したページの添付ファイル情報を返します。
+			辞書を復帰します。
+
 ==============================================================================
 カスタマイズ					*pukiwiki-customizing*
 
@@ -220,6 +232,13 @@ g:pukiwiki_no_default_key_mappings
 
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
+
+2013-05-09 syngan  v0.19
+
+	* 添付ファイル操作関数を追加
+	  - pukiwiki#get_attach_files()
+	  - pukiwiki#delete_attach_files()
+	  - pukiwiki#info_attach_files()
 
 2013-05-07 syngan  v0.18
 
