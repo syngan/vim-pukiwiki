@@ -187,6 +187,41 @@ function! s:PW_init_check() "{{{
 	return 1
 endfunction "}}}
 
+function! s:PW_gen_multipart(settings, param) " {{{
+	 " multipart-form を生成する
+	if !s:VITAL.is_dict(a:param)
+		throw "invalid argument"
+	endif
+	let b = "-------------11285676"
+	if has('reltime')
+		let b .= substitute(reltimestr(reltime()), '\.', '', 'g')
+	else
+		let b .= "iamapen"
+	endif
+	let a:settings.contentType = "multipart/form-data; boundary=" . b
+	let ret = ""
+	let CRLF = "\r\n"
+	let b = "--" . b
+	for key in keys(a:param)
+		let ret .= b . CRLF
+		if key == "attach_file"
+			let ret .= 'Content-Disposition: form-data; name="attach_file"; filename="' . a:param[key] . '"' . CRLF
+			let ret .= 'Content-Type: application/octet-stream' . CRLF
+
+			let attach_body = readfile(a:param[key], 'b')
+			let buf = join(attach_body, "\n")
+"			let ret .= 'Content-Length: ' . len(buf) . CRLF
+			let ret .= CRLF . buf . CRLF
+		else
+			let ret .= 'Content-Disposition: form-data; name="' . key . '"' . CRLF
+			let ret .= CRLF . a:param[key] . CRLF
+		endif
+	endfor
+
+	let ret .= b . '--' . CRLF
+	return ret
+endfunction
+
 function! s:PW_request(funcname, param, page, method) " {{{
 " Web サーバにリクエストを送り、結果を受け取る.
 " @return success をキーに持つ辞書
@@ -209,9 +244,15 @@ function! s:PW_request(funcname, param, page, method) " {{{
 		endif
 	endif
 	if a:method == 'POST'
-		let settings['data'] = a:param
+		let settings['data'] = pm
+	elseif a:method == 'GET'
+		let settings['param'] = pm
+	elseif a:method == 'MULT'
+		" multipart/form-data
+		let settings['data'] = s:PW_gen_multipart(settings, pm)
+		let settings['method'] = 'POST'
 	else
-		let settings['param'] = a:param
+		throw 'invalid argument: method'
 	endif
 	try
 		let retdic = s:HTTP.request(settings)
@@ -392,7 +433,6 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 
 	" undo 履歴を消去する, @see *clear-undo*
 	let oldundolevel = &undolevels
-	echo oldundolevel
 	execute ":setlocal undolevels=-1"
 	execute "normal a \<BS>\<Esc>"
 	execute ":setlocal undolevels=" . oldundolevel
@@ -494,7 +534,7 @@ function! s:PW_write() "{{{
 			execute "normal! " . lineno . "G"
 
 			" 理解不能. echo だと hit-enter がでる.
-			echon 'update ' . b:pukiwiki_page . ' @ ' . b:pukiwiki_site_name
+			echo 'update ' . b:pukiwiki_page . ' @ ' . b:pukiwiki_site_name
 
 			return 0
 		endif
@@ -508,10 +548,13 @@ function! s:PW_write() "{{{
 		if bodyr =~ '<title>\_.\{-}を削除しました\_.\{-}<\/title>'
 			let page = b:pukiwiki_page
 			call s:PW_get_edit_page(b:pukiwiki_site_name, top, 0)
-			echon page . ' を削除しました'
+			echo page . ' を削除しました'
 			return
 		endif
 
+		if g:pukiwiki_debug
+			echo retdic
+		endif
 		" 失敗
 		execute ":undo"
 		execute ":set nomodified"
@@ -612,7 +655,7 @@ function! s:PW_write() "{{{
 	execute "normal! " . lineno . "G"
 
 	" 理解不能. echo だと hit-enter がでる.
-	echon 'update ' . b:pukiwiki_page . ' @ ' . b:pukiwiki_site_name
+	echo 'update ' . b:pukiwiki_page . ' @ ' . b:pukiwiki_site_name
 endfunction "}}}
 
 function! pukiwiki#get_back_page() "{{{
@@ -870,6 +913,7 @@ function! pukiwiki#fileupload() range "{{{
 		return
 	endif
 
+	let use_vital = 1
 	let sitedict = g:pukiwiki_config[b:pukiwiki_site_name]
 	let url = sitedict['url']
 	let enc = sitedict['encode']
@@ -879,7 +923,7 @@ function! pukiwiki#fileupload() range "{{{
 
 	let enc_page = s:VITAL.iconv(b:pukiwiki_page, &enc, enc)
 
-	if 1
+	if !use_vital
 		" fileupload
 		let enc_page = s:PW_urlencode(enc_page)
 		let tmpfile = tempname()
@@ -918,7 +962,7 @@ function! pukiwiki#fileupload() range "{{{
 			continue
 		endif
 
-		if 1
+		if !use_vital
 			let fcmd = cmd . ' -F "attach_file=@' . curr_line . '"'
 			let fcmd = fcmd . ' "' . url . '"'
 			let result = s:PW_system(fcmd)
@@ -929,25 +973,22 @@ function! pukiwiki#fileupload() range "{{{
 				if errcode == 26
 					let msg = 'file not found'
 				endif
-
 				let msg = "\tcurl error (" . errcode . ':' . msg . ')'
 				call setline(linenum, curr_line . msg)
 				continue
 			endif
 
 			let body = s:PW_fileread(tmpfile)
+			call delete(tmpfile)
 			let body = s:VITAL.iconv(body, enc, &enc)
 		else
 			try
-				let attach_body = readfile(curr_line, 'b')
-				let attach_str = join(attach_body, '\n')
-				unlet attach_body
-				let param['attach_file'] = attach_str
+				let param['attach_file'] = curr_line
 			catch
 				call setline(linenum, curr_line . "\t--" . v:exception)
 				continue
 			endtry
-			let retdic = s:PW_request('get_page', param, b:pukiwiki_page, 'POST')
+			let retdic = s:PW_request('get_page', param, b:pukiwiki_page, 'MULT')
 			if !retdic['success']
 				return 0
 			endif

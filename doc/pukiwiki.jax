@@ -155,6 +155,10 @@ pukiwiki#get_back_page()
 
 pukiwiki#fileupload() range
 			選択された行にあるファイルを添付する
+			ファイルアップロー後には digest
+			の値が変更になるため，その後ファイル更新するとエラーになります。
+			編集を継続する場合には reload (更新)により digest
+			の再読み込みをおこなってください
 
 pukiwiki#jump() 
 			カーソル位置にあるページを開きます。
@@ -221,7 +225,7 @@ g:pukiwiki_no_default_key_mappings
 2013-05-07 syngan  v0.18
 
 	* PW_write() を vitalize
-	  - あとは fileupload() のみ
+	* PW_fileupload() を vitalize
 
 2013-05-06 syngan  v0.17
 
