@@ -788,7 +788,11 @@ function! pukiwiki#fileupload() range "{{{
 	let enc = sitedict['encode']
 	let top = sitedict['top']
 
-	let pass = input('パスワード: ')
+	if !has_key(sitedict, 'password')
+		let pass = input('パスワード: ')
+	else
+		let pass = sitedict['password']
+	endif
 
 	let enc_page = s:VITAL.iconv(b:pukiwiki_page, &enc, enc)
 
@@ -831,6 +835,15 @@ function! pukiwiki#fileupload() range "{{{
 		let body = substitute(body, '^.*<h1 class="title">\(.*\)</h1>.*$', '\1', '')
 		let body = substitute(body, '<a href=".*">\(.*\)</a>', '[[\1]]', '')
 		call setline(linenum, curr_line . "\t" . body)
+
+		if body =~ '.*パスワード.*'
+			if has_key(sitedict, 'password')
+				call remove(sitedict, 'password')
+			endif
+			break
+		elseif body =~ '.*アップロード.*' || body =~ '.*同じファイル名.*'
+			let sitedict['password'] = pass
+		endif
     endfor
 
 endfunction "}}}
