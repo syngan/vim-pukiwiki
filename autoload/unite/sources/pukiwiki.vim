@@ -107,48 +107,21 @@ let s:uni_menu = {
 function! s:uni_menu.gather_candidates(args, context) "{{{
 " 候補は pukiwiki のメニュー固定
 " [[トップ]] [[添付]] [[リロード]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]
-	let cand = []
-	call add(cand, {
-	\	'word' : 'top page',
-	\	'action__command' : 'PukiWikiJumpMenu top',
-	\   'source' : 'pukiwiki/menu',
-	\})
-	call add(cand, {
-	\	'word' : 'attached files',
-	\	'action__command' : 'PukiWikiJumpMenu attach',
-	\   'source' : 'pukiwiki/menu',
-	\})
-	call add(cand, {
-	\	'word' : 'reload',
-	\	'action__command' : 'PukiWikiJumpMenu reload',
-	\   'source' : 'pukiwiki/menu',
-	\})
-	call add(cand, {
-	\	'word' : 'new page',
-	\	'action__command' : 'PukiWikiJumpMenu new',
-	\   'source' : 'pukiwiki/menu',
-	\})
-	call add(cand, {
-	\	'word' : 'page list',
-	\	'action__command' : 'PukiWikiJumpMenu list',
-	\   'source' : 'pukiwiki/menu',
-	\})
-	call add(cand, {
-	\	'word' : 'search',
-	\	'action__command' : 'PukiWikiJumpMenu search',
-	\   'source' : 'pukiwiki/menu',
-	\})
-	call add(cand, {
-	\	'word' : 'recent changes',
-	\	'action__command' : 'PukiWikiJumpMenu recent',
-	\   'source' : 'pukiwiki/menu',
-	\})
-	call add(cand, {
-	\	'word' : 'help: formatting rules',
-	\	'action__command' : 'PukiWikiJumpMenu help',
-	\   'source' : 'pukiwiki/menu',
-	\})
-	return cand
+	let cand = [
+	\	['top page', 'top'],
+	\	['attached files', 'attach'],
+	\	['reload', 'reload'],
+	\	['new page', 'new'],
+	\	['page list', 'list'],
+	\	['search', 'search'],
+	\	['recent changes', 'recent'],
+	\	['help: formatting rules', 'help'],
+	\]
+
+	return map(cand, "{
+	\	'word' : v:val[0],
+	\	'action__command' : 'PukiWikiJumpMenu ' . v:val[1],
+	\   'source' : 'pukiwiki/menu'}")
 endfunction
 
 " }}}
@@ -262,7 +235,7 @@ function! s:uni_bm.gather_candidates(args, context) "{{{
 		let l = {}
 		let l.word = page . ' @ ' . site
 		" スペースをエスケープする
-		let l.action__command= 'PukiWiki ' . site . ' ' . escape(page, ' ')
+		let l.action__command = 'PukiWiki ' . site . ' ' . escape(page, ' ')
 		let l.source = 'pukiwiki/bookmark'
 		let l.pukiwiki_index = i + 1
 		let lines[i] = l
