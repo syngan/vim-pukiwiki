@@ -830,42 +830,24 @@ function! s:PW_show_page_list() "{{{
 	call s:PW_newpage(b:pukiwiki_site_name, 'cmd=list')
 	call s:PW_set_statusline(b:pukiwiki_site_name, b:pukiwiki_page)
 
-	let body = substitute(body, '^.*<div id="body">\(.*\)<hr class="full_hr" />.*$', '\1', '')
-	let body = substitute(body, '<a id\_.\{-}<strong>\(\_.\{-}\)<\/strong><\/a>', '\[\[\1\]\]', 'g')
-"	let body = substitute(body, '<li><a href=".\{-}">\(\_.\{-}\)<\/a><small>(.*)</small></li>', '\[\[\1\]\]', 'g')
+	" がんばって加工
+	let bodyl = split(body, "\n")
+	let bodyl = filter(bodyl, 'v:val =~ "^\\s*<li><a href=" || v:val =~ "^\\s*<li><a id="')
+	let bodyl = map(bodyl, 'substitute(v:val, "^\\s*<li><a href.*>\\(.*\\)</a><small>\\(.*\\)</small>.*$", "- [[\\1]]\\t\\2", "")')
+	let bodyl = map(bodyl, 'substitute(v:val, "^\\s*<li><a id.*><strong>\\(.*\\)</strong></a>.*$", "\\n*** \\1", "")')
+	let bodyl = map(bodyl, 's:HTML.decodeEntityReference(v:val)')
+	let body = join(bodyl, "\n")
 
 	execute "normal! i" . body
 
-	" がんばって加工
-	" @REG
-	let regbak = @"
-	silent! %g/^$/d
-	silent! %g/<div/d
-	silent! %g/<\/div/d
-	silent! %g/<ul/d
-	silent! %g/<\/ul/d
-	silent! %g/^\s*<\/li/d
-	silent! %s/^.*<li><a.*>\(.*\)<\/a><small>\(.*\)<\/small>.*$/\t\[\[\1\]\] \2/
-	silent! %g/^\[/d
-	silent! %g/<br \/.*/d
-	silent! %s/\s*<li>\[\[\(.*\)\]\]$/\1/
-	let @" = regbak
-
 	" page 名しかないので, decode しなくても良い気がする.
 	" single quote &apos;  &#xxxx などはやらないといけないらしい.
-	let cl = 1
-	while cl <= line('$')
-		let line = getline(cl)
-		call setline(cl, s:HTML.decodeEntityReference(line))
-		let cl = cl + 1
-	endwhile
 
 	execute ":setlocal noai"
 	execute "normal! gg0"
 	if g:pukiwiki_show_header
 		execute "normal! i" . b:pukiwiki_site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
 	endif
-
 
 	call s:PW_endpage(b:pukiwiki_site_name, b:pukiwiki_page, 1)
 endfunction "}}}
@@ -896,36 +878,28 @@ function! s:PW_show_search() "{{{
 	if !retdic['success']
 		return
 	endif
-	let body = retdic['content']
 
 	call s:PW_newpage(b:pukiwiki_site_name, 'cmd=search')
 	call s:PW_set_statusline(b:pukiwiki_site_name, b:pukiwiki_page)
 
-
-	let body = substitute(body, '^.*<div id="body">\(.*\)<hr class="full_hr" />.*$', '\1', '')
-	let body = substitute(body, '\(.*\)<form action.*', '\1', '')
-"	let body = substitute(body, '^<div class=[^\n]\{-}$', '', '')
-	execute "normal! i" . body
-
 	" がんばって加工
-	" @REG
-	let regbak = @"
-	silent! %g/<div/d
-	silent! %g/<ul/d
-	silent! %g/<\/ul/d
-	silent! %s/<strong class="word.">//g
-	silent! %s/<\/strong>//g
-	silent! %s/<strong>//g
-	silent! %s/^.*<li><a.*>\(.*\)<\/a>\(.*\)<\/li>$/\t\[\[\1\]\] \2/
+	let bodyl = split(retdic['content'], '\n')
+	let bodyl = filter(bodyl, 'v:val =~ "^\\s*<li><a href=" || v:val =~ "^<strong class="')
+	let bodyl = map(bodyl, 'substitute(v:val, "^\\s*<li><a href.*>\\(.*\\)</a>\\(.*\\)</li>.*$", "- [[\\1]]\\t\\2", "")')
+	let bodyl[-1] = substitute(bodyl[-1], '<[^>]*>', '', 'g')
+	let bodyl = map(bodyl, 's:HTML.decodeEntityReference(v:val)')
+	let mes = remove(bodyl, -1)
+	call insert(bodyl, mes, 0)
+	let body = join(bodyl, "\n")
+	unlet bodyl
 
 	" 最終行に [... 10 ページ見つかりました] メッセージ
 	" それを最初にだす
 	" @REG
-	execute "normal! GddggP0"
+	execute "normal! gg0i" . body
 	if g:pukiwiki_show_header
-		execute "normal! i" . b:pukiwiki_site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
+		execute "normal! gg0i" . b:pukiwiki_site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
 	endif
-	let @" = regbak
 
 	call s:PW_endpage(b:pukiwiki_site_name, b:pukiwiki_page, 1)
 endfunction "}}}

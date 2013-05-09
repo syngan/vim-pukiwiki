@@ -208,6 +208,7 @@ g:pukiwiki_timestamp_update			*g:pukiwiki_timestamp_update*
 g:pukiwiki_config				*g:pukiwiki_config*
 	アクセスする PukiWiki サイトに関する情報を設定します。
 	g:pukiwiki_config は辞書型で, サイト名をキーにします。
+	サイト名はユーザが任意に設定します。
 	値はサイト情報を保持する辞書を指定します。
 		"url"		Required
 		"top"		Defult: 'FrontPage'
