@@ -31,23 +31,6 @@ set cpo&vim
 
 scriptencoding euc-jp
 
-"---------------------------------------------
-" global 変数
-"---------------------------------------------
-
-" デバッグ用
-if !exists('g:pukiwiki_debug')
-	let g:pukiwiki_debug = 0
-endif
-
-" タイムスタンプを変更するかどうかの確認メッセージ
-" 1 = いつも yes
-" 0 = いつも no
-"-1 (else) 確認する
-if !exists('g:pukiwiki_timestamp_update')
-	let g:pukiwiki_timestamp_update = -1
-endif
-
 "}}}
 
 " variables {{{
@@ -95,10 +78,7 @@ endfunction "}}}
 "}}}
 
 function! pukiwiki#PukiWiki(...) "{{{
-	if !s:PW_init_check()
-		echohl ErrorMsg
-		echo '起動に失敗しました。'
-		echohl None
+	if !s:PW_env_check()
 		return
 	endif
 
@@ -113,6 +93,7 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 " PukiVim [ SiteName [ PageName ]]
 "
 	if &modified
+		" @TODO 複数の同じ window を開いているときは skip したい.
 		call s:VITAL.print_error('変更が保存されていません。')
 		return 0
 	endif
@@ -134,20 +115,13 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 		let site_name = a:1
 	endif
 
-	try
-		if !has_key(g:pukiwiki_config, site_name)
-			call s:VITAL.print_error('site "' . site_name . '" not found.')
-			return 0
-		endif
-	catch /^Vim\%((\a\+)\)\?:E715/
-		return 0
-	endtry
-
-	let dict = g:pukiwiki_config[site_name]
-	if (!has_key(dict, 'url'))
-		call s:VITAL.print_error('"url" does not defined.')
+	let msg = s:PW_valid_config(site_name)
+	if msg != ''
+		call s:VITAL.print_error(msg)
 		return 0
 	endif
+
+	let dict = g:pukiwiki_config[site_name]
 	let url = dict['url']
 
 	if (!has_key(dict, 'encode'))
@@ -176,11 +150,43 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 
 endfunction "}}}
 
-function! s:PW_init_check() "{{{
+function! s:PW_env_check() "{{{
 
 	" curl/wget の有無をチェック
 	if !executable('curl') && !executable('wget')
-		call s:VITAL.print_error('curl/wget が見つかりません。')
+		call s:VITAL.print_error('cURL and wget are not found.')
+		return 0
+	endif
+
+	return 1
+endfunction "}}}
+
+function! s:PW_valid_config(site_name) "{{{
+	if !exists('g:pukiwiki_config')
+		return 'g:pukiwiki_config does not defined.'
+	endif
+	if !s:VITAL.is_dict(g:pukiwiki_config)
+		return 'g:pukiwiki_config is not a dictionary.'
+	endif
+	if !has_key(g:pukiwiki_config, a:site_name)
+		return ('site "' . site_name . '" is not defined.')
+	endif
+
+	let sitedict = g:pukiwiki_config[a:site_name]
+	if !s:VITAL.is_dict(sitedict)
+		return ('g:pukiwiki_config[' . a:site_name . '] is not a dictionary.')
+	endif
+
+	if (!has_key(sitedict, 'url'))
+		return .print_error('g:pukiwiki_config[' . a:site_name . '].url is not defined.')
+	endif
+
+	return ""
+
+endfunction "}}}
+
+function! s:PW_is_init() " {{{
+	if !exists('b:pukiwiki_site_name')
 		return 0
 	endif
 
@@ -220,7 +226,7 @@ function! s:PW_gen_multipart(settings, param) " {{{
 
 	let ret .= b . '--' . CRLF
 	return ret
-endfunction
+endfunction " }}}
 
 function! s:PW_request(funcname, param, page, method) " {{{
 " Web サーバにリクエストを送り、結果を受け取る.
@@ -291,7 +297,7 @@ function! s:PW_newpage(site_name, page) "{{{
 	execute ":setlocal filetype=pukiwiki"
 
 	" nnoremap {{{
-	if !exists('g:pukiwiki_no_default_key_mappings') || !g:pukiwiki_no_default_key_mappings
+	if !g:pukiwiki_no_default_key_mappings
 		nnoremap <silent> <buffer> <CR>    :call pukiwiki#jump()<CR>
 		nnoremap <silent> <buffer> <Tab>   :call pukiwiki#move_next_bracket()<CR>
 		nnoremap <silent> <buffer> <S-Tab> :call pukiwiki#move_prev_bracket()<CR>
@@ -401,7 +407,7 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 	endif
 
 
-	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header
+	if g:pukiwiki_show_header
 		silent! execute "normal! i" . a:site_name . " " . a:page . s:pukivim_ro_menu
 	endif
 "	silent! execute "normal! ihistory>>>>>" . len(s:pukiwiki_history) . "\n"
@@ -474,7 +480,7 @@ function! s:PW_write() "{{{
 	" 書き込みが壊れるだめな仕様
 	" @REG
 	let regbak = @"
-	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header
+	if g:pukiwiki_show_header
 		silent! execute "normal! gg3D"
 	else
 		silent! execute "normal! gg"
@@ -590,8 +596,8 @@ function! pukiwiki#info_attach_file(site_name, page, file) " {{{
 
 	let ret = {'success' : 0}
 
-	if !exists('g:pukiwiki_config') || !has_key(g:pukiwiki_config, a:site_name)
-		ret['errmsg'] = a:sitename . ' is not defined'
+	let ret['errmsg'] = s:PW_valid_config(site_name)
+	if ret['errmsg'] != ''
 		return ret
 	endif
 
@@ -705,6 +711,7 @@ endfunction " }}}
 
 function! pukiwiki#get_attach_files() "{{{
 
+	" 普通はない. 初期化されているはず
 	if !exists('b:pukiwiki_site_name') ||
 	\	!has_key(g:pukiwiki_config, b:pukiwiki_site_name)
 		return []
@@ -735,9 +742,10 @@ endfunction "}}}
 
 function! pukiwiki#bookmark() " {{{
 	" 現在のページをブックマークする
-	if !exists('b:pukiwiki_site_name')
+	if !s:PW_is_init()
 		throw "PukiWiki が実行されていません"
 	endif
+
 	if !exists('g:pukiwiki_bookmark')
 		throw "g:pukiwiki_bookmark が指定されていません"
 	endif
@@ -801,7 +809,7 @@ function! s:PW_show_attach(site_name, page) "{{{
 	call s:PW_newpage(a:site_name, a:page)
 	call s:PW_set_statusline(a:site_name, a:page)
 
-	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header
+	if g:pukiwiki_show_header
 		execute "normal! i" . a:site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
 	endif
 	execute "normal! i添付ファイル一覧 [[" . b:pukiwiki_page . "]]\n"
@@ -854,7 +862,7 @@ function! s:PW_show_page_list() "{{{
 
 	execute ":setlocal noai"
 	execute "normal! gg0"
-	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header
+	if g:pukiwiki_show_header
 		execute "normal! i" . b:pukiwiki_site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
 	endif
 
@@ -914,7 +922,7 @@ function! s:PW_show_search() "{{{
 	" それを最初にだす
 	" @REG
 	execute "normal! GddggP0"
-	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header
+	if g:pukiwiki_show_header
 		execute "normal! i" . b:pukiwiki_site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
 	endif
 	let @" = regbak
@@ -935,7 +943,7 @@ endfunction
 
 function! pukiwiki#fileupload() range "{{{
 
-	if !exists('b:pukiwiki_site_name')
+	if !s:PW_is_init()
 		return
 	endif
 
@@ -1002,7 +1010,7 @@ endfunction "}}}
 " g:motion {{{
 function! pukiwiki#jump_menu(pname)
 
-	if !exists('b:pukiwiki_site_name')
+	if !s:PW_is_init()
 		call s:VITAL.print_error('vim-pukiwiki has not initialized')
 		return
 	endif
@@ -1039,10 +1047,10 @@ endfunction
 
 
 function! pukiwiki#jump()  "{{{
-	if !exists('b:pukiwiki_site_name')
+	if !s:PW_is_init()
 		return
 	endif
-	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header && line('.') < 4
+	if g:pukiwiki_show_header && line('.') < 4
 		" ヘッダ部分
 		let cur = s:PW_matchstr_undercursor('\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]')
 	else
@@ -1064,7 +1072,7 @@ function! pukiwiki#jump()  "{{{
 	endif
 
 	let cur = substitute(cur, '\[\[\(.*\)\]\]', '\1', '')
-	if exists('g:pukiwiki_show_header') && g:pukiwiki_show_header && line('.') < 4
+	if g:pukiwiki_show_header && line('.') < 4
 		return pukiwiki#jump_menu(cur)
 	endif
 

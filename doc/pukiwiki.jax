@@ -207,9 +207,26 @@ g:pukiwiki_timestamp_update			*g:pukiwiki_timestamp_update*
 
 g:pukiwiki_config				*g:pukiwiki_config*
 	アクセスする PukiWiki サイトに関する情報を設定します。
+	g:pukiwiki_config は辞書型で, サイト名をキーにします。
+	値はサイト情報を保持する辞書を指定します。
+		"url"		Required
+		"top"		Defult: 'FrontPage'
+		"encode"	Defult: 'euc-jp'
+
+	Example >
+		" PukiWiki のサイト情報
+		let g:pukiwiki_config = {
+		\	"LocalWiki" : {
+		\		"url" : "http://127.0.0.1/pukiwiki/",
+		\		"top" : 'FrontPage',
+		\		"encode" : "euc-jp",
+		\	},
+		\}
+	<
 
 g:pukiwiki_bookmark				*g:pukiwiki_bookmark*
 	ブックマークを保存するファイル名を設定します。
+	ブックマーク機能を利用する場合に設定してください。
 
 g:pukiwiki_show_header				*g:pukiwiki_show_header*
 	PukiWiki のヘッダ部を表示する場合に 1 を指定します。デフォルトは 0 （
@@ -222,6 +239,7 @@ g:pukiwiki_show_header				*g:pukiwiki_show_header*
 g:pukiwiki_no_default_key_mappings
 					*g:pukiwiki_no_default_key_mappings*
 	この値が真の場合には以下のキーマッピングを設定しません。
+	デフォルト値は 0 です。
 
 (|pukiwiki-viewer| 内）
 {lhs}		{rhs}					意味

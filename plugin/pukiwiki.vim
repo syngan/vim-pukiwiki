@@ -34,6 +34,17 @@ command! -nargs=* PukiWikiJumpMenu :call pukiwiki#jump_menu(<f-args>)
 
 let b:loaded_pukiwiki = 1
 
+function! s:set_global_variable(key, default)
+  if !has_key(g:, a:key)
+    let g:[a:key] = a:default
+  endif
+endfunction
+
+call s:set_global_variable('pukiwiki_timestamp_update',        -1)
+call s:set_global_variable('pukiwiki_debug',                    0)
+call s:set_global_variable('pukiwiki_show_header',              0)
+call s:set_global_variable('pukiwiki_no_default_key_mappings',  0)
+
 let &cpo = s:save_cpo
 unlet s:save_cpo
 

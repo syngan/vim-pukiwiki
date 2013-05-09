@@ -111,7 +111,7 @@ function! s:uni_menu.gather_candidates(args, context) "{{{
 	\	['top page', 'top'],
 	\	['attached files', 'attach'],
 	\	['reload', 'reload'],
-	\	['new page', 'new'],
+	\	['open/create page', 'new'],
 	\	['page list', 'list'],
 	\	['search', 'search'],
 	\	['recent changes', 'recent'],
@@ -122,9 +122,7 @@ function! s:uni_menu.gather_candidates(args, context) "{{{
 	\	'word' : v:val[0],
 	\	'action__command' : 'PukiWikiJumpMenu ' . v:val[1],
 	\   'source' : 'pukiwiki/menu'}")
-endfunction
-
-" }}}
+endfunction " }}}
 
 " }}}
 
