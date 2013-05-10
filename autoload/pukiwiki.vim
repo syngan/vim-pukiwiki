@@ -36,12 +36,19 @@ scriptencoding euc-jp
 " variables {{{
 let s:pukiwiki_history = []
 
-let s:pukivim_ro_menu = "\n"
+let s:pukiwiki_header_row = 3
+lockvar s:pukiwiki_header_row
+
+let s:pukiwiki_ro_menu = "\n"
 	\ . "[[トップ]] [[添付]] [[リロード]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]\n"
 	\ . "------------------------------------------------------------------------------\n"
-"let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
-let s:bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
-"let s:bracket_name = '\[\[\_.\{-}\]\]'
+lockvar s:pukiwiki_ro_menu
+"let s:pukiwiki_bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
+let s:pukiwiki_bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
+"let s:pukiwiki_bracket_name = '\[\[\_.\{-}\]\]'
+"
+"
+lockvar s:pukiwiki_bracket_name
 
 " }}}
 
@@ -99,7 +106,7 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 	endif
 
 	if !exists('g:pukiwiki_config')
-		call s:VITAL.print_error('g:pukiwiki_config does not defined.')
+		call s:VITAL.print_error('g:pukiwiki_config is not defined.')
 		return 0
 	endif
 
@@ -163,7 +170,7 @@ endfunction "}}}
 
 function! s:PW_valid_config(site_name) "{{{
 	if !exists('g:pukiwiki_config')
-		return 'g:pukiwiki_config does not defined.'
+		return 'g:pukiwiki_config is not defined.'
 	endif
 	if !s:VITAL.is_dict(g:pukiwiki_config)
 		return 'g:pukiwiki_config is not a dictionary.'
@@ -287,7 +294,7 @@ function! s:PW_request(funcname, param, page, method) " {{{
 	return retdic
 endfunction "}}}
 
-function! s:PW_newpage(site_name, page) "{{{
+function! s:PW_newpage(site_name, page, pagetype) "{{{
 
 	let sitedict = g:pukiwiki_config[a:site_name]
 	let enc = sitedict['encode']
@@ -312,6 +319,7 @@ function! s:PW_newpage(site_name, page) "{{{
 
 	let b:pukiwiki_site_name = a:site_name
 	let b:pukiwiki_page      = a:page
+	let b:pukiwiki_page_type = a:pagetype
 endfunction "}}}
 
 function! s:PW_endpage(site_name, page, readonly) "{{{
@@ -356,11 +364,11 @@ function! s:PW_get_source_page(site_name, page) "{{{
 	return s:PW_get_page(a:site_name, a:page, "source", 1)
 endfunction "}}}
 
-function! s:PW_insert_header(site_name, page)
+function! s:PW_insert_header(site_name, page) " {{{
 	if g:pukiwiki_show_header
-		execute "normal! gg0i" . a:site_name . " " . a:page . s:pukivim_ro_menu
+		execute "normal! gg0i" . a:site_name . " " . a:page . s:pukiwiki_ro_menu
 	endif
-endfunction
+endfunction " }}}
 
 function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 " ページを開く
@@ -409,7 +417,7 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 
 	" 全消去
 	if a:opennew
-		call s:PW_newpage(a:site_name, a:page)
+		call s:PW_newpage(a:site_name, a:page, "normal")
 	else
 		" @REG
 		let regbak = @"
@@ -443,14 +451,12 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 
 	if a:pwcmd == 'edit'
 		augroup PukiWikiEdit
+			" 不要な autocmd は消去したい @TODO
 			execute "autocmd BufWriteCmd " . status_line . " call s:PW_write()"
 		augroup END
 		call s:PW_endpage(a:site_name, a:page, 0)
 	endif
 	if a:pwcmd == 'source'
-"		augroup PukiWikiEdit
-"			execute "autocmd!"
-"		augroup END
 		call s:PW_endpage(a:site_name, a:page, 1)
 	endif
 
@@ -479,7 +485,7 @@ function! s:PW_write() "{{{
 	elseif g:pukiwiki_timestamp_update == 0
 		let notimestamp = 'true'
 	else
-		let last_confirm = s:PW_yesno('タイムスタンプを変更する？: ', 'Y')
+		let last_confirm = s:PW_yesno('タイムスタンプを変更する？: ', 'y')
 		if last_confirm
 			let notimestamp = 'true'
 		endif
@@ -491,7 +497,7 @@ function! s:PW_write() "{{{
 	" @REG
 	if g:pukiwiki_show_header
 		let regbak = @"
-		silent! execute "normal! gg3D"
+		silent! execute "normal! gg" . s:pukiwiki_header_row . "D"
 		let @" = regbak
 	else
 		silent! execute "normal! gg"
@@ -578,10 +584,8 @@ function! s:PW_write() "{{{
 		echo "&enc=" . &enc . ", enc=" . enc . ", page=" . b:pukiwiki_page
 		echo "s:VITAL.iconv=" . Byte2hex(s:VITAL.iconv(b:pukiwiki_page, &enc, enc))
 		echo "urlen=" . s:PW_urlencode(s:VITAL.iconv( b:pukiwiki_page, &enc, enc))
-		call s:VITAL.print_error('更新の衝突が発生したか、その他のエラーで書き込めませんでした。')
-	else
-		call s:VITAL.print_error('更新の衝突が発生したか、その他のエラーで書き込めませんでした。')
 	endif
+	call s:VITAL.print_error('更新の衝突が発生したか、その他のエラーで書き込めませんでした。')
 	return 0
 endfunction "}}}
 
@@ -721,8 +725,9 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 	let body = split(retdic['content'], '\n')
 	let title = substitute(retdic['content'], '^.*<title>\([^\n]*\)</title>.*$', '\1', '')
 	if title =~ ".*添付ファイルの情報.*"
-		" パスワード間違いとかエラー.
-		"
+		" パスワード間違いなどによるエラー.
+		" request は正常に帰ってきて,
+		" font-weight:bold でエラーが復帰される
 		let body = filter(body, 'v:val =~ "^<p style=\"font-weight:bold\">"')
 		if len(body) > 0
 			let title = substitute(body[0], '<[^>]*>', '', 'g')
@@ -783,11 +788,11 @@ endfunction "}}}
 function! pukiwiki#bookmark() " {{{
 	" 現在のページをブックマークする
 	if !s:PW_is_init()
-		throw "PukiWiki が実行されていません"
+		throw "pukiwiki.vim is not executed."
 	endif
 
 	if !exists('g:pukiwiki_bookmark')
-		throw "g:pukiwiki_bookmark が指定されていません"
+		throw "g:pukiwiki_bookmark is not defined"
 	endif
 	if filereadable(g:pukiwiki_bookmark)
 		let lines = readfile(g:pukiwiki_bookmark)
@@ -846,7 +851,7 @@ function! s:PW_show_attach(site_name, page) "{{{
 	let body = substitute(body, '<.\{-}>', '', 'g')
 	let body = substitute(body, '\n\n*', '\n', 'g')
 
-	call s:PW_newpage(a:site_name, a:page)
+	call s:PW_newpage(a:site_name, a:page, 'attach')
 	call s:PW_set_statusline(a:site_name, a:page)
 	call s:PW_insert_header(a:site_name, a:page)
 	execute "normal! i添付ファイル一覧 [[" . b:pukiwiki_page . "]]\n"
@@ -864,7 +869,7 @@ function! s:PW_show_page_list() "{{{
 	endif
 	let body = retdic['content']
 
-	call s:PW_newpage(b:pukiwiki_site_name, 'cmd=list')
+	call s:PW_newpage(b:pukiwiki_site_name, 'cmd=list', 'pagelist')
 	call s:PW_set_statusline(b:pukiwiki_site_name, b:pukiwiki_page)
 
 	" がんばって加工
@@ -914,7 +919,7 @@ function! s:PW_show_search() "{{{
 		return
 	endif
 
-	call s:PW_newpage(b:pukiwiki_site_name, 'cmd=search')
+	call s:PW_newpage(b:pukiwiki_site_name, 'cmd=search', 'search')
 	call s:PW_set_statusline(b:pukiwiki_site_name, b:pukiwiki_page)
 
 	" がんばって加工
@@ -1025,7 +1030,14 @@ function! pukiwiki#jump_menu(pname) " {{{
 	if a:pname == 'トップ' || a:pname == 'top'
 		call s:PW_get_top_page(b:pukiwiki_site_name)
 	elseif a:pname == 'リロード' || a:pname == 'reload'
-		if b:pukiwiki_page == 'FormattingRules' || b:pukiwiki_page == 'RecentChanges'
+		if b:pukiwiki_page_type == 'attach'
+			call s:PW_show_attach(b:pukiwiki_site_name, b:pukiwiki_page)
+		elseif b:pukiwiki_page_type == 'pagelist'
+			call s:PW_show_page_list()
+		elseif b:pukiwiki_page_type == 'search'
+			" @TODO 本当は検索語を覚えていて呼び出しのやり直しすべきだろう
+			call s:PW_show_search()
+		elseif b:pukiwiki_page == 'FormattingRules' || b:pukiwiki_page == 'RecentChanges'
 			call s:PW_get_source_page(b:pukiwiki_site_name, b:pukiwiki_page)
 		else
 			call s:PW_get_edit_page(b:pukiwiki_site_name, b:pukiwiki_page, 0)
@@ -1060,7 +1072,7 @@ function! pukiwiki#jump()  "{{{
 		" ヘッダ部分
 		let cur = s:PW_matchstr_undercursor('\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]')
 	else
-		let cur = s:PW_matchstr_undercursor(s:bracket_name)
+		let cur = s:PW_matchstr_undercursor(s:pukiwiki_bracket_name)
 	endif
 
 	if cur == ''
@@ -1078,7 +1090,7 @@ function! pukiwiki#jump()  "{{{
 	endif
 
 	let cur = substitute(cur, '\[\[\(.*\)\]\]', '\1', '')
-	if g:pukiwiki_show_header && line('.') < 4
+	if g:pukiwiki_show_header && line('.') <= s:pukiwiki_header_row
 		return pukiwiki#jump_menu(cur)
 	endif
 
@@ -1097,7 +1109,7 @@ endfunction "}}}
 
 function! pukiwiki#move_next_bracket() "{{{
 	let tmp = @/
-	let @/ = s:bracket_name
+	let @/ = s:pukiwiki_bracket_name
 	silent! execute "normal! n"
 	execute "normal! ll"
 	let @/ = tmp
@@ -1105,7 +1117,7 @@ endfunction "}}}
 
 function! pukiwiki#move_prev_bracket() "{{{
 	let tmp = @/
-	let @/ = s:bracket_name
+	let @/ = s:pukiwiki_bracket_name
 	execute "normal! hhh"
 	silent! execute "normal! N"
 	execute "normal! ll"
