@@ -640,7 +640,7 @@ function! pukiwiki#info_attach_file(site_name, page, file) " {{{
 
 	let ret = {'success' : 0}
 
-	let ret['errmsg'] = s:PW_valid_config(site_name)
+	let ret['errmsg'] = s:PW_valid_config(a:site_name)
 	if ret['errmsg'] != ''
 		return ret
 	endif
@@ -718,7 +718,7 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 	let retdic = s:PW_request('delete_attach_file', attach_info, a:page, 'POST')
 	let b:pukiwiki_site_name = site_bak
 	if !retdic['success']
-		call s:VITAL.print_error('delete attach file filed: ' . a:file)
+		call s:VITAL.print_error('delete the attach file filed: ' . a:file)
 		return -1
 	endif
 
@@ -778,6 +778,7 @@ function! pukiwiki#get_attach_files() "{{{
 	if !retdic['success']
 		return 0
 	endif
+
 	let body = split(retdic['content'], '\n')
 	let body = filter(body, 'v:val =~ "<li><a href=\".*</a>$"')
 	let body = map(body, 'substitute(v:val, "\\s*<li><a href=[^>]*>", "", "")')
@@ -1043,7 +1044,7 @@ function! pukiwiki#jump_menu(pname) " {{{
 			call s:PW_get_edit_page(b:pukiwiki_site_name, b:pukiwiki_page, 0)
 		endif
 	elseif a:pname == '新規' || a:pname == 'new'
-		let page = input('新規ページ名: ')
+		let page = input('page name: ')
 		if page == ''
 			return
 		endif

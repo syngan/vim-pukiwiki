@@ -111,7 +111,7 @@ function! s:uni_menu.gather_candidates(args, context) "{{{
 	\	['top page', 'top'],
 	\	['attached files', 'attach'],
 	\	['reload', 'reload'],
-	\	['open/create page', 'new'],
+	\	['create page/open page', 'new'],
 	\	['page list', 'list'],
 	\	['search', 'search'],
 	\	['recent changes', 'recent'],
@@ -122,7 +122,8 @@ function! s:uni_menu.gather_candidates(args, context) "{{{
 	\	'word' : v:val[0],
 	\	'action__command' : 'PukiWikiJumpMenu ' . v:val[1],
 	\   'source' : 'pukiwiki/menu'}")
-endfunction " }}}
+endfunction
+" }}}
 
 " }}}
 
@@ -244,13 +245,72 @@ endfunction
 " }}}
 " }}}
 
+" pukiwiki/attach {{{
+let s:uni_attach = {
+	\ 'name': 'pukiwiki/attach',
+	\ 'description': 'attach files of PukiWiki',
+	\ 'default_action' : 'yank',
+	\ 'action_table' : {},
+	\ 'default_kind' : 'command',
+\}
+
+let s:uni_attach.hooks = {}
+
+function! s:uni_attach.hooks.on_init(args, context) "{{{
+	if exists('b:pukiwiki_site_name')
+		let a:context.source__pw_site_name = b:pukiwiki_site_name
+		let a:context.source__pw_page = b:pukiwiki_page
+	else
+		echo "pukiwiki.vim is not initialized"
+	endif
+endfunction "}}}
+
+function! s:uni_attach.gather_candidates(args, context) "{{{
+	if !has_key(a:context, 'source__pw_site_name')
+		return []
+	endif
+
+	let b:pukiwiki_site_name = a:context.source__pw_site_name
+	let b:pukiwiki_page = a:context.source__pw_page
+	let files = pukiwiki#get_attach_files()
+
+	return map(files, "{
+	\	'word' : v:val,
+	\	'source' : 'pukiwiki/attach',
+	\	'source__pw_site_name' : b:pukiwiki_site_name,
+	\	'source__pw_page' : b:pukiwiki_page,
+	\}")
+endfunction "}}}
+
+let s:uni_attach.action_table.delete = {
+	\ 'description' : 'delete the selected file from PukiWiki',
+	\ 'is_selectable' : 0,
+	\ 'is_invalidate_cache' : 1,
+	\}
+
+function! s:uni_attach.action_table.delete.func(candidates) "{{{
+
+	let filename = a:candidates.word
+	let site_name = a:candidates.source__pw_site_name
+	let page = a:candidates.source__pw_page
+	if !unite#util#input_yesno(
+		\ 'Really delete the ' . filename .' at ' . page . ' @ ' . site_name)
+		redraw
+		echo 'canceled.'
+		return
+	endif
+	redraw
+
+	call pukiwiki#delete_attach_file(site_name, page, filename)
+endfunction "}}}
+
 function! unite#sources#pukiwiki#define() "{{{
 	" 登録. g:pukiwiki_config が定義されていない場合には
 	" 動作していないはずなので登録しない
 	if !exists('g:pukiwiki_config')
 		return {}
 	endif
-	return [s:uni_puki, s:uni_menu, s:uni_bm]
+	return [s:uni_puki, s:uni_menu, s:uni_bm, s:uni_attach]
 endfunction "}}}
 
 let &cpo = s:save_cpo
