@@ -252,24 +252,24 @@ function! s:PW_request(funcname, param, info, method) " {{{
 	let settings['method'] = a:method
 	let settings['maxRedirect'] = 0
 "	let a:param['page'] = s:PW_urlencode(enc_page)
-	let pm = a:param
-	if page != ''
-		if s:VITAL.is_dict(a:param)
-			let pm['page'] = s:VITAL.iconv(page, &enc, enc)
-		else
-			let pm .= '&page=' . s:VITAL.iconv(page, &enc, enc)
-		endif
+	if page != '' && !has_key(a:param, "refer")
+		let a:param['page'] = page
 	endif
+	let a:param["encode_hint"] = 'ぷ'
+
 	if a:method == 'POST'
+		let pm = s:PW_joindictstr(a:param, enc)
 		let settings['data'] = pm
 	elseif a:method == 'GET'
+		let pm = s:PW_joindictstr(a:param, enc)
 		let settings['param'] = pm
 	elseif a:method == 'MULT'
 		" multipart/form-data
+		let pm = a:param
 		let settings['data'] = s:PW_gen_multipart(settings, pm)
 		let settings['method'] = 'POST'
 	else
-		throw 'invalid argument: method'
+		throw 'invalid argument: method: ' . a:method
 	endif
 	try
 		let retdic = s:HTTP.request(settings)
@@ -290,7 +290,7 @@ function! s:PW_request(funcname, param, info, method) " {{{
 			return retdic
 		endif
 	endif
-	let retdic['content'] = s:VITAL.iconv(retdic['content'], enc, &enc)
+	let retdic['content'] = s:PW_iconv_s(retdic['content'], enc)
 	return retdic
 endfunction "}}}
 
@@ -303,7 +303,6 @@ function! s:PW_newpage(site_name, page, pagetype) "{{{
 	execute ":setlocal modifiable"
 	execute ":setlocal indentexpr="
 	execute ":setlocal noautoindent"
-	execute ":setlocal paste"
 	execute ':setlocal nobuflisted'
 
 	execute ":setlocal filetype=pukiwiki"
@@ -334,7 +333,6 @@ function! s:PW_endpage(site_name, page, readonly) "{{{
 		execute ":setlocal readonly"
 	endif
 	execute ":setlocal noswapfile"
-	execute ":setlocal nopaste"
 	silent! execute ":redraws!"
 endfunction "}}}
 
@@ -411,7 +409,6 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 	endif
 	let result = retdic['content']
 
-
 	if a:pwcmd == 'edit'
 		if result !~ '<textarea\_.\{-}>\_.\{-}</textarea>\_.\{-}<textarea'
 			" cmd=source で読み直し
@@ -422,12 +419,10 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 			call s:VITAL.print_error('ページの読み込みに失敗しました。認証が必要です。')
 			return
 		endif
-
 	else
 		call s:VITAL.print_error('unknown command: ' . a:pwcmd)
 		return
 	endif
-
 
 	if a:pwcmd == 'edit'
 		let digest = s:PW_get_digest(result)
@@ -437,7 +432,6 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 		let digest = ''
 		let msg = matchstr(result, '.*<pre id="source">\zs\_.\{-}\ze</pre>.*')
 	endif
-
 
 	" 全消去
 	if a:opennew
@@ -449,7 +443,6 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 		let @" = regbak
 	endif
 
-
 	call s:PW_insert_header(a:site_name, a:page)
 "	silent! execute "normal! ihistory>>>>>" . len(s:pukiwiki_history) . "\n"
 "	for elm in s:pukiwiki_history
@@ -457,9 +450,9 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 "	endfor
 "	silent! execute "normal! ihistory<<<<<" . len(s:pukiwiki_history) . "\n"
 
+"	let msg = s:PW_iconv_s(msg, enc)
 	let msg = s:HTML.decodeEntityReference(msg)
 	silent! execute "normal! i" . msg
-
 
 	let b:pukiwiki_info.digest = digest
 	let b:pukiwiki_info.page = a:page
@@ -480,6 +473,7 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 		augroup END
 		call s:PW_endpage(a:site_name, a:page, 0)
 	endif
+
 	if a:pwcmd == 'source'
 		call s:PW_endpage(a:site_name, a:page, 1)
 	endif
@@ -530,23 +524,18 @@ function! s:PW_write() "{{{
 	endif
 	execute ":setlocal fenc="
 
-	let body = map(body, 's:VITAL.iconv(v:val, &enc, enc)')
-	let body = map(body, 's:PW_urlencode(v:val)')
 
 	" urlencode した本文前にその他の情報設定
 	let param = {}
-	let param["encode_hint"] = s:PW_urlencode(s:VITAL.iconv('ぷ', &enc, enc))
 	let param['cmd'] = 'edit'
-	let param['page'] = s:PW_urlencode(s:VITAL.iconv(page, &enc, enc))
+	let param['page'] = page
 	let param['digest'] = b:pukiwiki_info["digest"]
-	let param['write'] = s:PW_urlencode(s:VITAL.iconv('ページの更新', &enc, enc))
+	let param['write'] = 'ページの更新'
 	let param["notimestamp"] = notimestamp
 	let param["original"] = ''
-	let param["msg"] = join(body, '%0A')
-	let paramstr = s:PW_joindictstr(param)
-	unlet param
+	let param["msg"] = join(body, "\n")
 
-	let retdic = s:PW_request('write', paramstr, b:pukiwiki_info, 'POST')
+	let retdic = s:PW_request('write', param, b:pukiwiki_info, 'POST')
 	if !retdic['success']
 		return 0
 	endif
@@ -572,13 +561,14 @@ function! s:PW_write() "{{{
 
 	" もう少しまともな判定方法はないのか?
 	if bodyr =~ '<title>\_.\{-}を削除しました\_.\{-}<\/title>'
+		execute ":set nomodified"
 		call s:PW_get_top_page(site)
 		echo page . ' を削除しました'
 		return
 	endif
 
 	if g:pukiwiki_debug
-		echo paramstr
+		echo param
 		echo retdic
 	endif
 
@@ -665,16 +655,12 @@ function! pukiwiki#info_attach_file(site_name, page, file) " {{{
 	endif
 
 	let sitedict = g:pukiwiki_config[a:site_name]
-	let enc = sitedict['encode']
-	let enc_page = a:page
 
 	let param = {}
-	let param['encode_hint'] = 'ぷ'
 	let param['plugin'] = 'attach'
 	let param['pcmd'] = 'info'
-	let param['refer'] = enc_page
+	let param['refer'] = a:page
 	let param['file'] = a:file
-
 
 	let info = {
 		\ "site" : a:site_name,
@@ -784,13 +770,11 @@ function! pukiwiki#get_attach_files() "{{{
 	" 添付ファイルの一覧
 	let page = b:pukiwiki_info.page
 	let sitedict = g:pukiwiki_config[b:pukiwiki_info["site"]]
-	let enc = sitedict['encode']
 
 	let param = {}
 	let param['plugin'] = 'attach'
 	let param['pcmd'] = 'list'
-	let enc_page = s:VITAL.iconv(page, &enc, enc)
-	let param['refer'] = enc_page
+	let param['refer'] = page
 
 	let retdic = s:PW_request('show_attach', param, b:pukiwiki_info, 'GET')
 	if !retdic['success']
@@ -799,8 +783,10 @@ function! pukiwiki#get_attach_files() "{{{
 
 	let body = split(retdic['content'], '\n')
 	let body = filter(body, 'v:val =~ "<li><a href=\".*</a>$"')
-	let body = map(body, 'substitute(v:val, "\\s*<li><a href=[^>]*>", "", "")')
-	let body = map(body, 'substitute(v:val, "</a>", "", "")')
+	let body = map(body, 'substitute(v:val, "\\s*<li><a href=[^>]* title=.\\(.*\\).>\\(.*\\)</a>", "\\1\\t\\2", "")')
+	let body = map(body, '[substitute(v:val, ".*\\t", "", ""), substitute(v:val, "\\t.*", "", "")]')
+	" ファイル名, 情報
+	let body = map(body, '[s:HTML.decodeEntityReference(v:val[0]), v:val[1]]')
 	return body
 endfunction "}}}
 
@@ -850,39 +836,14 @@ function! s:PW_show_attach(site_name, page) "{{{
 " 表示せずにコマンドだけ・・・のほうがいいのかな
 "----------------------------------------------
 
-	let sitedict = g:pukiwiki_config[a:site_name]
-	let enc = sitedict['encode']
-
-	" 添付ファイルの一覧
-	let enc_page = s:VITAL.iconv(a:page, &enc, enc)
-	let param = {}
-	let param['plugin'] = 'attach'
-	let param['pcmd'] = 'list'
-	let param['refer'] = enc_page
-	let info = {
-		\ "site" : a:site_name,
-		\ "page" : a:page,
-	\}
-	let retdic = s:PW_request('show_attach', param, info, 'GET')
-	if !retdic['success']
-		return 0
-	endif
-	let body = retdic['content']
-
-	let body = substitute(body, '^.*\(<div id="body">.*<hr class="full_hr" />\).*$', '\1', '')
-	let body = substitute(body, '^.*<div id="body">.*<ul>\(.*\)</ul>.*<hr class="full_hr" />.*$', '\1', '')
-	let body = substitute(body, '<span class="small">.\{-}</span>\n', '', 'g')
-	let body = substitute(body, ' </li>\n', '', 'g')
-	let body = substitute(body, ' <li><a.\{-} title="\(.\{-}\)">\(.\{-}\)</a>', '\2\t(\1)', 'g')
-
-	" [添付ファイルがありません] 対応
-	let body = substitute(body, '<.\{-}>', '', 'g')
-	let body = substitute(body, '\n\n*', '\n', 'g')
+	let files = pukiwiki#get_attach_files()
+	let files = map(files, '"- " . v:val[0] . "\t\t(" . v:val[1] . ")"')
+	let body = join(files, "\n")
 
 	call s:PW_newpage(a:site_name, a:page, 'attach')
 	call s:PW_set_statusline(a:site_name, a:page)
 	call s:PW_insert_header(a:site_name, a:page)
-	execute "normal! i添付ファイル一覧 [[" . a:page . "]]\n"
+	execute "normal! i添付ファイル一覧 [[" . a:page . "]]\n\n"
 	execute "normal! i" . body
 
 	call s:PW_endpage(a:site_name, a:page, 1)
@@ -930,7 +891,6 @@ function! s:PW_show_search() "{{{
 
 	let site = b:pukiwiki_info.site
 	let sitedict = g:pukiwiki_config[site]
-	let enc = sitedict['encode']
 
 	let word = input('keyword: ')
 	if word == ''
@@ -943,7 +903,6 @@ function! s:PW_show_search() "{{{
 	endif
 
 	let param = {}
-	let param['encode_hint'] = 'ぷ'
 	let param['word'] = word
 	let param['type'] = type
 	let param['cmd'] = 'search'
@@ -964,8 +923,8 @@ function! s:PW_show_search() "{{{
 	" がんばって加工
 	let bodyl = split(retdic['content'], '\n')
 	let bodyl = filter(bodyl, 'v:val =~ "^\\s*<li><a href=" || v:val =~ "^<strong class="')
-	let bodyl = map(bodyl, 'substitute(v:val, "^\\s*<li><a href.*>\\(.*\\)</a>\\(.*\\)</li>.*$", "- [[\\1]]\\t\\2", "")')
-	let bodyl[-1] = substitute(bodyl[-1], '<[^>]*>', '', 'g')
+	let bodyl = map(bodyl, 'substitute(v:val, "^\\s*<li><a href=[^>]*>\\(.*\\)</a>\\(.*\\)</li>.*$", "- [[\\1]]\\t\\2", "")')
+	let bodyl = map(bodyl, 'substitute(v:val, "<[^>]*>", "", "g")')
 	let bodyl = map(bodyl, 's:HTML.decodeEntityReference(v:val)')
 	let mes = remove(bodyl, -1)
 	call insert(bodyl, mes, 0)
@@ -1005,16 +964,13 @@ function! pukiwiki#fileupload() range "{{{
 	let page = b:pukiwiki_info["page"]
 
 	let sitedict = g:pukiwiki_config[site]
-	let enc = sitedict['encode']
 
 	let pass = s:get_password(sitedict)
-	let enc_page = s:VITAL.iconv(page, &enc, enc)
 
 	let param = {}
-	let param['encode_hint'] = 'ぷ'
 	let param['plugin'] = 'attach'
 	let param['pcmd'] = 'post'
-	let param['refer'] = enc_page
+	let param['refer'] = page
 	let param['pass'] = pass
 
     for linenum in range(a:firstline, a:lastline)
@@ -1177,11 +1133,11 @@ endfunction "}}}
 
 " s:alice.vim {{{
 
-function! s:PW_joindictstr(dict) " {{{
+function! s:PW_joindictstr(dict, enc) " {{{
 	let ret = ''
 	for key in keys(a:dict)
 		if strlen(ret) | let ret .= "&" | endif
-		let ret .= key . "=" . a:dict[key]
+		let ret .= key . "=" . s:PW_urlenc_u(a:dict[key], a:enc)
 	endfor
 	return ret
 endfunction " }}}
@@ -1219,6 +1175,20 @@ function! s:PW_matchstr_undercursor(mx) "{{{
   let mx = '\m\%<'.(column + 1).'c'.a:mx.'\%>'.column.'c'
   return matchstr(getline('.'), mx)
 endfunction "}}}
+
+" local を サーバ向けに変更
+function! s:PW_iconv_u(val, toenc) " {{{
+	return s:VITAL.iconv(a:val, &enc, a:toenc)
+endfunction " }}}
+
+" サーバからの文字列をローカルに変更
+function! s:PW_iconv_s(val, fromenc) " {{{
+	return s:VITAL.iconv(a:val, a:fromenc, &enc)
+endfunction " }}}
+
+function! s:PW_urlenc_u(val, toenc)
+	return s:PW_urlencode(s:PW_iconv_u(a:val, a:toenc))
+endfunction
 
 "}}}
 

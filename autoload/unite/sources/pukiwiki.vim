@@ -275,7 +275,7 @@ function! s:uni_attach.gather_candidates(args, context) "{{{
 	let files = pukiwiki#get_attach_files()
 
 	return map(files, "{
-	\	'word' : v:val,
+	\	'word' : v:val[0],
 	\	'source' : 'pukiwiki/attach',
 	\	'source__pw_info' : b:pukiwiki_info,
 	\}")
@@ -294,7 +294,7 @@ function! s:uni_attach.action_table.delete.func(candidates) "{{{
 	let page = pukiwiki_info["page"]
 	let filename = a:candidates.word
 	if !unite#util#input_yesno(
-		\ 'Really delete the ' . filename .' at ' . page . ' @ ' . site_name)
+		\ 'Really delete "' . filename .'" at ' . page . ' @ ' . site_name)
 		redraw
 		echo 'canceled.'
 		return
