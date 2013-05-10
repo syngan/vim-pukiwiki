@@ -110,7 +110,7 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 
 	if a:0 == 0
 		" 問い合わせ
-		let site_name = input('サイト名: ')
+		let site_name = input('site name: ')
 	else
 		let site_name = a:1
 	endif
@@ -198,11 +198,15 @@ function! s:PW_gen_multipart(settings, param) " {{{
 	if !s:VITAL.is_dict(a:param)
 		throw "invalid argument"
 	endif
-	let b = "-------------11285676"
+
+
+	" @TODO 本当はファイル内に同じ文字列がないこと、を確認する必要があるが...
+	let b = "---------------------11285676"
 	if has('reltime')
-		let b .= substitute(reltimestr(reltime()), '\.', '', 'g')
+		let b .= substitute(reltimestr(reltime()), "\\X", '', 'g')
 	else
-		let b .= "iamapen"
+"		let b .= substitute(tempname().localtime(), "[^A-Za-z0-9]", '', 'g')
+		let b .= substitute(localtime(), "[^A-Za-z0-9]", '', 'g')
 	endif
 	let a:settings.contentType = "multipart/form-data; boundary=" . b
 	let ret = ""
@@ -272,6 +276,7 @@ function! s:PW_request(funcname, param, page, method) " {{{
 	endif
 	if !retdic['success']
 		if retdic['status'] == 302
+			" 書き込み時(PW_write())に成功扱いにする.
 			let retdic['success'] = 1
 		else
 			call s:VITAL.print_error(a:funcname . '() failed: ' . retdic['status'] . ' ' . retdic['statusText'])
@@ -351,6 +356,12 @@ function! s:PW_get_source_page(site_name, page) "{{{
 	return s:PW_get_page(a:site_name, a:page, "source", 1)
 endfunction "}}}
 
+function! s:PW_insert_header(site_name, page)
+	if g:pukiwiki_show_header
+		execute "normal! gg0i" . a:site_name . " " . a:page . s:pukivim_ro_menu
+	endif
+endfunction
+
 function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 " ページを開く
 " pwcmd = "edit" or "source"
@@ -407,9 +418,7 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 	endif
 
 
-	if g:pukiwiki_show_header
-		silent! execute "normal! i" . a:site_name . " " . a:page . s:pukivim_ro_menu
-	endif
+	call s:PW_insert_header(a:site_name, a:page)
 "	silent! execute "normal! ihistory>>>>>" . len(s:pukiwiki_history) . "\n"
 "	for elm in s:pukiwiki_history
 "		silent! execute "normal! i" . elm[4] . "\n"
@@ -470,22 +479,23 @@ function! s:PW_write() "{{{
 	elseif g:pukiwiki_timestamp_update == 0
 		let notimestamp = 'true'
 	else
-		let last_confirm = input('タイムスタンプを変更する？(Y/n): ')
-		if last_confirm =~ '^\cy'
+		let last_confirm = s:PW_yesno('タイムスタンプを変更する？: ', 'Y')
+		if last_confirm
 			let notimestamp = 'true'
 		endif
+		unlet last_confirm
 	endif
 
 	" ヘッダの削除. ユーザがヘッダを修正すると
 	" 書き込みが壊れるだめな仕様
 	" @REG
-	let regbak = @"
 	if g:pukiwiki_show_header
+		let regbak = @"
 		silent! execute "normal! gg3D"
+		let @" = regbak
 	else
 		silent! execute "normal! gg"
 	endif
-	let @" = regbak
 	execute ":setlocal fenc="
 
 	" urlencode
@@ -574,6 +584,36 @@ function! s:PW_write() "{{{
 	endif
 	return 0
 endfunction "}}}
+
+
+function! s:PW_yesno(mes, def) " {{{
+
+	if a:def =~? '^y'
+		let m = 'Y/n'
+		let def = 'y'
+	elseif a:def =~ '^n'
+		let m = 'y/N'
+		let def = 'n'
+	else
+		let m = 'y/n'
+		let def = ''
+	endif
+
+	let message = a:mes. ' [' . m . ']: '
+	let yesno = input(message)
+	while yesno !~? '^\%(y\%[es]\|n\%[o]\)$'
+		redraw
+		if yesno == '' && def != ''
+			let yesno = def
+			break
+		endif
+	    " Retry.
+		call s:VITAL.print_error('Invalid input.')
+		let yesno = input(message)
+	endwhile
+
+	return yesno =~? 'y\%[es]'
+endfunction " }}}
 
 function! pukiwiki#get_back_page() "{{{
 	if (len(s:pukiwiki_history) > 0)
@@ -808,10 +848,7 @@ function! s:PW_show_attach(site_name, page) "{{{
 
 	call s:PW_newpage(a:site_name, a:page)
 	call s:PW_set_statusline(a:site_name, a:page)
-
-	if g:pukiwiki_show_header
-		execute "normal! i" . a:site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
-	endif
+	call s:PW_insert_header(a:site_name, a:page)
 	execute "normal! i添付ファイル一覧 [[" . b:pukiwiki_page . "]]\n"
 	execute "normal! i" . body
 
@@ -845,9 +882,7 @@ function! s:PW_show_page_list() "{{{
 
 	execute ":setlocal noai"
 	execute "normal! gg0"
-	if g:pukiwiki_show_header
-		execute "normal! i" . b:pukiwiki_site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
-	endif
+	call s:PW_insert_header(b:pukiwiki_site_name, b:pukiwiki_page)
 
 	call s:PW_endpage(b:pukiwiki_site_name, b:pukiwiki_page, 1)
 endfunction "}}}
@@ -859,13 +894,13 @@ function! s:PW_show_search() "{{{
 	let enc = sitedict['encode']
 	let top = sitedict['top']
 
-	let word = input('キーワード: ')
+	let word = input('keyword: ')
 	if word == ''
 		return
 	endif
 	let type = 'AND'
 	let andor = input('(And/or): ')
-	if andor =~ '^\co'
+	if andor =~? 'o\%[r]'
 		let type = 'OR'
 	endif
 
@@ -897,23 +932,21 @@ function! s:PW_show_search() "{{{
 	" それを最初にだす
 	" @REG
 	execute "normal! gg0i" . body
-	if g:pukiwiki_show_header
-		execute "normal! gg0i" . b:pukiwiki_site_name . " " . b:pukiwiki_page . s:pukivim_ro_menu
-	endif
+	call s:PW_insert_header(b:pukiwiki_site_name, b:pukiwiki_page)
 
 	call s:PW_endpage(b:pukiwiki_site_name, b:pukiwiki_page, 1)
 endfunction "}}}
 " }}}
 
-function! s:get_password(sitedict)
+function! s:get_password(sitedict) " {{{
 	if !has_key(a:sitedict, 'password')
-		let pass = input('パスワード: ')
+		let pass = input('password: ')
 	else
 		let pass = a:sitedict['password']
 	endif
 
 	return pass
-endfunction
+endfunction " }}}
 
 function! pukiwiki#fileupload() range "{{{
 
@@ -982,7 +1015,7 @@ function! pukiwiki#fileupload() range "{{{
 endfunction "}}}
 
 " g:motion {{{
-function! pukiwiki#jump_menu(pname)
+function! pukiwiki#jump_menu(pname) " {{{
 
 	if !s:PW_is_init()
 		call s:VITAL.print_error('vim-pukiwiki has not initialized')
@@ -1017,8 +1050,7 @@ function! pukiwiki#jump_menu(pname)
 		call s:PW_get_source_page(b:pukiwiki_site_name, page)
 	endif
 	return
-endfunction
-
+endfunction " }}}
 
 function! pukiwiki#jump()  "{{{
 	if !s:PW_is_init()
@@ -1041,7 +1073,7 @@ function! pukiwiki#jump()  "{{{
 	endif
 
 	if &modified
-		call s:VITAL.print_error('変更が保存されていません。')
+		call s:VITAL.print_error("No write since last change")
 		return
 	endif
 
