@@ -254,7 +254,7 @@ function! s:PW_request(funcname, param, page, method) " {{{
 "	let a:param['page'] = s:PW_urlencode(enc_page)
 	let pm = a:param
 	if a:page != ''
-		if s:VITAL.is_dict(a:param) 
+		if s:VITAL.is_dict(a:param)
 			let pm['page'] = s:VITAL.iconv(a:page, &enc, enc)
 		else
 			let pm .= '&page=' . s:VITAL.iconv(a:page, &enc, enc)
@@ -346,6 +346,27 @@ function! s:PW_set_statusline(site_name, page) "{{{
 	let status_line = s:PW_gen_statusline_str(a:site_name, a:page)
 	silent! execute ":f " . status_line
 	return status_line
+endfunction "}}}
+
+function! pukiwiki#update_digest() "{{{
+	if !s:PW_is_init()
+		throw "pukiwiki.vim is not executed."
+		return 0
+	endif
+
+	let param = {}
+	let param['cmd'] = "edit"
+	let retdic = s:PW_request('update_digest', param, b:pukiwiki_page, 'GET')
+	if !retdic['success']
+		return 0
+	endif
+	let result = retdic['content']
+	if result !~ '<textarea\_.\{-}>\_.\{-}</textarea>\_.\{-}<textarea'
+		return 0
+	endif
+
+	let b:pukiwiki_digest = s:PW_get_digest(result)
+	return 1
 endfunction "}}}
 
 function! s:PW_get_digest(str) "{{{
@@ -477,7 +498,6 @@ function! s:PW_write() "{{{
 	let enc = sitedict['encode']
 	let top = sitedict['top']
 
-	let notimestamp = ''
 	let lineno = line('.')
 
 	if g:pukiwiki_timestamp_update == 1
@@ -486,8 +506,10 @@ function! s:PW_write() "{{{
 		let notimestamp = 'true'
 	else
 		let last_confirm = s:PW_yesno('タイムスタンプを変更する？: ', 'y')
-		if last_confirm
+		if !last_confirm
 			let notimestamp = 'true'
+		else
+			let notimestamp = ''
 		endif
 		unlet last_confirm
 	endif
@@ -496,33 +518,25 @@ function! s:PW_write() "{{{
 	" 書き込みが壊れるだめな仕様
 	" @REG
 	if g:pukiwiki_show_header
-		let regbak = @"
-		silent! execute "normal! gg" . s:pukiwiki_header_row . "D"
-		let @" = regbak
+"		let regbak = @"
+"		silent! execute "normal! gg" . s:pukiwiki_header_row . "D"
+"		let @" = regbak
+		let body = getline(1 + s:pukiwiki_header_row, line('$'))
 	else
-		silent! execute "normal! gg"
+		let body = getline(1, line('$'))
 	endif
 	execute ":setlocal fenc="
 
-	" urlencode
-	let body = []
-
-	let cl = 1
-	while cl <= line('$')
-		let line = getline(cl)
-		let line = s:VITAL.iconv(line, &enc, enc)
-		let line = s:PW_urlencode(line)
-		call add(body, line)
-		let cl = cl + 1
-	endwhile
+	let body = map(body, 's:VITAL.iconv(v:val, &enc, enc)')
+	let body = map(body, 's:PW_urlencode(v:val)')
 
 	" urlencode した本文前にその他の情報設定
 	let param = {}
-	let cmd = "encode_hint=" . s:PW_urlencode(s:VITAL.iconv('ぷ', &enc, enc))
+	let param["encode_hint"] = s:PW_urlencode(s:VITAL.iconv('ぷ', &enc, enc))
 	let param['cmd'] = 'edit'
 	let param['page'] = s:PW_urlencode(s:VITAL.iconv(b:pukiwiki_page, &enc, enc))
 	let param['digest'] = b:pukiwiki_digest
-	let param['write'] = s:VITAL.iconv('ページの更新', &enc, enc)
+	let param['write'] = s:PW_urlencode(s:VITAL.iconv('ページの更新', &enc, enc))
 	let param["notimestamp"] = notimestamp
 	let param["original"] = ''
 	let param["msg"] = join(body, '%0A')
@@ -530,7 +544,6 @@ function! s:PW_write() "{{{
 	unlet param
 
 	let retdic = s:PW_request('write', paramstr, b:pukiwiki_page, 'POST')
-	unlet paramstr
 	if !retdic['success']
 		return 0
 	endif
@@ -538,6 +551,7 @@ function! s:PW_write() "{{{
 	" 書き込みが成功すると PukiWiki が
 	" locationヘッダーを吐く & 302 を返す
 	if retdic['status'] == 302
+
 		call s:PW_get_edit_page(b:pukiwiki_site_name, b:pukiwiki_page, 0)
 
 		" 元いた行に移動
@@ -561,34 +575,36 @@ function! s:PW_write() "{{{
 	endif
 
 	if g:pukiwiki_debug
+		echo paramstr
 		echo retdic
 	endif
-	" 失敗
-	execute ":undo"
-	execute ":set nomodified"
-	execute ":setlocal nomodifiable"
-	execute ":setlocal readonly"
-	let site_name = b:pukiwiki_site_name
-	let page      = b:pukiwiki_page
 
-	" 書き込みしようとしたバッファの名前の前に'ローカル'を付けて
-	" 現在のサーバー上の内容を取得して'diffthis'を実行する。
-	call s:PW_set_statusline(b:pukiwiki_site_name, 'ローカル ' . b:pukiwiki_page)
-	execute ":diffthis"
-	execute ":new"
-
-	call s:PW_get_edit_page(site_name, page, 0)
-	execute ":diffthis"
-	if g:pukiwiki_debug
-		echo "digest=[" . b:pukiwiki_digest . "] cmd=[" . cmd . "]"
-		echo "&enc=" . &enc . ", enc=" . enc . ", page=" . b:pukiwiki_page
-		echo "s:VITAL.iconv=" . Byte2hex(s:VITAL.iconv(b:pukiwiki_page, &enc, enc))
-		echo "urlen=" . s:PW_urlencode(s:VITAL.iconv( b:pukiwiki_page, &enc, enc))
-	endif
 	call s:VITAL.print_error('更新の衝突が発生したか、その他のエラーで書き込めませんでした。')
 	return 0
+"
+"	" 失敗
+"	execute ":undo"
+"	execute ":set nomodified"
+"	execute ":setlocal nomodifiable"
+"	execute ":setlocal readonly"
+"	let site_name = b:pukiwiki_site_name
+"	let page      = b:pukiwiki_page
+"
+"	" 書き込みしようとしたバッファの名前の前に'ローカル'を付けて
+"	" 現在のサーバー上の内容を取得して'diffthis'を実行する。
+"	call s:PW_set_statusline(b:pukiwiki_site_name, 'ローカル ' . b:pukiwiki_page)
+"	execute ":diffthis"
+"	execute ":new"
+"
+"	call s:PW_get_edit_page(site_name, page, 0)
+"	execute ":diffthis"
+"	if g:pukiwiki_debug
+"		echo "digest=[" . b:pukiwiki_digest . "] cmd=[" . cmd . "]"
+"		echo "&enc=" . &enc . ", enc=" . enc . ", page=" . b:pukiwiki_page
+"		echo "s:VITAL.iconv=" . Byte2hex(s:VITAL.iconv(b:pukiwiki_page, &enc, enc))
+"		echo "urlen=" . s:PW_urlencode(s:VITAL.iconv( b:pukiwiki_page, &enc, enc))
+"	endif
 endfunction "}}}
-
 
 function! s:PW_yesno(mes, def) " {{{
 
@@ -739,7 +755,7 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 	endif
 	unlet body
 	if title =~ '.*からファイルを削除しました'
-		let g:pukiwiki_config['password'] = pass
+		call s:set_password(sitedict, pass)
 		return 0
 	else
 		call s:VITAL.print_error(title)
@@ -954,6 +970,10 @@ function! s:get_password(sitedict) " {{{
 	return pass
 endfunction " }}}
 
+function! s:set_password(sitedict, pass) " {{{
+	let a:sitedict['password'] = a:pass
+endfunction " }}}
+
 function! pukiwiki#fileupload() range "{{{
 
 	if !s:PW_is_init()
@@ -1009,12 +1029,13 @@ function! pukiwiki#fileupload() range "{{{
 		call setline(linenum, curr_line . "\t" . body)
 
 		if body =~ '.*パスワード.*'
+			" パスワード誤り
 			if has_key(sitedict, 'password')
 				call remove(sitedict, 'password')
 			endif
 			break
 		elseif body =~ '.*アップロード.*' || body =~ '.*同じファイル名.*'
-			let sitedict['password'] = pass
+			call s:set_password(sitedict, pass)
 		endif
     endfor
 

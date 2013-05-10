@@ -63,6 +63,7 @@ TODO:
 
 BUG:
   - S-TAB のキーマップが動作しない.
+  - pukiwiki#fileupload() 後に保存が成功しない
 
 オリジナル
   http://vimwiki.net/?scripts%2F10
