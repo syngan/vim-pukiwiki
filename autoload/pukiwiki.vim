@@ -59,28 +59,18 @@ let s:HTTP = s:VITAL.import('Web.Http')
 " }}}
 
 " debug {{{
+
 function! pukiwiki#buf_vars() "{{{
 	" デバッグ用
-	if exists('b:pukiwiki_site_name')
-		call s:PW_echokv('site_name' , b:pukiwiki_site_name)
-		let sitedict = g:pukiwiki_config[b:pukiwiki_site_name]
-		call s:PW_echokv('url' , sitedict['url'])
-		call s:PW_echokv('top' , sitedict['top'])
-		call s:PW_echokv('enc' , sitedict['encode'])
-	else
-		call s:PW_echokv('site_name' , 'undefined')
+	if exists('b:pukiwiki_info')
+		for key in keys(b:pukiwiki_info)
+			call s:PW_echokv(key , b:pukiwiki_info[key])
+		endfor
+		let sitedict = g:pukiwiki_config[b:pukiwiki_info["site"]]
+		for key in keys(sitedict)
+			call s:PW_echokv(key , sitedict[key])
+		endfor
 	endif
-	if exists('b:pukiwiki_page')
-		call s:PW_echokv('page'      , b:pukiwiki_page)
-	else
-		call s:PW_echokv('page'      , 'undefined')
-	endif
-	if exists('b:pukiwiki_digest')
-		call s:PW_echokv('digest'    , b:pukiwiki_digest)
-	else
-		call s:PW_echokv('digest'    , 'undefined')
-	endif
-
 endfunction "}}}
 "}}}
 
@@ -129,7 +119,6 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 	endif
 
 	let dict = g:pukiwiki_config[site_name]
-	let url = dict['url']
 
 	if (!has_key(dict, 'encode'))
 		let dict['encode'] = 'euc-jp'
@@ -138,7 +127,6 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 		let top = dict['top']
 	else
 		let top	= 'FrontPage'
-		let dict['top'] = top
 	endif
 
 	if a:0 > 1
@@ -193,7 +181,11 @@ function! s:PW_valid_config(site_name) "{{{
 endfunction "}}}
 
 function! s:PW_is_init() " {{{
-	if !exists('b:pukiwiki_site_name')
+	if !exists('b:pukiwiki_info')
+		return 0
+	endif
+
+	if !has_key(b:pukiwiki_info, "site")
 		return 0
 	endif
 
@@ -239,10 +231,18 @@ function! s:PW_gen_multipart(settings, param) " {{{
 	return ret
 endfunction " }}}
 
-function! s:PW_request(funcname, param, page, method) " {{{
+function! s:PW_request(funcname, param, info, method) " {{{
 " Web サーバにリクエストを送り、結果を受け取る.
 " @return success をキーに持つ辞書
-	let sitedict = g:pukiwiki_config[b:pukiwiki_site_name]
+
+	let site = a:info["site"]
+	if has_key(a:info, "page")
+		let page = a:info["page"]
+	else
+		let page = ""
+	endif
+
+	let sitedict = g:pukiwiki_config[site]
 	let url = sitedict['url']
 	let enc = sitedict['encode']
 
@@ -253,11 +253,11 @@ function! s:PW_request(funcname, param, page, method) " {{{
 	let settings['maxRedirect'] = 0
 "	let a:param['page'] = s:PW_urlencode(enc_page)
 	let pm = a:param
-	if a:page != ''
+	if page != ''
 		if s:VITAL.is_dict(a:param)
-			let pm['page'] = s:VITAL.iconv(a:page, &enc, enc)
+			let pm['page'] = s:VITAL.iconv(page, &enc, enc)
 		else
-			let pm .= '&page=' . s:VITAL.iconv(a:page, &enc, enc)
+			let pm .= '&page=' . s:VITAL.iconv(page, &enc, enc)
 		endif
 	endif
 	if a:method == 'POST'
@@ -317,9 +317,12 @@ function! s:PW_newpage(site_name, page, pagetype) "{{{
 	endif
 	" }}}
 
-	let b:pukiwiki_site_name = a:site_name
-	let b:pukiwiki_page      = a:page
-	let b:pukiwiki_page_type = a:pagetype
+	let b:pukiwiki_info = {
+		\ "site" : a:site_name,
+		\ "page" : a:page,
+		\ "type" : a:pagetype,
+		\ "header" : g:pukiwiki_show_header,
+		\}
 endfunction "}}}
 
 function! s:PW_endpage(site_name, page, readonly) "{{{
@@ -356,7 +359,7 @@ function! pukiwiki#update_digest() "{{{
 
 	let param = {}
 	let param['cmd'] = "edit"
-	let retdic = s:PW_request('update_digest', param, b:pukiwiki_page, 'GET')
+	let retdic = s:PW_request('update_digest', param, b:pukiwiki_info, 'GET')
 	if !retdic['success']
 		return 0
 	endif
@@ -365,7 +368,7 @@ function! pukiwiki#update_digest() "{{{
 		return 0
 	endif
 
-	let b:pukiwiki_digest = s:PW_get_digest(result)
+	let b:pukiwiki_info.digest = s:PW_get_digest(result)
 	return 1
 endfunction "}}}
 
@@ -396,13 +399,13 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 " pwcmd = "edit" or "source"
 
 	let sitedict = g:pukiwiki_config[a:site_name]
-	let url = sitedict['url']
-	let enc = sitedict['encode']
-	let top = sitedict['top']
-	let b:pukiwiki_site_name = a:site_name
 	let param = {}
 	let param['cmd'] = a:pwcmd
-	let retdic = s:PW_request('get_page', param, a:page, 'GET')
+	let info = {
+		\ "site" : a:site_name,
+		\ "page" : a:page,
+	\}
+	let retdic = s:PW_request('get_page', param, info, 'GET')
 	if !retdic['success']
 		return 0
 	endif
@@ -458,10 +461,10 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 	silent! execute "normal! i" . msg
 
 
-	let b:pukiwiki_digest = digest
-	let b:pukiwiki_page   = a:page
+	let b:pukiwiki_info.digest = digest
+	let b:pukiwiki_info.page = a:page
 
-	let status_line = s:PW_set_statusline(b:pukiwiki_site_name, b:pukiwiki_page)
+	let status_line = s:PW_set_statusline(a:site_name, a:page)
 
 	" undo 履歴を消去する, @see *clear-undo*
 	let oldundolevel = &undolevels
@@ -493,10 +496,10 @@ function! s:PW_write() "{{{
 		return
 	endif
 
-	let sitedict = g:pukiwiki_config[b:pukiwiki_site_name]
-	let url = sitedict['url']
+	let site = b:pukiwiki_info["site"]
+	let page = b:pukiwiki_info["page"]
+	let sitedict = g:pukiwiki_config[site]
 	let enc = sitedict['encode']
-	let top = sitedict['top']
 
 	let lineno = line('.')
 
@@ -534,8 +537,8 @@ function! s:PW_write() "{{{
 	let param = {}
 	let param["encode_hint"] = s:PW_urlencode(s:VITAL.iconv('ぷ', &enc, enc))
 	let param['cmd'] = 'edit'
-	let param['page'] = s:PW_urlencode(s:VITAL.iconv(b:pukiwiki_page, &enc, enc))
-	let param['digest'] = b:pukiwiki_digest
+	let param['page'] = s:PW_urlencode(s:VITAL.iconv(page, &enc, enc))
+	let param['digest'] = b:pukiwiki_info["digest"]
 	let param['write'] = s:PW_urlencode(s:VITAL.iconv('ページの更新', &enc, enc))
 	let param["notimestamp"] = notimestamp
 	let param["original"] = ''
@@ -543,7 +546,7 @@ function! s:PW_write() "{{{
 	let paramstr = s:PW_joindictstr(param)
 	unlet param
 
-	let retdic = s:PW_request('write', paramstr, b:pukiwiki_page, 'POST')
+	let retdic = s:PW_request('write', paramstr, b:pukiwiki_info, 'POST')
 	if !retdic['success']
 		return 0
 	endif
@@ -552,12 +555,13 @@ function! s:PW_write() "{{{
 	" locationヘッダーを吐く & 302 を返す
 	if retdic['status'] == 302
 
-		call s:PW_get_edit_page(b:pukiwiki_site_name, b:pukiwiki_page, 0)
+		" 再読み込み
+		call s:PW_get_edit_page(site, page, 0)
 
 		" 元いた行に移動
 		execute "normal! " . lineno . "G"
 
-		echo 'update ' . b:pukiwiki_page . ' @ ' . b:pukiwiki_site_name
+		echo 'update ' . page . ' @ ' . site
 		return 0
 	endif
 
@@ -568,8 +572,7 @@ function! s:PW_write() "{{{
 
 	" もう少しまともな判定方法はないのか?
 	if bodyr =~ '<title>\_.\{-}を削除しました\_.\{-}<\/title>'
-		let page = b:pukiwiki_page
-		call s:PW_get_edit_page(b:pukiwiki_site_name, top, 0)
+		call s:PW_get_top_page(site)
 		echo page . ' を削除しました'
 		return
 	endif
@@ -638,7 +641,7 @@ endfunction " }}}
 function! pukiwiki#get_back_page() "{{{
 	if (len(s:pukiwiki_history) > 0)
 		let [site_name, page, pwcmd] = remove(s:pukiwiki_history, -1)
-		if page == b:pukiwiki_page && len(s:pukiwiki_history) > 0
+		if page == b:pukiwiki_info["page"] && len(s:pukiwiki_history) > 0
 			let [site_name, page, pwcmd] = remove(s:pukiwiki_history, -1)
 		else
 			return
@@ -662,9 +665,7 @@ function! pukiwiki#info_attach_file(site_name, page, file) " {{{
 	endif
 
 	let sitedict = g:pukiwiki_config[a:site_name]
-	let url = sitedict['url']
 	let enc = sitedict['encode']
-	let top = sitedict['top']
 	let enc_page = a:page
 
 	let param = {}
@@ -674,10 +675,12 @@ function! pukiwiki#info_attach_file(site_name, page, file) " {{{
 	let param['refer'] = enc_page
 	let param['file'] = a:file
 
-	let site_bak = b:pukiwiki_site_name
-	let b:pukiwiki_site_name = a:site_name
-	let retdic = s:PW_request('info_attach_file', param, a:page, 'POST')
-	let b:pukiwiki_site_name = site_bak
+
+	let info = {
+		\ "site" : a:site_name,
+		\ "page" : a:page,
+	\}
+	let retdic = s:PW_request('info_attach_file', param, info, 'POST')
 	if !retdic['success']
 		ret['errmsg'] = 'get infomation of attach file ' . a:file . ' failed'
 		return ret
@@ -694,7 +697,7 @@ function! pukiwiki#info_attach_file(site_name, page, file) " {{{
 		if title[0] =~ ".*そのファイルは見つかりません.*"
 			let ret['errmsg'] = 'file not attached: ' . a:file
 		else
-			let ret['errmsg'] = 'title is not attach file info'
+			let ret['errmsg'] = 'title is not attach file info: ' . title[0]
 		endif
 		return ret
 	endif
@@ -729,10 +732,11 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 	let pass = s:get_password(sitedict)
 	let attach_info['pass'] = pass
 
-	let site_bak = b:pukiwiki_site_name
-	let b:pukiwiki_site_name = a:site_name
-	let retdic = s:PW_request('delete_attach_file', attach_info, a:page, 'POST')
-	let b:pukiwiki_site_name = site_bak
+	let info = {
+		\ "site" : a:site_name,
+		\ "page" : a:page,
+	\}
+	let retdic = s:PW_request('delete_attach_file', attach_info, info, 'POST')
 	if !retdic['success']
 		call s:VITAL.print_error('delete the attach file filed: ' . a:file)
 		return -1
@@ -773,15 +777,13 @@ endfunction " }}}
 function! pukiwiki#get_attach_files() "{{{
 
 	" 普通はない. 初期化されているはず
-	if !exists('b:pukiwiki_site_name') ||
-	\	!has_key(g:pukiwiki_config, b:pukiwiki_site_name)
+	if !s:PW_is_init()
 		return []
 	endif
 
 	" 添付ファイルの一覧
-	let page = b:pukiwiki_page
-	let sitedict = g:pukiwiki_config[b:pukiwiki_site_name]
-	let url = sitedict['url']
+	let page = b:pukiwiki_info.page
+	let sitedict = g:pukiwiki_config[b:pukiwiki_info["site"]]
 	let enc = sitedict['encode']
 
 	let param = {}
@@ -790,7 +792,7 @@ function! pukiwiki#get_attach_files() "{{{
 	let enc_page = s:VITAL.iconv(page, &enc, enc)
 	let param['refer'] = enc_page
 
-	let retdic = s:PW_request('show_attach', param, enc_page, 'GET')
+	let retdic = s:PW_request('show_attach', param, b:pukiwiki_info, 'GET')
 	if !retdic['success']
 		return 0
 	endif
@@ -821,7 +823,9 @@ function! pukiwiki#bookmark() " {{{
 		let lines = ["pukiwiki.bookmark.v1."]
 	endif
 
-	call add(lines, b:pukiwiki_site_name . "," . b:pukiwiki_page)
+	let site = b:pukiwiki_info.site
+	let page = b:pukiwiki_info.page
+	call add(lines, site . "," . page)
 	call writefile(lines, g:pukiwiki_bookmark)
 	echo "success"
 endfunction " }}}
@@ -830,7 +834,11 @@ endfunction " }}}
 function! s:PW_get_top_page(site_name) "{{{
 
 	let sitedict = g:pukiwiki_config[a:site_name]
-	let top = sitedict['top']
+	if has_key(sitedict, 'top')
+		let top = sitedict['top']
+	else
+		let top = "FrontPage"
+	endif
 
 	return s:PW_get_edit_page(a:site_name, top, 1)
 
@@ -843,7 +851,6 @@ function! s:PW_show_attach(site_name, page) "{{{
 "----------------------------------------------
 
 	let sitedict = g:pukiwiki_config[a:site_name]
-	let url = sitedict['url']
 	let enc = sitedict['encode']
 
 	" 添付ファイルの一覧
@@ -852,7 +859,11 @@ function! s:PW_show_attach(site_name, page) "{{{
 	let param['plugin'] = 'attach'
 	let param['pcmd'] = 'list'
 	let param['refer'] = enc_page
-	let retdic = s:PW_request('show_attach', param, a:page, 'GET')
+	let info = {
+		\ "site" : a:site_name,
+		\ "page" : a:page,
+	\}
+	let retdic = s:PW_request('show_attach', param, info, 'GET')
 	if !retdic['success']
 		return 0
 	endif
@@ -871,7 +882,7 @@ function! s:PW_show_attach(site_name, page) "{{{
 	call s:PW_newpage(a:site_name, a:page, 'attach')
 	call s:PW_set_statusline(a:site_name, a:page)
 	call s:PW_insert_header(a:site_name, a:page)
-	execute "normal! i添付ファイル一覧 [[" . b:pukiwiki_page . "]]\n"
+	execute "normal! i添付ファイル一覧 [[" . a:page . "]]\n"
 	execute "normal! i" . body
 
 	call s:PW_endpage(a:site_name, a:page, 1)
@@ -880,14 +891,20 @@ endfunction "}}}
 function! s:PW_show_page_list() "{{{
 	let param = {}
 	let param['cmd'] = 'list'
-	let retdic = s:PW_request('show_page_list', param, '', 'GET')
+
+	let info = {
+	\	"site" : b:pukiwiki_info["site"],
+	\}
+	let retdic = s:PW_request('show_page_list', param, info, 'GET')
 	if !retdic['success']
 		return
 	endif
 	let body = retdic['content']
 
-	call s:PW_newpage(b:pukiwiki_site_name, 'cmd=list', 'pagelist')
-	call s:PW_set_statusline(b:pukiwiki_site_name, b:pukiwiki_page)
+	let site = b:pukiwiki_info.site
+	let page = "cmd=list"
+	call s:PW_newpage(site, page, 'pagelist')
+	call s:PW_set_statusline(site, page)
 
 	" がんばって加工
 	let bodyl = split(body, "\n")
@@ -904,17 +921,16 @@ function! s:PW_show_page_list() "{{{
 
 	execute ":setlocal noai"
 	execute "normal! gg0"
-	call s:PW_insert_header(b:pukiwiki_site_name, b:pukiwiki_page)
+	call s:PW_insert_header(site, page)
 
-	call s:PW_endpage(b:pukiwiki_site_name, b:pukiwiki_page, 1)
+	call s:PW_endpage(site, page, 1)
 endfunction "}}}
 
 function! s:PW_show_search() "{{{
 
-	let sitedict = g:pukiwiki_config[b:pukiwiki_site_name]
-	let url = sitedict['url']
+	let site = b:pukiwiki_info.site
+	let sitedict = g:pukiwiki_config[site]
 	let enc = sitedict['encode']
-	let top = sitedict['top']
 
 	let word = input('keyword: ')
 	if word == ''
@@ -931,13 +947,19 @@ function! s:PW_show_search() "{{{
 	let param['word'] = word
 	let param['type'] = type
 	let param['cmd'] = 'search'
-	let retdic = s:PW_request('show_search', param, '', 'POST')
+
+	let info = {
+		\ "site" : site,
+	\}
+	let retdic = s:PW_request('show_search', param, info, 'POST')
 	if !retdic['success']
 		return
 	endif
 
-	call s:PW_newpage(b:pukiwiki_site_name, 'cmd=search', 'search')
-	call s:PW_set_statusline(b:pukiwiki_site_name, b:pukiwiki_page)
+
+	let page = 'cmd=search'
+	call s:PW_newpage(site, page, 'search')
+	call s:PW_set_statusline(site, page)
 
 	" がんばって加工
 	let bodyl = split(retdic['content'], '\n')
@@ -954,9 +976,8 @@ function! s:PW_show_search() "{{{
 	" それを最初にだす
 	" @REG
 	execute "normal! gg0i" . body
-	call s:PW_insert_header(b:pukiwiki_site_name, b:pukiwiki_page)
-
-	call s:PW_endpage(b:pukiwiki_site_name, b:pukiwiki_page, 1)
+	call s:PW_insert_header(site, page)
+	call s:PW_endpage(site, page, 1)
 endfunction "}}}
 " }}}
 
@@ -980,13 +1001,14 @@ function! pukiwiki#fileupload() range "{{{
 		return
 	endif
 
-	let sitedict = g:pukiwiki_config[b:pukiwiki_site_name]
-	let url = sitedict['url']
+	let site = b:pukiwiki_info["site"]
+	let page = b:pukiwiki_info["page"]
+
+	let sitedict = g:pukiwiki_config[site]
 	let enc = sitedict['encode']
-	let top = sitedict['top']
 
 	let pass = s:get_password(sitedict)
-	let enc_page = s:VITAL.iconv(b:pukiwiki_page, &enc, enc)
+	let enc_page = s:VITAL.iconv(page, &enc, enc)
 
 	let param = {}
 	let param['encode_hint'] = 'ぷ'
@@ -1017,7 +1039,7 @@ function! pukiwiki#fileupload() range "{{{
 		endif
 
 		let param['attach_file'] = curr_line
-		let retdic = s:PW_request('get_page', param, b:pukiwiki_page, 'MULT')
+		let retdic = s:PW_request('get_page', param, b:pukiwiki_info, 'MULT')
 		if !retdic['success']
 			return 0
 		endif
@@ -1049,39 +1071,43 @@ function! pukiwiki#jump_menu(pname) " {{{
 		return
 	endif
 
+	let site = b:pukiwiki_info["site"]
+	let page = b:pukiwiki_info["page"]
+	let ptyp = b:pukiwiki_info["type"]
+
 	if a:pname == 'トップ' || a:pname == 'top'
-		call s:PW_get_top_page(b:pukiwiki_site_name)
+		call s:PW_get_top_page(site)
 	elseif a:pname == 'リロード' || a:pname == 'reload'
-		if b:pukiwiki_page_type == 'attach'
-			call s:PW_show_attach(b:pukiwiki_site_name, b:pukiwiki_page)
-		elseif b:pukiwiki_page_type == 'pagelist'
+		if ptyp == 'attach'
+			call s:PW_show_attach(site, page)
+		elseif ptyp == 'pagelist'
 			call s:PW_show_page_list()
-		elseif b:pukiwiki_page_type == 'search'
+		elseif ptyp == 'search'
 			" @TODO 本当は検索語を覚えていて呼び出しのやり直しすべきだろう
 			call s:PW_show_search()
-		elseif b:pukiwiki_page == 'FormattingRules' || b:pukiwiki_page == 'RecentChanges'
-			call s:PW_get_source_page(b:pukiwiki_site_name, b:pukiwiki_page)
+		elseif page == 'FormattingRules' || page == 'RecentChanges'
+			call s:PW_get_source_page(site, page)
 		else
-			call s:PW_get_edit_page(b:pukiwiki_site_name, b:pukiwiki_page, 0)
+			call s:PW_get_edit_page(site, page, 0)
 		endif
 	elseif a:pname == '新規' || a:pname == 'new'
 		let page = input('page name: ')
 		if page == ''
 			return
 		endif
-		call s:PW_get_edit_page(b:pukiwiki_site_name, page, 1)
+		call s:PW_get_edit_page(site, page, 1)
 	elseif a:pname == '一覧' || a:pname == 'list'
 		call s:PW_show_page_list()
 	elseif a:pname == '単語検索' || a:pname == 'search'
 		call s:PW_show_search()
 	elseif a:pname == '添付' || a:pname == 'attach'
-		call s:PW_show_attach(b:pukiwiki_site_name, b:pukiwiki_page)
+		call s:PW_show_attach(site, page)
 	elseif a:pname == '最終更新' || a:pname == 'recent'
 		let page = 'RecentChanges'
-		call s:PW_get_source_page(b:pukiwiki_site_name, page)
+		call s:PW_get_source_page(site, page)
 	elseif a:pname == 'ヘルプ' || a:pname == 'help'
 		let page = 'FormattingRules'
-		call s:PW_get_source_page(b:pukiwiki_site_name, page)
+		call s:PW_get_source_page(site, page)
 	endif
 	return
 endfunction " }}}
@@ -1090,7 +1116,9 @@ function! pukiwiki#jump()  "{{{
 	if !s:PW_is_init()
 		return
 	endif
-	if g:pukiwiki_show_header && line('.') < 4
+
+	let has_header = b:pukiwiki_info["header"]
+	if has_header && line('.') < 4
 		" ヘッダ部分
 		let cur = s:PW_matchstr_undercursor('\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]')
 	else
@@ -1112,7 +1140,7 @@ function! pukiwiki#jump()  "{{{
 	endif
 
 	let cur = substitute(cur, '\[\[\(.*\)\]\]', '\1', '')
-	if g:pukiwiki_show_header && line('.') <= s:pukiwiki_header_row
+	if has_header && line('.') <= s:pukiwiki_header_row
 		return pukiwiki#jump_menu(cur)
 	endif
 
@@ -1126,7 +1154,7 @@ function! pukiwiki#jump()  "{{{
 		return
 	endif
 
-	call s:PW_get_edit_page(b:pukiwiki_site_name, cur, 1)
+	call s:PW_get_edit_page(b:pukiwiki_info["site"], cur, 1)
 endfunction "}}}
 
 function! pukiwiki#move_next_bracket() "{{{

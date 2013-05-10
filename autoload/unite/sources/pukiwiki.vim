@@ -257,28 +257,27 @@ let s:uni_attach = {
 let s:uni_attach.hooks = {}
 
 function! s:uni_attach.hooks.on_init(args, context) "{{{
-	if exists('b:pukiwiki_site_name')
-		let a:context.source__pw_site_name = b:pukiwiki_site_name
-		let a:context.source__pw_page = b:pukiwiki_page
+	if exists('b:pukiwiki_info')
+		let a:context.source__pw_info = b:pukiwiki_info
 	else
 		echo "pukiwiki.vim is not initialized"
 	endif
 endfunction "}}}
 
 function! s:uni_attach.gather_candidates(args, context) "{{{
-	if !has_key(a:context, 'source__pw_site_name')
+	if !has_key(a:context, 'source__pw_info')
 		return []
 	endif
 
-	let b:pukiwiki_site_name = a:context.source__pw_site_name
-	let b:pukiwiki_page = a:context.source__pw_page
+	let b:pukiwiki_info = a:context.source__pw_info
+	let site = b:pukiwiki_info["site"]
+	let page = b:pukiwiki_info["page"]
 	let files = pukiwiki#get_attach_files()
 
 	return map(files, "{
 	\	'word' : v:val,
 	\	'source' : 'pukiwiki/attach',
-	\	'source__pw_site_name' : b:pukiwiki_site_name,
-	\	'source__pw_page' : b:pukiwiki_page,
+	\	'source__pw_info' : b:pukiwiki_info,
 	\}")
 endfunction "}}}
 
@@ -290,9 +289,10 @@ let s:uni_attach.action_table.delete = {
 
 function! s:uni_attach.action_table.delete.func(candidates) "{{{
 
+	let pukiwiki_info = a:candidates.source__pw_info
+	let site_name = pukiwiki_info["site"]
+	let page = pukiwiki_info["page"]
 	let filename = a:candidates.word
-	let site_name = a:candidates.source__pw_site_name
-	let page = a:candidates.source__pw_page
 	if !unite#util#input_yesno(
 		\ 'Really delete the ' . filename .' at ' . page . ' @ ' . site_name)
 		redraw
@@ -303,6 +303,24 @@ function! s:uni_attach.action_table.delete.func(candidates) "{{{
 
 	call pukiwiki#delete_attach_file(site_name, page, filename)
 endfunction "}}}
+
+"function! s:uni_attach.action_table.show_info = {
+"	\ 'description' : 'show detail information of the attached file'
+"	\ 'is_selectable' : 0,
+"	\ 'is_invalidate_cache' : 0,
+"	\ 'kind' : 'source',
+"	\}
+"
+"function! s:uni_attach.action_table.show_info.func(candidates) "{{{
+"
+""	unite#start("pukiwiki/attach_info")
+"
+"	let filename = a:candidates.word
+"	let site_name = a:candidates.source__pw_site_name
+"	let page = a:candidates.source__pw_page
+"
+"endfunction " }}} 
+
 
 function! unite#sources#pukiwiki#define() "{{{
 	" 登録. g:pukiwiki_config が定義されていない場合には
