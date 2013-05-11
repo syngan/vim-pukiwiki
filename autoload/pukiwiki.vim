@@ -349,7 +349,7 @@ function! s:PW_newpage(site_name, page, pagetype) "{{{
 endfunction "}}}
 
 function! s:PW_endpage(site_name, page, readonly) "{{{
-	execute "normal! gg"
+	call setpos(".", [0, 1, 1, 0])
 	execute ':setlocal nobuflisted'
 	execute ":set nomodified"
 	if a:readonly
@@ -468,17 +468,10 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 	else
 		" @REG
 		let regbak = @"
-		execute 'normal! ggdG'
+		global/^.*$/d
 		let @" = regbak
 	endif
 
-"	silent! execute "normal! ihistory>>>>>" . len(s:pukiwiki_history) . "\n"
-"	for elm in s:pukiwiki_history
-"		silent! execute "normal! i" . elm[4] . "\n"
-"	endfor
-"	silent! execute "normal! ihistory<<<<<" . len(s:pukiwiki_history) . "\n"
-
-"	let msg = s:PW_iconv_s(msg, enc)
 	let bodyl = split(msg, "\n")
 	let bodyl = map(bodyl, 's:HTML.decodeEntityReference(v:val)')
 	let h = s:PW_insert_header(a:site_name, a:page)
@@ -525,7 +518,8 @@ function! s:PW_write() "{{{
 	let sitedict = g:pukiwiki_config[site]
 	let enc = sitedict['encode']
 
-	let lineno = line('.')
+	let row = line('.')
+	let col = col('.')
 
 	if g:pukiwiki_timestamp_update == 1
 	  let notimestamp = ''
@@ -544,7 +538,7 @@ function! s:PW_write() "{{{
 	" ヘッダの削除. ユーザがヘッダを修正すると
 	" 書き込みが壊れるだめな仕様
 	" @REG
-	if g:pukiwiki_show_header
+	if b:pukiwiki_info["header"]
 "		let regbak = @"
 "		silent! execute "normal! gg" . s:pukiwiki_header_row . "D"
 "		let @" = regbak
@@ -552,7 +546,6 @@ function! s:PW_write() "{{{
 	else
 		let body = getline(1, line('$'))
 	endif
-"	execute ":setlocal fenc="
 
 
 	" urlencode した本文前にその他の情報設定
@@ -566,6 +559,7 @@ function! s:PW_write() "{{{
 	let param["notimestamp"] = notimestamp
 	let param["original"] = ''
 	let param["msg"] = join(body, "\n")
+	echomsg "joind=" . len(split(param.msg, "\n")) . " <== " . len(param.msg) . " <== " . len(body)
 
 	let retdic = s:PW_request('write', param, b:pukiwiki_info, 'POST')
 	if !retdic['success']
@@ -585,7 +579,7 @@ function! s:PW_write() "{{{
 		call s:PW_get_edit_page(site, page, 0)
 
 		" 元いた行に移動
-		execute "normal! " . lineno . "G"
+		call setpos(".", [0, row, col, 0])
 
 		echo 'update ' . page . ' @ ' . site
 		return 0
