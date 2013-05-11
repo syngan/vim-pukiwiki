@@ -52,8 +52,6 @@ TODO:
   - 凍結/凍結解除機能
   - ドキュメント
   - 履歴をファイルに保存する. 不要か.
-  - 文字コードを utf-8 にしたい.
-  -- README のみ utf-8 で不統一
   - [[page#link]] に対応
   - augroup PukiWikiEdit の扱い. 削除できていない.
   - unite-pukiwki/attach

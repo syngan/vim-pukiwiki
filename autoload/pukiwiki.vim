@@ -27,8 +27,7 @@ set cpo&vim
 
 " option {{{
 
-"scriptencoding utf-8
-scriptencoding euc-jp
+scriptencoding utf-8
 
 "}}}
 
@@ -39,7 +38,7 @@ let s:pukiwiki_header_row = 3
 lockvar s:pukiwiki_header_row
 
 let s:pukiwiki_ro_menu = "\n"
-	\ . "[[¥È¥Ã¥×]] [[ÅºÉÕ]] [[¥ê¥í¡¼¥É]] [[¿·µ¬]] [[°ìÍ÷]] [[Ã±¸ì¸¡º÷]] [[ºÇ½ª¹¹¿·]] [[¥Ø¥ë¥×]]\n"
+	\ . "[[ãƒˆãƒƒãƒ—]] [[æ·»ä»˜]] [[ãƒªãƒ­ãƒ¼ãƒ‰]] [[æ–°è¦]] [[ä¸€è¦§]] [[å˜èªæ¤œç´¢]] [[æœ€çµ‚æ›´æ–°]] [[ãƒ˜ãƒ«ãƒ—]]\n"
 	\ . "------------------------------------------------------------------------------\n"
 lockvar s:pukiwiki_ro_menu
 "let s:pukiwiki_bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
@@ -59,7 +58,7 @@ let s:HTTP = s:VITAL.import('Web.Http')
 
 " debug {{{
 function! pukiwiki#buf_vars() "{{{
-	" ¥Ç¥Ğ¥Ã¥°ÍÑ
+	" ãƒ‡ãƒãƒƒã‚°ç”¨
 	if exists('b:pukiwiki_info')
 		for key in keys(b:pukiwiki_info)
 			call s:PW_echokv(key , b:pukiwiki_info[key])
@@ -70,13 +69,6 @@ function! pukiwiki#buf_vars() "{{{
 		endfor
 	endif
 endfunction "}}}
-
-function! pukiwiki#say_hello() "{{{
-	echo "¤»¤¤¤Ï¤í¡¼"
-	echomsg "¤»¤¤¤Ï¤í¡¼"
-	call s:VITAL.print_error("¤»¤¤¤Ï¤í¡¼")
-endfunction "}}}
-
 "}}}
 
 function! pukiwiki#PukiWiki(...) "{{{
@@ -85,7 +77,7 @@ function! pukiwiki#PukiWiki(...) "{{{
 	endif
 
 	if !call("s:PW_read_pukiwiki_list", a:000)
-		" s:VITAL.print_error('¥Ö¥Ã¥¯¥Ş¡¼¥¯¤ÎÆÉ¤ß¹ş¤ß¤Ë¼ºÇÔ¤·¤Ş¤·¤¿¡£')
+		" s:VITAL.print_error('ãƒ–ãƒƒã‚¯ãƒãƒ¼ã‚¯ã®èª­ã¿è¾¼ã¿ã«å¤±æ•—ã—ã¾ã—ãŸã€‚')
 		return
 	endif
 endfunction "}}}
@@ -95,8 +87,8 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 " PukiVim [ SiteName [ PageName ]]
 "
 	if &modified
-		" @TODO Ê£¿ô¤ÎÆ±¤¸ window ¤ò³«¤¤¤Æ¤¤¤ë¤È¤­¤Ï skip ¤·¤¿¤¤.
-		call s:VITAL.print_error('ÊÑ¹¹¤¬ÊİÂ¸¤µ¤ì¤Æ¤¤¤Ş¤»¤ó¡£')
+		" @TODO è¤‡æ•°ã®åŒã˜ window ã‚’é–‹ã„ã¦ã„ã‚‹ã¨ãã¯ skip ã—ãŸã„.
+		call s:VITAL.print_error('å¤‰æ›´ãŒä¿å­˜ã•ã‚Œã¦ã„ã¾ã›ã‚“ã€‚')
 		return 0
 	endif
 
@@ -111,7 +103,7 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 	endif
 
 	if a:0 == 0
-		" Ìä¤¤¹ç¤ï¤»
+		" å•ã„åˆã‚ã›
 		let site_name = input('site name: ')
 	else
 		let site_name = a:1
@@ -140,7 +132,7 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 		let page  = top
 	endif
 
-	" ºÇ½é¤Ë°ìÅÙ¤À¤±¶õ¥Õ¥¡¥¤¥ë¤ò³«¤¯
+	" æœ€åˆã«ä¸€åº¦ã ã‘ç©ºãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã
 	if page == 'RecentChanges'
 		call s:PW_get_source_page(site_name, page)
 	else
@@ -152,7 +144,7 @@ endfunction "}}}
 
 function! s:PW_env_check() "{{{
 
-	" curl/wget ¤ÎÍ­Ìµ¤ò¥Á¥§¥Ã¥¯
+	" curl/wget ã®æœ‰ç„¡ã‚’ãƒã‚§ãƒƒã‚¯
 	if !executable('curl') && !executable('wget')
 		call s:VITAL.print_error('cURL and wget are not found.')
 		return 0
@@ -198,13 +190,13 @@ function! s:PW_is_init() " {{{
 endfunction "}}}
 
 function! s:PW_gen_multipart(settings, param) " {{{
-	 " multipart-form ¤òÀ¸À®¤¹¤ë
+	 " multipart-form ã‚’ç”Ÿæˆã™ã‚‹
 	if !s:VITAL.is_dict(a:param)
 		throw "invalid argument"
 	endif
 
 
-	" @TODO ËÜÅö¤Ï¥Õ¥¡¥¤¥ëÆâ¤ËÆ±¤¸Ê¸»úÎó¤¬¤Ê¤¤¤³¤È¡¢¤ò³ÎÇ§¤¹¤ëÉ¬Í×¤¬¤¢¤ë¤¬...
+	" @TODO æœ¬å½“ã¯ãƒ•ã‚¡ã‚¤ãƒ«å†…ã«åŒã˜æ–‡å­—åˆ—ãŒãªã„ã“ã¨ã€ã‚’ç¢ºèªã™ã‚‹å¿…è¦ãŒã‚ã‚‹ãŒ...
 	let b = "---------------------11285676"
 	if has('reltime')
 		let b .= substitute(reltimestr(reltime()), "\\X", '', 'g')
@@ -237,8 +229,8 @@ function! s:PW_gen_multipart(settings, param) " {{{
 endfunction " }}}
 
 function! s:PW_request(funcname, param, info, method) " {{{
-" Web ¥µ¡¼¥Ğ¤Ë¥ê¥¯¥¨¥¹¥È¤òÁ÷¤ê¡¢·ë²Ì¤ò¼õ¤±¼è¤ë.
-" @return success ¤ò¥­¡¼¤Ë»ı¤Ä¼­½ñ
+" Web ã‚µãƒ¼ãƒã«ãƒªã‚¯ã‚¨ã‚¹ãƒˆã‚’é€ã‚Šã€çµæœã‚’å—ã‘å–ã‚‹.
+" @return success ã‚’ã‚­ãƒ¼ã«æŒã¤è¾æ›¸
 
 	let site = a:info["site"]
 	if has_key(a:info, "page")
@@ -261,13 +253,13 @@ function! s:PW_request(funcname, param, info, method) " {{{
 		let a:param['page'] = page
 	endif
 "
-	" ¤×
+	" ã·
 	"   EUC  a4d7
 	"   SJIS 82d5
 	"   utf8 e381b7
 	"   jis  1b244224571b2842
 	" @JPMES
-	let a:param["encode_hint"] = "¤×"
+	let a:param["encode_hint"] = "ã·"
 	if a:method == 'POST'
 		let pm = s:PW_joindictstr(a:param, enc)
 		let settings['data'] = pm
@@ -300,7 +292,7 @@ function! s:PW_request(funcname, param, info, method) " {{{
 	endif
 	if !retdic['success']
 		if retdic['status'] == 302
-			" ½ñ¤­¹ş¤ß»ş(PW_write())¤ËÀ®¸ù°·¤¤¤Ë¤¹¤ë.
+			" æ›¸ãè¾¼ã¿æ™‚(PW_write())ã«æˆåŠŸæ‰±ã„ã«ã™ã‚‹.
 			let retdic['success'] = 1
 		else
 			call s:VITAL.print_error(a:funcname . '() failed: ' . retdic['status'] . ' ' . retdic['statusText'])
@@ -392,14 +384,14 @@ function! pukiwiki#update_digest() "{{{
 endfunction "}}}
 
 function! s:PW_get_digest(str) "{{{
-	" [[ÊÔ½¸]] ²èÌÌ¤«¤é digest ¤ò¼èÆÀ¤¹¤ë
+	" [[ç·¨é›†]] ç”»é¢ã‹ã‚‰ digest ã‚’å–å¾—ã™ã‚‹
 	let s = matchstr(a:str,
 	\     '<input type="hidden" name="digest" value="\zs.\{-}\ze" />')
 	return s
 endfunction "}}}
 
 function! s:PW_get_edit_page(site_name, page, opennew) "{{{
-" edit ¥Ú¡¼¥¸¤ò³«¤¯
+" edit ãƒšãƒ¼ã‚¸ã‚’é–‹ã
 	return s:PW_get_page(a:site_name, a:page, "edit", a:opennew)
 endfunction "}}}
 
@@ -414,7 +406,7 @@ function! s:PW_insert_header(site_name, page) " {{{
 endfunction " }}}
 
 function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
-" ¥Ú¡¼¥¸¤ò³«¤¯
+" ãƒšãƒ¼ã‚¸ã‚’é–‹ã
 " pwcmd = "edit" or "source"
 
 	let sitedict = g:pukiwiki_config[a:site_name]
@@ -432,12 +424,12 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 
 	if a:pwcmd == 'edit'
 		if result !~ '<textarea\_.\{-}>\_.\{-}</textarea>\_.\{-}<textarea'
-			" cmd=source ¤ÇÆÉ¤ßÄ¾¤·
+			" cmd=source ã§èª­ã¿ç›´ã—
 			return s:PW_get_source_page(a:site_name, a:page)
 		endif
 	elseif a:pwcmd == 'source'
 		if result !~ '<pre id="source">'
-			call s:VITAL.print_error('reading the page failed. Ç§¾Ú¤¬É¬Í×¤Ç¤¹¡£')
+			call s:VITAL.print_error('reading the page failed. èªè¨¼ãŒå¿…è¦ã§ã™ã€‚')
 			return
 		endif
 	else
@@ -454,7 +446,7 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 		let msg = matchstr(result, '.*<pre id="source">\zs\_.\{-}\ze</pre>.*')
 	endif
 
-	" Á´¾Ãµî
+	" å…¨æ¶ˆå»
 	if a:opennew
 		call s:PW_newpage(a:site_name, a:page, "normal")
 	else
@@ -480,7 +472,7 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 
 	let status_line = s:PW_set_statusline(a:site_name, a:page)
 
-	" undo ÍúÎò¤ò¾Ãµî¤¹¤ë, @see *clear-undo*
+	" undo å±¥æ­´ã‚’æ¶ˆå»ã™ã‚‹, @see *clear-undo*
 	let oldundolevel = &undolevels
 	execute ":setlocal undolevels=-1"
 	execute "normal a \<BS>\<Esc>"
@@ -489,7 +481,7 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 
 	if a:pwcmd == 'edit'
 		augroup PukiWikiEdit
-			" ÉÔÍ×¤Ê autocmd ¤Ï¾Ãµî¤·¤¿¤¤ @TODO
+			" ä¸è¦ãª autocmd ã¯æ¶ˆå»ã—ãŸã„ @TODO
 			execute "autocmd BufWriteCmd " . status_line . " call s:PW_write()"
 		augroup END
 		call s:PW_endpage(a:site_name, a:page, 0)
@@ -532,8 +524,8 @@ function! s:PW_write() "{{{
 		unlet last_confirm
 	endif
 
-	" ¥Ø¥Ã¥À¤Îºï½ü. ¥æ¡¼¥¶¤¬¥Ø¥Ã¥À¤ò½¤Àµ¤¹¤ë¤È
-	" ½ñ¤­¹ş¤ß¤¬²õ¤ì¤ë¤À¤á¤Ê»ÅÍÍ
+	" ãƒ˜ãƒƒãƒ€ã®å‰Šé™¤. ãƒ¦ãƒ¼ã‚¶ãŒãƒ˜ãƒƒãƒ€ã‚’ä¿®æ­£ã™ã‚‹ã¨
+	" æ›¸ãè¾¼ã¿ãŒå£Šã‚Œã‚‹ã ã‚ãªä»•æ§˜
 	" @REG
 	if g:pukiwiki_show_header
 "		let regbak = @"
@@ -546,14 +538,14 @@ function! s:PW_write() "{{{
 "	execute ":setlocal fenc="
 
 
-	" urlencode ¤·¤¿ËÜÊ¸Á°¤Ë¤½¤ÎÂ¾¤Î¾ğÊóÀßÄê
+	" urlencode ã—ãŸæœ¬æ–‡å‰ã«ãã®ä»–ã®æƒ…å ±è¨­å®š
 	let param = {}
 	let param['cmd'] = 'edit'
 	let param['page'] = page
 	let param['digest'] = b:pukiwiki_info["digest"]
-	" ¥Ú¡¼¥¸¤Î¹¹¿·'
+	" ãƒšãƒ¼ã‚¸ã®æ›´æ–°'
 	" @JPMES
-	et param['write'] = '¥Ú¡¼¥¸¤Î¹¹¿·'
+	et param['write'] = 'ãƒšãƒ¼ã‚¸ã®æ›´æ–°'
 	let param["notimestamp"] = notimestamp
 	let param["original"] = ''
 	let param["msg"] = join(body, "\n")
@@ -568,30 +560,30 @@ function! s:PW_write() "{{{
 		echo retdic
 	endif
 
-	" ½ñ¤­¹ş¤ß¤¬À®¸ù¤¹¤ë¤È PukiWiki ¤¬
-	" location¥Ø¥Ã¥À¡¼¤òÅÇ¤¯ & 302 ¤òÊÖ¤¹
+	" æ›¸ãè¾¼ã¿ãŒæˆåŠŸã™ã‚‹ã¨ PukiWiki ãŒ
+	" locationãƒ˜ãƒƒãƒ€ãƒ¼ã‚’åã & 302 ã‚’è¿”ã™
 	if retdic['status'] == 302
 
-		" ºÆÆÉ¤ß¹ş¤ß
+		" å†èª­ã¿è¾¼ã¿
 		call s:PW_get_edit_page(site, page, 0)
 
-		" ¸µ¤¤¤¿¹Ô¤Ë°ÜÆ°
+		" å…ƒã„ãŸè¡Œã«ç§»å‹•
 		execute "normal! " . lineno . "G"
 
 		echo 'update ' . page . ' @ ' . site
 		return 0
 	endif
 
-	" pukiwiki ¾å¤Ç²¿¤«¤Î¥¤¥Ù¥ó¥È¤¬µ¯¤³¤Ã¤¿.
-	"  - ¥Ú¡¼¥¸¤Îºï½ü
-	"  - ¹¹¿·¤Î¾×ÆÍ
+	" pukiwiki ä¸Šã§ä½•ã‹ã®ã‚¤ãƒ™ãƒ³ãƒˆãŒèµ·ã“ã£ãŸ.
+	"  - ãƒšãƒ¼ã‚¸ã®å‰Šé™¤
+	"  - æ›´æ–°ã®è¡çª
 	let bodyr = retdic['content']
 
-	" @TODO ¤â¤¦¾¯¤·¤Ş¤È¤â¤ÊÈ½ÄêÊıË¡¤Ï¤Ê¤¤¤Î¤«?
-	" ¤òºï½ü¤·¤Ş¤·¤¿
+	" @TODO ã‚‚ã†å°‘ã—ã¾ã¨ã‚‚ãªåˆ¤å®šæ–¹æ³•ã¯ãªã„ã®ã‹?
+	" ã‚’å‰Šé™¤ã—ã¾ã—ãŸ
 	"
 	" @JPMES
-	if bodyr =~ '<title>\_.\{-}¤òºï½ü¤·¤Ş¤·¤¿\_.\{-}<\/title>'
+	if bodyr =~ '<title>\_.\{-}ã‚’å‰Šé™¤ã—ã¾ã—ãŸ\_.\{-}<\/title>'
 		execute ":set nomodified"
 		call s:PW_get_top_page(site)
 		echo page . ' has been deleted.'
@@ -604,10 +596,10 @@ function! s:PW_write() "{{{
 	endif
 
 	" @JPMES
-	call s:VITAL.print_error('¹¹¿·¤Î¾×ÆÍ¤¬È¯À¸¤·¤¿¤«¡¢¤½¤ÎÂ¾¤Î¥¨¥é¡¼¤Ç½ñ¤­¹ş¤á¤Ş¤»¤ó¤Ç¤·¤¿¡£')
+	call s:VITAL.print_error('æ›´æ–°ã®è¡çªãŒç™ºç”Ÿã—ãŸã‹ã€ãã®ä»–ã®ã‚¨ãƒ©ãƒ¼ã§æ›¸ãè¾¼ã‚ã¾ã›ã‚“ã§ã—ãŸã€‚')
 	return 0
 "
-"	" ¼ºÇÔ
+"	" å¤±æ•—
 "	execute ":undo"
 "	execute ":set nomodified"
 "	execute ":setlocal nomodifiable"
@@ -615,9 +607,9 @@ function! s:PW_write() "{{{
 "	let site_name = b:pukiwiki_site_name
 "	let page      = b:pukiwiki_page
 "
-"	" ½ñ¤­¹ş¤ß¤·¤è¤¦¤È¤·¤¿¥Ğ¥Ã¥Õ¥¡¤ÎÌ¾Á°¤ÎÁ°¤Ë'¥í¡¼¥«¥ë'¤òÉÕ¤±¤Æ
-"	" ¸½ºß¤Î¥µ¡¼¥Ğ¡¼¾å¤ÎÆâÍÆ¤ò¼èÆÀ¤·¤Æ'diffthis'¤ò¼Â¹Ô¤¹¤ë¡£
-"	call s:PW_set_statusline(b:pukiwiki_site_name, '¥í¡¼¥«¥ë ' . b:pukiwiki_page)
+"	" æ›¸ãè¾¼ã¿ã—ã‚ˆã†ã¨ã—ãŸãƒãƒƒãƒ•ã‚¡ã®åå‰ã®å‰ã«'ãƒ­ãƒ¼ã‚«ãƒ«'ã‚’ä»˜ã‘ã¦
+"	" ç¾åœ¨ã®ã‚µãƒ¼ãƒãƒ¼ä¸Šã®å†…å®¹ã‚’å–å¾—ã—ã¦'diffthis'ã‚’å®Ÿè¡Œã™ã‚‹ã€‚
+"	call s:PW_set_statusline(b:pukiwiki_site_name, 'ãƒ­ãƒ¼ã‚«ãƒ« ' . b:pukiwiki_page)
 "	execute ":diffthis"
 "	execute ":new"
 "
@@ -673,7 +665,7 @@ function! pukiwiki#get_back_page() "{{{
 endfunction "}}}
 
 function! pukiwiki#get_history_list() "{{{
-	" protected ¤Ç¤Ê¤¤¤Èº¤¤ë¤Î¤À¤¬.
+	" protected ã§ãªã„ã¨å›°ã‚‹ã®ã ãŒ.
 	return s:pukiwiki_history
 endfunction "}}}
 
@@ -711,9 +703,9 @@ function! pukiwiki#info_attach_file(site_name, page, file) " {{{
 		return ret
 	endif
 
-	if title[0] !~ ".*ÅºÉÕ¥Õ¥¡¥¤¥ë¤Î¾ğÊó.*"
+	if title[0] !~ ".*æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã®æƒ…å ±.*"
 	" @JPMES
-		if title[0] =~ ".*¤½¤Î¥Õ¥¡¥¤¥ë¤Ï¸«¤Ä¤«¤ê¤Ş¤»¤ó.*"
+		if title[0] =~ ".*ãã®ãƒ•ã‚¡ã‚¤ãƒ«ã¯è¦‹ã¤ã‹ã‚Šã¾ã›ã‚“.*"
 			let ret['errmsg'] = 'the file is not attached: ' . a:file
 		else
 			let ret['errmsg'] = 'title is not attach file info: ' . title[0]
@@ -765,11 +757,11 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 	let title = substitute(retdic['content'], '^.*<title>\([^\n]*\)</title>.*$', '\1', '')
 
 	" @JPMES
-	if title =~ ".*ÅºÉÕ¥Õ¥¡¥¤¥ë¤Î¾ğÊó.*"
+	if title =~ ".*æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã®æƒ…å ±.*"
 
-		" ¥Ñ¥¹¥ï¡¼¥É´Ö°ã¤¤¤Ê¤É¤Ë¤è¤ë¥¨¥é¡¼.
-		" request ¤ÏÀµ¾ï¤Ëµ¢¤Ã¤Æ¤­¤Æ,
-		" font-weight:bold ¤Ç¥¨¥é¡¼¤¬Éüµ¢¤µ¤ì¤ë
+		" ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰é–“é•ã„ãªã©ã«ã‚ˆã‚‹ã‚¨ãƒ©ãƒ¼.
+		" request ã¯æ­£å¸¸ã«å¸°ã£ã¦ãã¦,
+		" font-weight:bold ã§ã‚¨ãƒ©ãƒ¼ãŒå¾©å¸°ã•ã‚Œã‚‹
 		let body = filter(body, 'v:val =~ "^<p style=\"font-weight:bold\">"')
 		if len(body) > 0
 			let title = substitute(body[0], '<[^>]*>', '', 'g')
@@ -780,7 +772,7 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 		return -1
 	endif
 	unlet body
-	if title =~ '.*¤«¤é¥Õ¥¡¥¤¥ë¤òºï½ü¤·¤Ş¤·¤¿'
+	if title =~ '.*ã‹ã‚‰ãƒ•ã‚¡ã‚¤ãƒ«ã‚’å‰Šé™¤ã—ã¾ã—ãŸ'
 	" @JPMES
 		call s:set_password(sitedict, pass)
 		return 0
@@ -792,19 +784,19 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 "	let param = attach_info
 "
 "	let retdic = s:PW_request('delete_attach_file', param, a:page, 'POST')
-"	" a:page ¤Ë¤½¤Î¥Õ¥¡¥¤¥ë¤Ï¸«¤Ä¤«¤ê¤Ş¤»¤ó
+"	" a:page ã«ãã®ãƒ•ã‚¡ã‚¤ãƒ«ã¯è¦‹ã¤ã‹ã‚Šã¾ã›ã‚“
 "	echo retdic
 "	return 0
 endfunction " }}}
 
 function! pukiwiki#get_attach_files() "{{{
 
-	" ÉáÄÌ¤Ï¤Ê¤¤. ½é´ü²½¤µ¤ì¤Æ¤¤¤ë¤Ï¤º
+	" æ™®é€šã¯ãªã„. åˆæœŸåŒ–ã•ã‚Œã¦ã„ã‚‹ã¯ãš
 	if !s:PW_is_init()
 		return []
 	endif
 
-	" ÅºÉÕ¥Õ¥¡¥¤¥ë¤Î°ìÍ÷
+	" æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ã®ä¸€è¦§
 	let page = b:pukiwiki_info.page
 	let sitedict = g:pukiwiki_config[b:pukiwiki_info["site"]]
 
@@ -822,13 +814,13 @@ function! pukiwiki#get_attach_files() "{{{
 	let body = filter(body, 'v:val =~ "<li><a href=\".*</a>$"')
 	let body = map(body, 'substitute(v:val, "\\s*<li><a href=[^>]* title=.\\(.*\\).>\\(.*\\)</a>", "\\1\\t\\2", "")')
 	let body = map(body, '[substitute(v:val, ".*\\t", "", ""), substitute(v:val, "\\t.*", "", "")]')
-	" ¥Õ¥¡¥¤¥ëÌ¾, ¾ğÊó
+	" ãƒ•ã‚¡ã‚¤ãƒ«å, æƒ…å ±
 	let body = map(body, '[s:HTML.decodeEntityReference(v:val[0]), v:val[1]]')
 	return body
 endfunction "}}}
 
 function! pukiwiki#bookmark() " {{{
-	" ¸½ºß¤Î¥Ú¡¼¥¸¤ò¥Ö¥Ã¥¯¥Ş¡¼¥¯¤¹¤ë
+	" ç¾åœ¨ã®ãƒšãƒ¼ã‚¸ã‚’ãƒ–ãƒƒã‚¯ãƒãƒ¼ã‚¯ã™ã‚‹
 	if !s:PW_is_init()
 		throw "pukiwiki.vim is not executed."
 	endif
@@ -839,7 +831,7 @@ function! pukiwiki#bookmark() " {{{
 	if filereadable(g:pukiwiki_bookmark)
 		let lines = readfile(g:pukiwiki_bookmark)
 		if lines[0] != "pukiwiki.bookmark.v1."
-			" ¾å½ñ¤­¤·¤Æ¤¤¤¤¤â¤Î¤«...
+			" ä¸Šæ›¸ãã—ã¦ã„ã„ã‚‚ã®ã‹...
 			throw "g:pukiwiki_bookmark is invalid"
 		endif
 	else
@@ -869,8 +861,8 @@ endfunction "}}}
 
 function! s:PW_show_attach(site_name, page) "{{{
 "----------------------------------------------
-" ÅºÉÕ¥Õ¥¡¥¤¥ëÍÑ¤Î²èÌÌ¤òÉ½¼¨¤¹¤ë.
-" É½¼¨¤»¤º¤Ë¥³¥Ş¥ó¥É¤À¤±¡¦¡¦¡¦¤Î¤Û¤¦¤¬¤¤¤¤¤Î¤«¤Ê
+" æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ç”¨ã®ç”»é¢ã‚’è¡¨ç¤ºã™ã‚‹.
+" è¡¨ç¤ºã›ãšã«ã‚³ãƒãƒ³ãƒ‰ã ã‘ãƒ»ãƒ»ãƒ»ã®ã»ã†ãŒã„ã„ã®ã‹ãª
 "----------------------------------------------
 
 	let files = pukiwiki#get_attach_files()
@@ -880,9 +872,9 @@ function! s:PW_show_attach(site_name, page) "{{{
 	call s:PW_newpage(a:site_name, a:page, 'attach')
 	call s:PW_set_statusline(a:site_name, a:page)
 	call s:PW_insert_header(a:site_name, a:page)
-	" ÅºÉÕ¥Õ¥¡¥¤¥ë°ìÍ÷
+	" æ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ä¸€è¦§
 	" @JPMES
-	execute "normal! iÅºÉÕ¥Õ¥¡¥¤¥ë°ìÍ÷ [[" . a:page . "]]\n\n"
+	execute "normal! iæ·»ä»˜ãƒ•ã‚¡ã‚¤ãƒ«ä¸€è¦§ [[" . a:page . "]]\n\n"
 	execute "normal! i" . body
 
 	call s:PW_endpage(a:site_name, a:page, 1)
@@ -906,7 +898,7 @@ function! s:PW_show_page_list() "{{{
 	call s:PW_newpage(site, page, 'pagelist')
 	call s:PW_set_statusline(site, page)
 
-	" ¤¬¤ó¤Ğ¤Ã¤Æ²Ã¹©
+	" ãŒã‚“ã°ã£ã¦åŠ å·¥
 	let bodyl = split(body, "\n")
 	let bodyl = filter(bodyl, 'v:val =~ "^\\s*<li><a href=" || v:val =~ "^\\s*<li><a id="')
 	let bodyl = map(bodyl, 'substitute(v:val, "^\\s*<li><a href.*>\\(.*\\)</a><small>\\(.*\\)</small>.*$", "- [[\\1]]\\t\\2", "")')
@@ -916,8 +908,8 @@ function! s:PW_show_page_list() "{{{
 
 	execute "normal! i" . body
 
-	" page Ì¾¤·¤«¤Ê¤¤¤Î¤Ç, decode ¤·¤Ê¤¯¤Æ¤âÎÉ¤¤µ¤¤¬¤¹¤ë.
-	" single quote &apos;  &#xxxx ¤Ê¤É¤Ï¤ä¤é¤Ê¤¤¤È¤¤¤±¤Ê¤¤¤é¤·¤¤.
+	" page åã—ã‹ãªã„ã®ã§, decode ã—ãªãã¦ã‚‚è‰¯ã„æ°—ãŒã™ã‚‹.
+	" single quote &apos;  &#xxxx ãªã©ã¯ã‚„ã‚‰ãªã„ã¨ã„ã‘ãªã„ã‚‰ã—ã„.
 
 	execute ":setlocal noai"
 	execute "normal! gg0"
@@ -959,7 +951,7 @@ function! s:PW_show_search() "{{{
 	call s:PW_newpage(site, page, 'search')
 	call s:PW_set_statusline(site, page)
 
-	" ¤¬¤ó¤Ğ¤Ã¤Æ²Ã¹©
+	" ãŒã‚“ã°ã£ã¦åŠ å·¥
 	let bodyl = split(retdic['content'], '\n')
 	let bodyl = filter(bodyl, 'v:val =~ "^\\s*<li><a href=" || v:val =~ "^<strong class="')
 	let bodyl = map(bodyl, 'substitute(v:val, "^\\s*<li><a href=[^>]*>\\(.*\\)</a>\\(.*\\)</li>.*$", "- [[\\1]]\\t\\2", "")')
@@ -970,8 +962,8 @@ function! s:PW_show_search() "{{{
 	let body = join(bodyl, "\n")
 	unlet bodyl
 
-	" ºÇ½ª¹Ô¤Ë [... 10 ¥Ú¡¼¥¸¸«¤Ä¤«¤ê¤Ş¤·¤¿] ¥á¥Ã¥»¡¼¥¸
-	" ¤½¤ì¤òºÇ½é¤Ë¤À¤¹
+	" æœ€çµ‚è¡Œã« [... 10 ãƒšãƒ¼ã‚¸è¦‹ã¤ã‹ã‚Šã¾ã—ãŸ] ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
+	" ãã‚Œã‚’æœ€åˆã«ã ã™
 	" @REG
 	execute "normal! gg0i" . body
 	call s:PW_insert_header(site, page)
@@ -1019,8 +1011,8 @@ function! pukiwiki#fileupload() range "{{{
 			continue
 		endif
 
-		" ¤¤¤¯¤Ä¤«¼«Ê¬¤Ç¥Á¥§¥Ã¥¯¤¹¤ë¤«.
-		" file ¤¬ÆÉ¤á¤ë¤«. directory ¤Ç¤Ê¤¤¤«.
+		" ã„ãã¤ã‹è‡ªåˆ†ã§ãƒã‚§ãƒƒã‚¯ã™ã‚‹ã‹.
+		" file ãŒèª­ã‚ã‚‹ã‹. directory ã§ãªã„ã‹.
 		if isdirectory(curr_line)
 			let msg = "\tdirectory"
 			call setline(linenum, curr_line . msg)
@@ -1046,16 +1038,16 @@ function! pukiwiki#fileupload() range "{{{
 		call setline(linenum, curr_line . "\t" . body)
 
 		" @JPMES
-		if body =~ '.*¥Ñ¥¹¥ï¡¼¥É.*'
-			" ¥Ñ¥¹¥ï¡¼¥É¸í¤ê
+		if body =~ '.*ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰.*'
+			" ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰èª¤ã‚Š
 			if has_key(sitedict, 'password')
 				call remove(sitedict, 'password')
 			endif
 			break
-		elseif body =~ '.*¥¢¥Ã¥×¥í¡¼¥É.*'
+		elseif body =~ '.*ã‚¢ãƒƒãƒ—ãƒ­ãƒ¼ãƒ‰.*'
 			call s:set_password(sitedict, pass)
-		" @TODO ¥Ñ¥¹¥ï¡¼¥É¸í¤ê¤Ç¡¢¤³¤³¤òÄÌ¤é¤Ê¤¤¤³¤È¤ò³ÎÇ§
-"		elseif body =~ '.*Æ±¤¸¥Õ¥¡¥¤¥ëÌ¾.*'
+		" @TODO ãƒ‘ã‚¹ãƒ¯ãƒ¼ãƒ‰èª¤ã‚Šã§ã€ã“ã“ã‚’é€šã‚‰ãªã„ã“ã¨ã‚’ç¢ºèª
+"		elseif body =~ '.*åŒã˜ãƒ•ã‚¡ã‚¤ãƒ«å.*'
 "			call s:set_password(sitedict, pass)
 		endif
     endfor
@@ -1074,37 +1066,37 @@ function! pukiwiki#jump_menu(pname) " {{{
 	let page = b:pukiwiki_info["page"]
 	let ptyp = b:pukiwiki_info["type"]
 
-	if a:pname == '¥È¥Ã¥×' || a:pname == 'top'
+	if a:pname == 'ãƒˆãƒƒãƒ—' || a:pname == 'top'
 		call s:PW_get_top_page(site)
-	elseif a:pname == '¥ê¥í¡¼¥É' || a:pname == 'reload'
+	elseif a:pname == 'ãƒªãƒ­ãƒ¼ãƒ‰' || a:pname == 'reload'
 		if ptyp == 'attach'
 			call s:PW_show_attach(site, page)
 		elseif ptyp == 'pagelist'
 			call s:PW_show_page_list()
 		elseif ptyp == 'search'
-			" @TODO ËÜÅö¤Ï¸¡º÷¸ì¤ò³Ğ¤¨¤Æ¤¤¤Æ¸Æ¤Ó½Ğ¤·¤Î¤ä¤êÄ¾¤·¤¹¤Ù¤­¤À¤í¤¦
+			" @TODO æœ¬å½“ã¯æ¤œç´¢èªã‚’è¦šãˆã¦ã„ã¦å‘¼ã³å‡ºã—ã®ã‚„ã‚Šç›´ã—ã™ã¹ãã ã‚ã†
 			call s:PW_show_search()
 		elseif page == 'FormattingRules' || page == 'RecentChanges'
 			call s:PW_get_source_page(site, page)
 		else
 			call s:PW_get_edit_page(site, page, 0)
 		endif
-	elseif a:pname == '¿·µ¬' || a:pname == 'new'
+	elseif a:pname == 'æ–°è¦' || a:pname == 'new'
 		let page = input('page name: ')
 		if page == ''
 			return
 		endif
 		call s:PW_get_edit_page(site, page, 1)
-	elseif a:pname == '°ìÍ÷' || a:pname == 'list'
+	elseif a:pname == 'ä¸€è¦§' || a:pname == 'list'
 		call s:PW_show_page_list()
-	elseif a:pname == 'Ã±¸ì¸¡º÷' || a:pname == 'search'
+	elseif a:pname == 'å˜èªæ¤œç´¢' || a:pname == 'search'
 		call s:PW_show_search()
-	elseif a:pname == 'ÅºÉÕ' || a:pname == 'attach'
+	elseif a:pname == 'æ·»ä»˜' || a:pname == 'attach'
 		call s:PW_show_attach(site, page)
-	elseif a:pname == 'ºÇ½ª¹¹¿·' || a:pname == 'recent'
+	elseif a:pname == 'æœ€çµ‚æ›´æ–°' || a:pname == 'recent'
 		let page = 'RecentChanges'
 		call s:PW_get_source_page(site, page)
-	elseif a:pname == '¥Ø¥ë¥×' || a:pname == 'help'
+	elseif a:pname == 'ãƒ˜ãƒ«ãƒ—' || a:pname == 'help'
 		let page = 'FormattingRules'
 		call s:PW_get_source_page(site, page)
 	endif
@@ -1118,7 +1110,7 @@ function! pukiwiki#jump()  "{{{
 
 	let has_header = b:pukiwiki_info["header"]
 	if has_header && line('.') < 4
-		" ¥Ø¥Ã¥ÀÉôÊ¬
+		" ãƒ˜ãƒƒãƒ€éƒ¨åˆ†
 		let cur = s:PW_matchstr_undercursor('\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]')
 	else
 		let cur = s:PW_matchstr_undercursor(s:pukiwiki_bracket_name)
@@ -1143,8 +1135,8 @@ function! pukiwiki#jump()  "{{{
 		return pukiwiki#jump_menu(cur)
 	endif
 
-	" InterWikiName¤Î¥¨¥¤¥ê¥¢¥¹¤Ç¤Ï¤Ê¤¤¥¨¥¤¥ê¥¢¥¹
-	" ¤Ä¤Ş¤ê¡¢¤¿¤À¤Î¥¨¥¤¥ê¥¢¥¹
+	" InterWikiNameã®ã‚¨ã‚¤ãƒªã‚¢ã‚¹ã§ã¯ãªã„ã‚¨ã‚¤ãƒªã‚¢ã‚¹
+	" ã¤ã¾ã‚Šã€ãŸã ã®ã‚¨ã‚¤ãƒªã‚¢ã‚¹
 	if cur =~ '>'
 		let cur = substitute(cur, '^.*>\([^:]*\)$', '\1', '')
 	endif
@@ -1186,10 +1178,10 @@ function! s:PW_joindictstr(dict, enc) " {{{
 endfunction " }}}
 
 function! s:PW_urlencode(str) "{{{
-" 1) [._-] ¤Ï¤½¤Î¤Ş¤Ş
-" 2) [A-Za-z0-9] ¤â¤½¤Î¤Ş¤Ş¡£
+" 1) [._-] ã¯ãã®ã¾ã¾
+" 2) [A-Za-z0-9] ã‚‚ãã®ã¾ã¾ã€‚
 " 3) 0x20[ ] ==> 0x2B[+]
-"    °Ê¾å¤Î3¤Ä¤Îµ¬Â§¤ËÅö¤Æ¤Ï¤Ş¤é¤Ê¤¤Ê¸»ú¤Ï¡¢ Á´¤Æ¡¢ "%16¿Ê¿ôÉ½µ­"¤ËÊÑ´¹¤¹¤ë¡£
+"    ä»¥ä¸Šã®3ã¤ã®è¦å‰‡ã«å½“ã¦ã¯ã¾ã‚‰ãªã„æ–‡å­—ã¯ã€ å…¨ã¦ã€ "%16é€²æ•°è¡¨è¨˜"ã«å¤‰æ›ã™ã‚‹ã€‚
   " Return URL encoded string
 
   let result = ''
@@ -1219,12 +1211,12 @@ function! s:PW_matchstr_undercursor(mx) "{{{
   return matchstr(getline('.'), mx)
 endfunction "}}}
 
-" local ¤ò ¥µ¡¼¥Ğ¸ş¤±¤ËÊÑ¹¹
+" local ã‚’ ã‚µãƒ¼ãƒå‘ã‘ã«å¤‰æ›´
 function! s:PW_iconv_u(val, toenc) " {{{
 	return s:VITAL.iconv(a:val, &enc, a:toenc)
 endfunction " }}}
 
-" ¥µ¡¼¥Ğ¤«¤é¤ÎÊ¸»úÎó¤ò¥í¡¼¥«¥ë¤ËÊÑ¹¹
+" ã‚µãƒ¼ãƒã‹ã‚‰ã®æ–‡å­—åˆ—ã‚’ãƒ­ãƒ¼ã‚«ãƒ«ã«å¤‰æ›´
 function! s:PW_iconv_s(val, fromenc) " {{{
 	return s:VITAL.iconv(a:val, a:fromenc, &enc)
 endfunction " }}}
