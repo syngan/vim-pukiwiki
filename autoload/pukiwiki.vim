@@ -37,15 +37,26 @@ let s:pukiwiki_history = []
 let s:pukiwiki_header_row = 3
 lockvar s:pukiwiki_header_row
 
-let s:pukiwiki_ro_menu = "\n"
-	\ . "[[トップ]] [[添付]] [[リロード]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]\n"
-	\ . "------------------------------------------------------------------------------\n"
-lockvar s:pukiwiki_ro_menu
-"let s:pukiwiki_bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
+"let s:pukiwiki_bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 let s:pukiwiki_bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 "let s:pukiwiki_bracket_name = '\[\[\_.\{-}\]\]'
+let s:regexp_alias = '[^\t<>\[\]#&":]\+'
+let s:regexp_page = '\(\.\{,2}/\)\@<![^\t\[\]<>#&\":]\+\(/\)\@!'
+let s:regexp_anchor = '#[A-Za-z0-9]\+'
+let s:pukiwiki_bracket_name = '\m\[\[' . s:regexp_page . '\]\]'
+let s:pukiwiki_bracket_name = '\m\[\[\(' . s:regexp_alias . '\)\=' . s:regexp_page . '\(' . s:regexp_anchor . '\)\=\]\]'
+let s:pukiwiki_bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 "
+"  \=   0 or 1
+"  \+   1 or more
+"http://vim-users.jp/2009/09/hack75/
+"  \@!  nothing, requires NO match
+"  \@<! nothing, requires NO match behind /zero-width
 "
+"    ページ名に# & < > "(半角)のいずれかの文字を含む
+"    ページ名の途中に:(半角)を含む(ページ名の前後はOK)
+"    ページ名が/ ./ ../(半角)で始まる
+"    ページ名が/(半角)で終わる
 lockvar s:pukiwiki_bracket_name
 
 " }}}
@@ -401,7 +412,12 @@ endfunction "}}}
 
 function! s:PW_insert_header(site_name, page) " {{{
 	if g:pukiwiki_show_header
-		execute "normal! gg0i" . a:site_name . " " . a:page . s:pukiwiki_ro_menu
+		call setline(1, a:site_name . " " . a:page)
+		call setline(2, "[[トップ]] [[添付]] [[リロード]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]")
+		call setline(3, "---------------------------------------------------------------------------------------")
+		return s:pukiwiki_header_row + 1
+	else
+		return 1
 	endif
 endfunction " }}}
 
@@ -456,7 +472,6 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 		let @" = regbak
 	endif
 
-	call s:PW_insert_header(a:site_name, a:page)
 "	silent! execute "normal! ihistory>>>>>" . len(s:pukiwiki_history) . "\n"
 "	for elm in s:pukiwiki_history
 "		silent! execute "normal! i" . elm[4] . "\n"
@@ -464,8 +479,10 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 "	silent! execute "normal! ihistory<<<<<" . len(s:pukiwiki_history) . "\n"
 
 "	let msg = s:PW_iconv_s(msg, enc)
-	let msg = s:HTML.decodeEntityReference(msg)
-	silent! execute "normal! i" . msg
+	let bodyl = split(msg, "\n")
+	let bodyl = map(bodyl, 's:HTML.decodeEntityReference(v:val)')
+	let h = s:PW_insert_header(a:site_name, a:page)
+	call map(bodyl, 'setline(v:key + h, v:val)')
 
 	let b:pukiwiki_info.digest = digest
 	let b:pukiwiki_info.page = a:page
@@ -545,7 +562,7 @@ function! s:PW_write() "{{{
 	let param['digest'] = b:pukiwiki_info["digest"]
 	" ページの更新'
 	" @JPMES
-	et param['write'] = 'ページの更新'
+	let param['write'] = 'ページの更新'
 	let param["notimestamp"] = notimestamp
 	let param["original"] = ''
 	let param["msg"] = join(body, "\n")
@@ -867,15 +884,15 @@ function! s:PW_show_attach(site_name, page) "{{{
 
 	let files = pukiwiki#get_attach_files()
 	let files = map(files, '"- " . v:val[0] . "\t\t(" . v:val[1] . ")"')
-	let body = join(files, "\n")
 
 	call s:PW_newpage(a:site_name, a:page, 'attach')
 	call s:PW_set_statusline(a:site_name, a:page)
-	call s:PW_insert_header(a:site_name, a:page)
+	let h = s:PW_insert_header(a:site_name, a:page)
 	" 添付ファイル一覧
 	" @JPMES
-	execute "normal! i添付ファイル一覧 [[" . a:page . "]]\n\n"
-	execute "normal! i" . body
+	call setline(h + 0, "添付ファイル一覧 [[" . a:page . "]]")
+	call setline(h + 1, "")
+	call map(files, 'setline(v:key + h + 2, v:val)')
 
 	call s:PW_endpage(a:site_name, a:page, 1)
 endfunction "}}}
@@ -902,18 +919,15 @@ function! s:PW_show_page_list() "{{{
 	let bodyl = split(body, "\n")
 	let bodyl = filter(bodyl, 'v:val =~ "^\\s*<li><a href=" || v:val =~ "^\\s*<li><a id="')
 	let bodyl = map(bodyl, 'substitute(v:val, "^\\s*<li><a href.*>\\(.*\\)</a><small>\\(.*\\)</small>.*$", "- [[\\1]]\\t\\2", "")')
-	let bodyl = map(bodyl, 'substitute(v:val, "^\\s*<li><a id.*><strong>\\(.*\\)</strong></a>.*$", "\\n*** \\1", "")')
+	let bodyl = map(bodyl, 'substitute(v:val, "^\\s*<li><a id.*><strong>\\(.*\\)</strong></a>.*$", "*** \\1", "")')
 	let bodyl = map(bodyl, 's:HTML.decodeEntityReference(v:val)')
-	let body = join(bodyl, "\n")
 
-	execute "normal! i" . body
+	let h = s:PW_insert_header(site, page)
+	call map(bodyl, 'setline(v:key + h, v:val)')
 
 	" page 名しかないので, decode しなくても良い気がする.
 	" single quote &apos;  &#xxxx などはやらないといけないらしい.
 
-	execute ":setlocal noai"
-	execute "normal! gg0"
-	call s:PW_insert_header(site, page)
 
 	call s:PW_endpage(site, page, 1)
 endfunction "}}}
@@ -959,14 +973,12 @@ function! s:PW_show_search() "{{{
 	let bodyl = map(bodyl, 's:HTML.decodeEntityReference(v:val)')
 	let mes = remove(bodyl, -1)
 	call insert(bodyl, mes, 0)
-	let body = join(bodyl, "\n")
-	unlet bodyl
 
 	" 最終行に [... 10 ページ見つかりました] メッセージ
 	" それを最初にだす
 	" @REG
-	execute "normal! gg0i" . body
-	call s:PW_insert_header(site, page)
+	let h = s:PW_insert_header(site, page)
+	call map(bodyl, 'setline(v:key + h, v:val)')
 	call s:PW_endpage(site, page, 1)
 endfunction "}}}
 " }}}
