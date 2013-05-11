@@ -1,4 +1,5 @@
 "=============================================================================
+"echomsg cuner
 " @AUTHOR: syngan
 " @License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
@@ -40,12 +41,20 @@ lockvar s:pukiwiki_header_row
 "let s:pukiwiki_bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 let s:pukiwiki_bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 "let s:pukiwiki_bracket_name = '\[\[\_.\{-}\]\]'
+"エイリアス名の中には、全角文字を含めることができます。
+"エイリアス名の中には、半角空白文字を含めることができます。
 let s:regexp_alias = '[^\t<>\[\]#&":]\+'
-let s:regexp_page = '\(\.\{,2}/\)\@<![^\t\[\]<>#&\":]\+\(/\)\@!'
-let s:regexp_anchor = '#[A-Za-z0-9]\+'
-let s:pukiwiki_bracket_name = '\m\[\[' . s:regexp_page . '\]\]'
-let s:pukiwiki_bracket_name = '\m\[\[\(' . s:regexp_alias . '\)\=' . s:regexp_page . '\(' . s:regexp_anchor . '\)\=\]\]'
-let s:pukiwiki_bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
+"    ページ名に# & < > "(半角)のいずれかの文字を含む
+"    ページ名の途中に:(半角)を含む(ページ名の前後はOK)
+"    ページ名が/ ./ ../(半角)で始まる
+"    ページ名が/(半角)で終わる
+let s:regexp_page = '\(\.\{,2}/\)\@<![^\t\[\]<>#&":]\+\(/\)\@!'
+" アンカー名は、半角アルファベットから始まる
+" 半角アルファベット・数字・ハイフン・アンダースコアからなる文字列を指定します。
+let s:regexp_anchor = '#\a[A-Za-z0-9_-]*'
+let s:pukiwiki_bracket_name = '\m\[\[' . s:regexp_page . '\]\]'   " ok
+let s:pukiwiki_bracket_name = '\m\[\[' . s:regexp_page . '\(' . s:regexp_anchor . '\)\=\]\]'
+let s:pukiwiki_bracket_name = '\m\[\[\(' . s:regexp_alias . '>\)\=' . s:regexp_page . '\(' . s:regexp_anchor . '\)\=\]\]'
 "
 "  \=   0 or 1
 "  \+   1 or more
@@ -53,10 +62,6 @@ let s:pukiwiki_bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@
 "  \@!  nothing, requires NO match
 "  \@<! nothing, requires NO match behind /zero-width
 "
-"    ページ名に# & < > "(半角)のいずれかの文字を含む
-"    ページ名の途中に:(半角)を含む(ページ名の前後はOK)
-"    ページ名が/ ./ ../(半角)で始まる
-"    ページ名が/(半角)で終わる
 lockvar s:pukiwiki_bracket_name
 
 " }}}
@@ -709,7 +714,7 @@ function! pukiwiki#info_attach_file(site_name, page, file) " {{{
 	let body = split(retdic['content'], '\n')
 	let title = filter(copy(body), 'v:val =~ "<title>.*</title>"')
 	if len(title) == 0
-		let ret['errmsg'] = '<title> not found'
+		let ret['errmsg'] = 'system error: <title> not found'
 		return ret
 	endif
 
@@ -1114,7 +1119,7 @@ function! pukiwiki#jump()  "{{{
 	endif
 
 	let has_header = b:pukiwiki_info["header"]
-	if has_header && line('.') < 4
+	if has_header && line('.') <= s:pukiwiki_header_row
 		" ヘッダ部分
 		let cur = s:PW_matchstr_undercursor('\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]')
 	else
@@ -1135,22 +1140,26 @@ function! pukiwiki#jump()  "{{{
 		return
 	endif
 
-	let cur = substitute(cur, '\[\[\(.*\)\]\]', '\1', '')
+	let cur = cur[2:-3]
 	if has_header && line('.') <= s:pukiwiki_header_row
 		return pukiwiki#jump_menu(cur)
 	endif
 
-	" InterWikiNameのエイリアスではないエイリアス
-	" つまり、ただのエイリアス
-	if cur =~ '>'
-		let cur = substitute(cur, '^.*>\([^:]*\)$', '\1', '')
-	endif
+	" エイリアスはとにかく削除
+	let cur = substitute(cur, '.*>', '', '')
 
-	if cur =~ ':'
-		return
-	endif
+	let anchor = substitute(cur, '^.*#', '#', '')
+	let cur = substitute(cur, '#.*', '', '')
 
 	call s:PW_get_edit_page(b:pukiwiki_info["site"], cur, 1)
+	if anchor =~ "#"
+		let p = search('^\*\{1,3}.*\[' . anchor . '\]', 'c')
+		if p == 0
+			" &anchor() を探す.
+			let p = search('&aname(' . anchor[1:] . ')', 'c')
+		endif
+
+	endif
 endfunction "}}}
 
 function! pukiwiki#move_next_bracket() "{{{
