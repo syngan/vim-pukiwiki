@@ -1163,20 +1163,13 @@ function! pukiwiki#jump()  "{{{
 endfunction "}}}
 
 function! pukiwiki#move_next_bracket() "{{{
-	let tmp = @/
-	let @/ = s:pukiwiki_bracket_name
-	silent! execute "normal! n"
-	execute "normal! ll"
-	let @/ = tmp
+	call search(s:pukiwiki_bracket_name)
+"	let tmp = @/
+"	let @/ = tmp
 endfunction "}}}
 
 function! pukiwiki#move_prev_bracket() "{{{
-	let tmp = @/
-	let @/ = s:pukiwiki_bracket_name
-	execute "normal! hhh"
-	silent! execute "normal! N"
-	execute "normal! ll"
-	let @/ = tmp
+	call search(s:pukiwiki_bracket_name, 'b')
 endfunction "}}}
 " }}}
 
