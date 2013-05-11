@@ -472,7 +472,7 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 		let @" = regbak
 	endif
 
-	let bodyl = split(msg, "\n")
+	let bodyl = split(msg, "\n", 1)
 	let bodyl = map(bodyl, 's:HTML.decodeEntityReference(v:val)')
 	let h = s:PW_insert_header(a:site_name, a:page)
 	call map(bodyl, 'setline(v:key + h, v:val)')
@@ -559,7 +559,6 @@ function! s:PW_write() "{{{
 	let param["notimestamp"] = notimestamp
 	let param["original"] = ''
 	let param["msg"] = join(body, "\n")
-	echomsg "joind=" . len(split(param.msg, "\n")) . " <== " . len(param.msg) . " <== " . len(body)
 
 	let retdic = s:PW_request('write', param, b:pukiwiki_info, 'POST')
 	if !retdic['success']
