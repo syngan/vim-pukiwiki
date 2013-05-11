@@ -54,16 +54,13 @@ TODO:
   - 履歴をファイルに保存する. 不要か.
   - 文字コードを utf-8 にしたい.
   -- README のみ utf-8 で不統一
-  -- おそらく, *.vim と pukiwiki の文字コードが一致しないと正しく動作しない状態
-  -- "ぷ" 周りの動作がおかしい気がする. (オリジナル版から)
-  --- そもそも encoding-hint を与えているのに iconv しなくて良いはず.
   - [[page#link]] に対応
   - augroup PukiWikiEdit の扱い. 削除できていない.
   - unite-pukiwki/attach
 
 BUG:
   - S-TAB のキーマップが動作しない.
-  - pukiwiki#fileupload() 後に保存が成功しない
+  - pukiwiki#fileupload() 後に保存が成功しないことがある
 
 オリジナル
   http://vimwiki.net/?scripts%2F10

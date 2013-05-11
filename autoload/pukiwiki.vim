@@ -22,13 +22,14 @@
 " }}}
 "=============================================================================
 
-scriptencoding euc-jp
 
 let s:save_cpo = &cpo
 set cpo&vim
 
+
 " option {{{
 
+"scriptencoding utf-8
 scriptencoding euc-jp
 
 "}}}
@@ -59,7 +60,6 @@ let s:HTTP = s:VITAL.import('Web.Http')
 " }}}
 
 " debug {{{
-
 function! pukiwiki#buf_vars() "{{{
 	" デバッグ用
 	if exists('b:pukiwiki_info')
@@ -72,6 +72,13 @@ function! pukiwiki#buf_vars() "{{{
 		endfor
 	endif
 endfunction "}}}
+
+function! pukiwiki#say_hello() "{{{
+	echo "せいはろー"
+	echomsg "せいはろー"
+	call s:VITAL.print_error("せいはろー")
+endfunction "}}}
+
 "}}}
 
 function! pukiwiki#PukiWiki(...) "{{{
@@ -255,14 +262,27 @@ function! s:PW_request(funcname, param, info, method) " {{{
 	if page != '' && !has_key(a:param, "refer")
 		let a:param['page'] = page
 	endif
-	let a:param["encode_hint"] = 'ぷ'
-
+"
+	" ぷ
+	"   EUC  a4d7
+	"   SJIS 82d5
+	"   utf8 e381b7
+	"   jis  1b244224571b2842
+	" @JPMES
+"	let a:param["encode_hint"] = s:VITAL.iconv("\xa4\xd7", "euc-jp", &enc)
+	let a:param["encode_hint"] = "ぷ"
 	if a:method == 'POST'
 		let pm = s:PW_joindictstr(a:param, enc)
 		let settings['data'] = pm
+		if g:pukiwiki_debug >= 5
+			echo pm
+		endif
 	elseif a:method == 'GET'
 		let pm = s:PW_joindictstr(a:param, enc)
 		let settings['param'] = pm
+		if g:pukiwiki_debug >= 5
+			echo pm
+		endif
 	elseif a:method == 'MULT'
 		" multipart/form-data
 		let pm = a:param
@@ -290,20 +310,24 @@ function! s:PW_request(funcname, param, info, method) " {{{
 			return retdic
 		endif
 	endif
+
 	let retdic['content'] = s:PW_iconv_s(retdic['content'], enc)
+
+
 	return retdic
 endfunction "}}}
 
 function! s:PW_newpage(site_name, page, pagetype) "{{{
 
-	let sitedict = g:pukiwiki_config[a:site_name]
-	let enc = sitedict['encode']
+"	let sitedict = g:pukiwiki_config[a:site_name]
+"	let enc = sitedict['encode']
 
-	silent execute ":e ++enc=" . enc . " " . tempname()
+"	silent execute ":e ++enc=" . enc . " " . tempname()
+	silent execute ":e " . tempname()
 	execute ":setlocal modifiable"
-	execute ":setlocal indentexpr="
-	execute ":setlocal noautoindent"
-	execute ':setlocal nobuflisted'
+"	execute ":setlocal indentexpr="
+"	execute ":setlocal noautoindent"
+"	execute ':setlocal nobuflisted'
 
 	execute ":setlocal filetype=pukiwiki"
 
@@ -416,7 +440,7 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 		endif
 	elseif a:pwcmd == 'source'
 		if result !~ '<pre id="source">'
-			call s:VITAL.print_error('ページの読み込みに失敗しました。認証が必要です。')
+			call s:VITAL.print_error('reading the page failed. 認証が必要です。')
 			return
 		endif
 	else
@@ -502,7 +526,7 @@ function! s:PW_write() "{{{
 	elseif g:pukiwiki_timestamp_update == 0
 		let notimestamp = 'true'
 	else
-		let last_confirm = s:PW_yesno('タイムスタンプを変更する？: ', 'y')
+		let last_confirm = s:PW_yesno('update timestamp?: ', 'y')
 		if !last_confirm
 			let notimestamp = 'true'
 		else
@@ -522,7 +546,7 @@ function! s:PW_write() "{{{
 	else
 		let body = getline(1, line('$'))
 	endif
-	execute ":setlocal fenc="
+"	execute ":setlocal fenc="
 
 
 	" urlencode した本文前にその他の情報設定
@@ -530,7 +554,10 @@ function! s:PW_write() "{{{
 	let param['cmd'] = 'edit'
 	let param['page'] = page
 	let param['digest'] = b:pukiwiki_info["digest"]
-	let param['write'] = 'ページの更新'
+	" ページの更新'
+	" @JPMES
+"	let param['write'] = s:VITAL.iconv("\xa5\xda\xa1\xbc\xa5\xb8\xa4\xce\xb9\xb9\xbf\xb7", "euc-jp", &enc)
+	et param['write'] = 'ページの更新'
 	let param["notimestamp"] = notimestamp
 	let param["original"] = ''
 	let param["msg"] = join(body, "\n")
@@ -538,6 +565,11 @@ function! s:PW_write() "{{{
 	let retdic = s:PW_request('write', param, b:pukiwiki_info, 'POST')
 	if !retdic['success']
 		return 0
+	endif
+
+	if g:pukiwiki_debug >= 3
+		echo param
+		echo retdic
 	endif
 
 	" 書き込みが成功すると PukiWiki が
@@ -559,19 +591,26 @@ function! s:PW_write() "{{{
 	"  - 更新の衝突
 	let bodyr = retdic['content']
 
-	" もう少しまともな判定方法はないのか?
+	" @TODO もう少しまともな判定方法はないのか?
+	" を削除しました
+	"
+	" @JPMES
+"	let mes = "\xA4\xF2\xBA\xEF\xBD\xFC\xA4\xB7\xA4\xDE\xA4\xB7\xA4\xBF"
+"	let mes = s:VITAL.iconv(mes, "euc-jp", &enc)
+"	if bodyr =~ '<title>\_.\{-}' . mes . '\_.\{-}<\/title>'
 	if bodyr =~ '<title>\_.\{-}を削除しました\_.\{-}<\/title>'
 		execute ":set nomodified"
 		call s:PW_get_top_page(site)
-		echo page . ' を削除しました'
+		echo page . ' has been deleted.'
 		return
 	endif
 
-	if g:pukiwiki_debug
+	if g:pukiwiki_debug < 3
 		echo param
 		echo retdic
 	endif
 
+	" @JPMES
 	call s:VITAL.print_error('更新の衝突が発生したか、その他のエラーで書き込めませんでした。')
 	return 0
 "
@@ -680,8 +719,12 @@ function! pukiwiki#info_attach_file(site_name, page, file) " {{{
 	endif
 
 	if title[0] !~ ".*添付ファイルの情報.*"
+	" @JPMES
+"	let mes = "\xC5\xBA\xC9\xD5\xA5\xD5\xA5\xA1\xA5\xA4\xA5\xEB\xA4\xCE\xBE\xF0\xCA\xF3"
+"	let mes = s:VITAL.iconv(mes, "euc-jp", &enc)
+"	if title[0] !~ ".*" . mes . ".*"
 		if title[0] =~ ".*そのファイルは見つかりません.*"
-			let ret['errmsg'] = 'file not attached: ' . a:file
+			let ret['errmsg'] = 'the file is not attached: ' . a:file
 		else
 			let ret['errmsg'] = 'title is not attach file info: ' . title[0]
 		endif
@@ -730,7 +773,13 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 
 	let body = split(retdic['content'], '\n')
 	let title = substitute(retdic['content'], '^.*<title>\([^\n]*\)</title>.*$', '\1', '')
+
+	" @JPMES
+"	let mes = "\xC5\xBA\xC9\xD5\xA5\xD5\xA5\xA1\xA5\xA4\xA5\xEB\xA4\xCE\xBE\xF0\xCA\xF3"
+"	let mes = s:VITAL.iconv(mes, "euc-jp", &enc)
+"	if title =~ ".*" . mes . ".*"
 	if title =~ ".*添付ファイルの情報.*"
+
 		" パスワード間違いなどによるエラー.
 		" request は正常に帰ってきて,
 		" font-weight:bold でエラーが復帰される
@@ -745,6 +794,10 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 	endif
 	unlet body
 	if title =~ '.*からファイルを削除しました'
+	" @JPMES
+"	let mes = "\xA4\xAB\xA4\xE9\xA5\xD5\xA5\xA1\xA5\xA4\xA5\xEB\xA4\xF2\xBA\xEF\xBD\xFC\xA4\xB7\xA4\xDE\xA4\xB7\xA4\xBF"
+"	let mes = s:VITAL.iconv(mes, "euc-jp", &enc)
+"	if title =~ '.*' . mes
 		call s:set_password(sitedict, pass)
 		return 0
 	else
@@ -803,7 +856,7 @@ function! pukiwiki#bookmark() " {{{
 		let lines = readfile(g:pukiwiki_bookmark)
 		if lines[0] != "pukiwiki.bookmark.v1."
 			" 上書きしていいものか...
-			throw "指定されたファイルに誤りがあります"
+			throw "g:pukiwiki_bookmark is invalid"
 		endif
 	else
 		let lines = ["pukiwiki.bookmark.v1."]
@@ -843,6 +896,11 @@ function! s:PW_show_attach(site_name, page) "{{{
 	call s:PW_newpage(a:site_name, a:page, 'attach')
 	call s:PW_set_statusline(a:site_name, a:page)
 	call s:PW_insert_header(a:site_name, a:page)
+	" 添付ファイル一覧
+	" @JPMES
+"	let mes = "\xC5\xBA\xC9\xD5\xA5\xD5\xA5\xA1\xA5\xA4\xA5\xEB\xB0\xEC\xCD\xF7"
+"	let mes = s:VITAL.iconv(mes, "euc-jp", &enc)
+"	execute "normal! i" . mes . " [[" . a:page . "]]\n\n"
 	execute "normal! i添付ファイル一覧 [[" . a:page . "]]\n\n"
 	execute "normal! i" . body
 
@@ -1006,14 +1064,24 @@ function! pukiwiki#fileupload() range "{{{
 		let body = substitute(body, '<a href=".*">\(.*\)</a>', '[[\1]]', '')
 		call setline(linenum, curr_line . "\t" . body)
 
+		" @JPMES
+"		let mes1 = "\xA5\xD1\xA5\xB9\xA5\xEF\xA1\xBC\xA5\xC9"
+"		let mes1 = s:VITAL.iconv(mes1, "euc-jp", &enc)
+"		let mes2 = "\xA5\xA2\xA5\xC3\xA5\xD7\xA5\xED\xA1\xBC\xA5\xC9"
+"		let mes2 = s:VITAL.iconv(mes2, "euc-jp", &enc)
+"		if body =~ '.*ぱすわーｄ' . mes1 . '.*'
 		if body =~ '.*パスワード.*'
 			" パスワード誤り
 			if has_key(sitedict, 'password')
 				call remove(sitedict, 'password')
 			endif
 			break
-		elseif body =~ '.*アップロード.*' || body =~ '.*同じファイル名.*'
+		elseif body =~ '.*アップロード.*'
+"		elseif body =~ '.*' . mes2 . '.*'
 			call s:set_password(sitedict, pass)
+		" @TODO パスワード誤りで、ここを通らないことを確認
+"		elseif body =~ '.*同じファイル名.*'
+"			call s:set_password(sitedict, pass)
 		endif
     endfor
 
@@ -1137,7 +1205,7 @@ function! s:PW_joindictstr(dict, enc) " {{{
 	let ret = ''
 	for key in keys(a:dict)
 		if strlen(ret) | let ret .= "&" | endif
-		let ret .= key . "=" . s:PW_urlenc_u(a:dict[key], a:enc)
+		let ret .= key . "=" . s:PW_urlencode(s:PW_iconv_u(a:dict[key], a:enc))
 	endfor
 	return ret
 endfunction " }}}
@@ -1185,10 +1253,6 @@ endfunction " }}}
 function! s:PW_iconv_s(val, fromenc) " {{{
 	return s:VITAL.iconv(a:val, a:fromenc, &enc)
 endfunction " }}}
-
-function! s:PW_urlenc_u(val, toenc)
-	return s:PW_urlencode(s:PW_iconv_u(a:val, a:toenc))
-endfunction
 
 "}}}
 
