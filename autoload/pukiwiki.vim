@@ -22,10 +22,8 @@
 " }}}
 "=============================================================================
 
-
 let s:save_cpo = &cpo
 set cpo&vim
-
 
 " option {{{
 
@@ -269,7 +267,6 @@ function! s:PW_request(funcname, param, info, method) " {{{
 	"   utf8 e381b7
 	"   jis  1b244224571b2842
 	" @JPMES
-"	let a:param["encode_hint"] = s:VITAL.iconv("\xa4\xd7", "euc-jp", &enc)
 	let a:param["encode_hint"] = "ぷ"
 	if a:method == 'POST'
 		let pm = s:PW_joindictstr(a:param, enc)
@@ -556,7 +553,6 @@ function! s:PW_write() "{{{
 	let param['digest'] = b:pukiwiki_info["digest"]
 	" ページの更新'
 	" @JPMES
-"	let param['write'] = s:VITAL.iconv("\xa5\xda\xa1\xbc\xa5\xb8\xa4\xce\xb9\xb9\xbf\xb7", "euc-jp", &enc)
 	et param['write'] = 'ページの更新'
 	let param["notimestamp"] = notimestamp
 	let param["original"] = ''
@@ -595,9 +591,6 @@ function! s:PW_write() "{{{
 	" を削除しました
 	"
 	" @JPMES
-"	let mes = "\xA4\xF2\xBA\xEF\xBD\xFC\xA4\xB7\xA4\xDE\xA4\xB7\xA4\xBF"
-"	let mes = s:VITAL.iconv(mes, "euc-jp", &enc)
-"	if bodyr =~ '<title>\_.\{-}' . mes . '\_.\{-}<\/title>'
 	if bodyr =~ '<title>\_.\{-}を削除しました\_.\{-}<\/title>'
 		execute ":set nomodified"
 		call s:PW_get_top_page(site)
@@ -720,9 +713,6 @@ function! pukiwiki#info_attach_file(site_name, page, file) " {{{
 
 	if title[0] !~ ".*添付ファイルの情報.*"
 	" @JPMES
-"	let mes = "\xC5\xBA\xC9\xD5\xA5\xD5\xA5\xA1\xA5\xA4\xA5\xEB\xA4\xCE\xBE\xF0\xCA\xF3"
-"	let mes = s:VITAL.iconv(mes, "euc-jp", &enc)
-"	if title[0] !~ ".*" . mes . ".*"
 		if title[0] =~ ".*そのファイルは見つかりません.*"
 			let ret['errmsg'] = 'the file is not attached: ' . a:file
 		else
@@ -775,9 +765,6 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 	let title = substitute(retdic['content'], '^.*<title>\([^\n]*\)</title>.*$', '\1', '')
 
 	" @JPMES
-"	let mes = "\xC5\xBA\xC9\xD5\xA5\xD5\xA5\xA1\xA5\xA4\xA5\xEB\xA4\xCE\xBE\xF0\xCA\xF3"
-"	let mes = s:VITAL.iconv(mes, "euc-jp", &enc)
-"	if title =~ ".*" . mes . ".*"
 	if title =~ ".*添付ファイルの情報.*"
 
 		" パスワード間違いなどによるエラー.
@@ -795,9 +782,6 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 	unlet body
 	if title =~ '.*からファイルを削除しました'
 	" @JPMES
-"	let mes = "\xA4\xAB\xA4\xE9\xA5\xD5\xA5\xA1\xA5\xA4\xA5\xEB\xA4\xF2\xBA\xEF\xBD\xFC\xA4\xB7\xA4\xDE\xA4\xB7\xA4\xBF"
-"	let mes = s:VITAL.iconv(mes, "euc-jp", &enc)
-"	if title =~ '.*' . mes
 		call s:set_password(sitedict, pass)
 		return 0
 	else
@@ -898,9 +882,6 @@ function! s:PW_show_attach(site_name, page) "{{{
 	call s:PW_insert_header(a:site_name, a:page)
 	" 添付ファイル一覧
 	" @JPMES
-"	let mes = "\xC5\xBA\xC9\xD5\xA5\xD5\xA5\xA1\xA5\xA4\xA5\xEB\xB0\xEC\xCD\xF7"
-"	let mes = s:VITAL.iconv(mes, "euc-jp", &enc)
-"	execute "normal! i" . mes . " [[" . a:page . "]]\n\n"
 	execute "normal! i添付ファイル一覧 [[" . a:page . "]]\n\n"
 	execute "normal! i" . body
 
@@ -1065,11 +1046,6 @@ function! pukiwiki#fileupload() range "{{{
 		call setline(linenum, curr_line . "\t" . body)
 
 		" @JPMES
-"		let mes1 = "\xA5\xD1\xA5\xB9\xA5\xEF\xA1\xBC\xA5\xC9"
-"		let mes1 = s:VITAL.iconv(mes1, "euc-jp", &enc)
-"		let mes2 = "\xA5\xA2\xA5\xC3\xA5\xD7\xA5\xED\xA1\xBC\xA5\xC9"
-"		let mes2 = s:VITAL.iconv(mes2, "euc-jp", &enc)
-"		if body =~ '.*ぱすわーｄ' . mes1 . '.*'
 		if body =~ '.*パスワード.*'
 			" パスワード誤り
 			if has_key(sitedict, 'password')
@@ -1077,7 +1053,6 @@ function! pukiwiki#fileupload() range "{{{
 			endif
 			break
 		elseif body =~ '.*アップロード.*'
-"		elseif body =~ '.*' . mes2 . '.*'
 			call s:set_password(sitedict, pass)
 		" @TODO パスワード誤りで、ここを通らないことを確認
 "		elseif body =~ '.*同じファイル名.*'

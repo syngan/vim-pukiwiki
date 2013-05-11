@@ -57,6 +57,9 @@ TODO:
   - [[page#link]] に対応
   - augroup PukiWikiEdit の扱い. 削除できていない.
   - unite-pukiwki/attach
+    - ダウンロード
+    - 詳細表示
+  - 日本語ファイル名の添付ファイル
 
 BUG:
   - S-TAB のキーマップが動作しない.
