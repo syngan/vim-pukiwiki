@@ -682,6 +682,7 @@ function! pukiwiki#get_history_list() "{{{
 	return s:pukiwiki_history
 endfunction "}}}
 
+" attach files {{{
 function! pukiwiki#info_attach_file(site_name, page, file) " {{{
 
 	let ret = {'success' : 0}
@@ -822,6 +823,40 @@ function! pukiwiki#get_attach_files() "{{{
 	let body = map(body, '[s:HTML.decodeEntityReference(v:val[0]), v:val[1]]')
 	return body
 endfunction "}}}
+
+" @TODO バイナリファイルの場合にファイルが壊れることがある.
+" vital.vim で r = join(readfile(file, "b"), "\n")
+" pukiwiki.vim で writefile(split(r, "\n", 1), ofile, "b")
+" 00 01 02 03 04 05 のファイルが
+" 0a 01 02 03 04 05 になる
+function! pukiwiki#download_attach_file(site_name, page, file, ofile)
+
+	let ret = s:PW_valid_config(a:site_name)
+	if ret
+		call s:VITAL.print_error(ret)
+		return -1
+	endif
+
+	let sitedict = g:pukiwiki_config[a:site_name]
+
+	let param = {}
+	let param['plugin'] = 'attach'
+	let param['pcmd'] = 'open'
+	let param['refer'] = a:page
+	let param['file'] = a:file
+
+	let info = {
+		\ "site" : a:site_name,
+		\ "page" : a:page,
+	\}
+	let retdic = s:PW_request('download_attach_file', param, info, 'GET')
+	if !retdic.success
+		return -1
+	endif
+	call writefile(split(retdic.content, "\n", 1), a:ofile, "b")
+	return 0
+endfunction
+" }}}
 
 function! pukiwiki#bookmark() " {{{
 	" 現在のページをブックマークする

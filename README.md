@@ -53,9 +53,6 @@ TODO:
   - ドキュメント
   - 履歴をファイルに保存する. 不要か.
   - augroup PukiWikiEdit の扱い. 削除できていない.
-  - unite-pukiwki/attach
-    - ダウンロード
-    - 詳細表示
   - 日本語ファイル名の添付ファイル
 
 BUG:

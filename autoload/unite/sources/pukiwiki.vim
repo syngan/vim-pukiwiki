@@ -320,6 +320,32 @@ function! s:uni_attach.action_table.show_info.func(candidates) "{{{
 	call unite#start([["pukiwiki/attachinfo", site, page, file]])
 endfunction " }}}
 
+let s:uni_attach.action_table.download = {
+	\ 'description' : 'download the attached file',
+	\ 'is_selectable' : 0,
+	\}
+
+function! s:uni_attach.action_table.download.func(candidates) "{{{
+
+	let filename = input("File: ")
+	if isdirectory(filename)
+		throw ("directory: " . filename)
+	endif
+
+	if filewritable(filename)
+		throw ("exists: " . filename)
+	endif
+
+	let info = a:candidates.source__pw_info
+	let site = info["site"]
+	let page = info["page"]
+	let file = a:candidates.word
+	return pukiwiki#download_attach_file(site, page, file, filename)
+endfunction " }}}
+
+
+
+
 " pukiwiki/attachinfo " {{{
 let s:uni_ai = {
 	\ 'name': 'pukiwiki/attachinfo',
