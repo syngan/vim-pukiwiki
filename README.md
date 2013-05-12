@@ -52,7 +52,6 @@ TODO:
   - 凍結/凍結解除機能
   - ドキュメント
   - 履歴をファイルに保存する. 不要か.
-  - [[page#link]] に対応
   - augroup PukiWikiEdit の扱い. 削除できていない.
   - unite-pukiwki/attach
     - ダウンロード

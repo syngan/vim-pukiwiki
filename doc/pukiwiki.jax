@@ -141,7 +141,7 @@ Example >
 	moveup アクションで選択されたブックマークを一つ上へ移動する
 	movedown アクションで選択されたブックマークを一つ下へ移動する
 
-:Unite pukiwiki/attach  (default action: yank)
+:Unite pukiwiki/attach  (default action: show_info)
 	添付ファイル一覧を表示します
 
 :Unite outline

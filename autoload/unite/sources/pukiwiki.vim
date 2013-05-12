@@ -246,10 +246,11 @@ endfunction
 " }}}
 
 " pukiwiki/attach {{{
+
 let s:uni_attach = {
 	\ 'name': 'pukiwiki/attach',
 	\ 'description': 'attach files of PukiWiki',
-	\ 'default_action' : 'yank',
+	\ 'default_action' : 'show_info',
 	\ 'action_table' : {},
 	\ 'default_kind' : 'command',
 \}
@@ -264,20 +265,21 @@ function! s:uni_attach.hooks.on_init(args, context) "{{{
 	endif
 endfunction "}}}
 
+
 function! s:uni_attach.gather_candidates(args, context) "{{{
 	if !has_key(a:context, 'source__pw_info')
 		return []
 	endif
 
-	let b:pukiwiki_info = a:context.source__pw_info
-	let site = b:pukiwiki_info["site"]
-	let page = b:pukiwiki_info["page"]
+	let info = a:context.source__pw_info
+"	let site = info["site"]
+"	let page = info["page"]
 	let files = pukiwiki#get_attach_files()
 
 	return map(files, "{
 	\	'word' : v:val[0],
 	\	'source' : 'pukiwiki/attach',
-	\	'source__pw_info' : b:pukiwiki_info,
+	\	'source__pw_info' : info,
 	\}")
 endfunction "}}}
 
@@ -304,23 +306,46 @@ function! s:uni_attach.action_table.delete.func(candidates) "{{{
 	call pukiwiki#delete_attach_file(site_name, page, filename)
 endfunction "}}}
 
-"function! s:uni_attach.action_table.show_info = {
-"	\ 'description' : 'show detail information of the attached file'
-"	\ 'is_selectable' : 0,
-"	\ 'is_invalidate_cache' : 0,
-"	\ 'kind' : 'source',
-"	\}
-"
-"function! s:uni_attach.action_table.show_info.func(candidates) "{{{
-"
-""	unite#start("pukiwiki/attach_info")
-"
-"	let filename = a:candidates.word
-"	let site_name = a:candidates.source__pw_site_name
-"	let page = a:candidates.source__pw_page
-"
-"endfunction " }}} 
+let s:uni_attach.action_table.show_info = {
+	\ 'description' : 'show detail information of the attached file',
+	\ 'is_selectable' : 0,
+	\ 'is_invalidate_cache' : 0,
+	\}
 
+function! s:uni_attach.action_table.show_info.func(candidates) "{{{
+	let info = a:candidates.source__pw_info
+	let site = info["site"]
+	let page = info["page"]
+	let file = a:candidates.word
+	call unite#start([["pukiwiki/attachinfo", site, page, file]])
+endfunction " }}}
+
+" pukiwiki/attachinfo " {{{
+let s:uni_ai = {
+	\ 'name': 'pukiwiki/attachinfo',
+	\ 'description': 'infomation of an attach file of PukiWiki',
+	\ 'default_action' : 'yank',
+	\ 'action_table' : {},
+	\ 'default_kind' : 'command',
+\}
+
+function! s:uni_ai.gather_candidates(args, context) "{{{
+	if len(a:args) != 3
+		return []
+	endif
+
+	let info = pukiwiki#info_attach_file(a:args[0], a:args[1], a:args[2])
+	if info.success == 0
+		return []
+	endif
+	let k = info.data
+	return map(k, "{
+	\	'word' : v:val,
+	\	'source' : 'pukiwiki/attachinfo',
+	\}")
+endfunction "}}}
+" }}}
+" }}}
 
 function! unite#sources#pukiwiki#define() "{{{
 	" 登録. g:pukiwiki_config が定義されていない場合には
@@ -328,7 +353,12 @@ function! unite#sources#pukiwiki#define() "{{{
 	if !exists('g:pukiwiki_config')
 		return {}
 	endif
-	return [s:uni_puki, s:uni_menu, s:uni_bm, s:uni_attach]
+	return [
+		\ s:uni_puki,
+		\ s:uni_menu,
+		\ s:uni_bm,
+		\ s:uni_attach,
+		\ s:uni_ai]
 endfunction "}}}
 
 let &cpo = s:save_cpo

@@ -39,7 +39,6 @@ let s:pukiwiki_header_row = 3
 lockvar s:pukiwiki_header_row
 
 "let s:pukiwiki_bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
-let s:pukiwiki_bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 "let s:pukiwiki_bracket_name = '\[\[\_.\{-}\]\]'
 "エイリアス名の中には、全角文字を含めることができます。
 "エイリアス名の中には、半角空白文字を含めることができます。
@@ -52,10 +51,8 @@ let s:regexp_page = '\(\.\{,2}/\)\@<![^\t\[\]<>#&":]\+\(/\)\@!'
 " アンカー名は、半角アルファベットから始まる
 " 半角アルファベット・数字・ハイフン・アンダースコアからなる文字列を指定します。
 let s:regexp_anchor = '#\a[A-Za-z0-9_-]*'
-let s:pukiwiki_bracket_name = '\m\[\[' . s:regexp_page . '\]\]'   " ok
-let s:pukiwiki_bracket_name = '\m\[\[' . s:regexp_page . '\(' . s:regexp_anchor . '\)\=\]\]'
 let s:pukiwiki_bracket_name = '\m\[\[\(' . s:regexp_alias . '>\)\=' . s:regexp_page . '\(' . s:regexp_anchor . '\)\=\]\]'
-"
+
 "  \=   0 or 1
 "  \+   1 or more
 "http://vim-users.jp/2009/09/hack75/
@@ -218,7 +215,7 @@ function! s:PW_gen_multipart(settings, param) " {{{
 		let b .= substitute(reltimestr(reltime()), "\\X", '', 'g')
 	else
 "		let b .= substitute(tempname().localtime(), "[^A-Za-z0-9]", '', 'g')
-		let b .= substitute(localtime(), "[^A-Za-z0-9]", '', 'g')
+		let b .= substitute(localtime(), "[^[:alnum:]]", '', 'g')
 	endif
 	let a:settings.contentType = "multipart/form-data; boundary=" . b
 	let ret = ""
@@ -473,8 +470,9 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 	else
 		" @REG
 		let regbak = @"
-		global/^.*$/d
+		execute "%d"
 		let @" = regbak
+		unlet regbak
 	endif
 
 	let bodyl = split(msg, "\n", 1)
@@ -728,18 +726,9 @@ function! pukiwiki#info_attach_file(site_name, page, file) " {{{
 		return ret
 	endif
 
-	let body = filter(body, "v:val =~ '.*<input type=.hidden. name=.*'")
-	for vv in body
-		let key = substitute(vv, '.*name="', '', '')
-		let key = substitute(key, '".*', '', '')
-		let val = substitute(vv, '.*value="', '', '')
-		let val = substitute(val, '".*', '', '')
-
-		if len(key) > 0
-			let ret[key] = val
-		endif
-	endfor
-
+	let body = filter(body, "v:val =~ ' <dd>.*'")
+	let body = map(body, "substitute(v:val, ' <dd>\\(.*\\)</dd>', '\\1', '')")
+	let ret.data = body
 	let ret['success'] = 1
 	return ret
 endfunction " }}}
@@ -1219,8 +1208,10 @@ function! s:PW_matchstr_undercursor(mx) "{{{
 endfunction "}}}
 
 " local を サーバ向けに変更
+" サーバは encode_hint を送っているため変換する必要がない
 function! s:PW_iconv_u(val, toenc) " {{{
-	return s:VITAL.iconv(a:val, &enc, a:toenc)
+	return a:val
+"	return s:VITAL.iconv(a:val, &enc, a:toenc)
 endfunction " }}}
 
 " サーバからの文字列をローカルに変更
