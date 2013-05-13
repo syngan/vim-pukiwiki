@@ -250,10 +250,11 @@ endfunction
 let s:uni_attach = {
 	\ 'name': 'pukiwiki/attach',
 	\ 'description': 'attach files of PukiWiki',
-	\ 'default_action' : 'show_info',
+	\ 'default_action' : 'start',
 	\ 'action_table' : {},
-	\ 'default_kind' : 'command',
+	\ 'default_kind' : 'source',
 \}
+"	\ 'alias_table' : { 'show_info' : 'start' },
 
 let s:uni_attach.hooks = {}
 
@@ -272,14 +273,17 @@ function! s:uni_attach.gather_candidates(args, context) "{{{
 	endif
 
 	let info = a:context.source__pw_info
-"	let site = info["site"]
-"	let page = info["page"]
+	let site = info["site"]
+	let page = info["page"]
 	let files = pukiwiki#get_attach_files()
 
 	return map(files, "{
 	\	'word' : v:val[0],
 	\	'source' : 'pukiwiki/attach',
+	\	'action__source_name' : 'pukiwiki/attachinfo',
+	\	'action__source_args' : [site, page, v:val[0]],
 	\	'source__pw_info' : info,
+	\	'source__pw_file' : v:val[0],
 	\}")
 endfunction "}}}
 
@@ -310,6 +314,8 @@ let s:uni_attach.action_table.show_info = {
 	\ 'description' : 'show detail information of the attached file',
 	\ 'is_selectable' : 0,
 	\ 'is_invalidate_cache' : 0,
+	\ 'is_start' : 1,
+	\ 'is_quit' : 0,
 	\}
 
 function! s:uni_attach.action_table.show_info.func(candidates) "{{{
@@ -325,8 +331,7 @@ let s:uni_attach.action_table.download = {
 	\ 'is_selectable' : 0,
 	\}
 
-function! s:uni_attach.action_table.download.func(candidates) "{{{
-
+function! s:download(candidates) " {{{
 	let filename = input("File: ")
 	if isdirectory(filename)
 		throw ("directory: " . filename)
@@ -339,12 +344,13 @@ function! s:uni_attach.action_table.download.func(candidates) "{{{
 	let info = a:candidates.source__pw_info
 	let site = info["site"]
 	let page = info["page"]
-	let file = a:candidates.word
+	let file = a:candidates.source__pw_file
 	return pukiwiki#download_attach_file(site, page, file, filename)
 endfunction " }}}
 
-
-
+function! s:uni_attach.action_table.download.func(candidates) "{{{
+	return s:download(a:candidates)
+endfunction " }}}
 
 " pukiwiki/attachinfo " {{{
 let s:uni_ai = {
@@ -365,11 +371,27 @@ function! s:uni_ai.gather_candidates(args, context) "{{{
 		return []
 	endif
 	let k = info.data
+
+	let pwinfo = {
+	\   "site" : a:args[0],
+	\   "page" : a:args[1],
+	\}
 	return map(k, "{
 	\	'word' : v:val,
 	\	'source' : 'pukiwiki/attachinfo',
+	\	'source__pw_info' : pwinfo,
+	\	'source__pw_file' : a:args[2],
 	\}")
 endfunction "}}}
+
+let s:uni_ai.action_table.download = {
+	\ 'description' : 'download the attached file',
+	\ 'is_selectable' : 0,
+	\}
+
+function! s:uni_ai.action_table.download.func(candidates) "{{{
+	return s:download(a:candidates)
+endfunction " }}}
 " }}}
 " }}}
 

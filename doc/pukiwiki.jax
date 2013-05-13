@@ -209,6 +209,10 @@ pukiwiki#download_attach_file(site, page, file, save_file)
 			指定したページの添付ファイル情報をダウンロードします。
 			バイナリファイルの場合には正常に動作しない可能性があり
 			ます。
+			(0x00 を含むファイルは壊れる可能性があります。これは,
+			vital.vim の Web.Http.request()
+			がバイナリファイルの場合にも join(readfile(file, "b"), "\n")
+			してしまう影響です。）
 
 ==============================================================================
 カスタマイズ					*pukiwiki-customizing*
