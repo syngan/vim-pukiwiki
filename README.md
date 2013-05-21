@@ -37,34 +37,34 @@ vim-pukiwiki ? A vim client for the PukiWiki 1.4.7 for Japanese.
 などとして起動します。
 
 あとは、
-  `<CR>` でページの移動
-  `:w` でページ更新
-  `<TAB>` で [[ ]] 間をジャンプ
+- `<CR>` でページの移動
+- `:w` でページ更新
+- `<TAB>` で [[ ]] 間をジャンプ
 
-  現在 `<CR>` でページ遷移出来るのは
-        BracketName
-        BracketNameのエイリアス
-  だけです。InterWikiNameや外部URLには現在対応していません。
+現在 `<CR>` でページ遷移出来るのは以下の2つだけです。InterWikiNameや外部URLには現在対応していません。
+- BracketName
+- BracketNameのエイリアス
+
 
 ==============================================================================
 
-TODO:
+* TODO:
   - 凍結/凍結解除機能
   - ドキュメント
   - 履歴をファイルに保存する. 不要か.
   - augroup PukiWikiEdit の扱い. 削除できていない.
   - 日本語ファイル名の添付ファイル
 
-BUG:
+* BUG:
   - S-TAB のキーマップが動作しない.
   - `pukiwiki#fileupload()` 後に保存が成功しないことがある
   - バイナリファイルの添付はファイルが壊れることがあります.
 
-オリジナル
+* オリジナル
   http://vimwiki.net/?scripts%2F10
   20080727版
 
-改変版
+* 改変版
   - d.hatena.ne.jp/ampmmn/20090401/1238536800
   - o 書き込み時に文字化けする現象の修正
   - x ユーザ認証への対応
