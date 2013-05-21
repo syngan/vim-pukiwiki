@@ -14,9 +14,9 @@ vim-pukiwiki ? A vim client for the PukiWiki 1.4.7 for Japanese.
 ==============================================================================
 使い方
 
-使用するためには vimrc に |g:pukiwiki_config| を設定する必要があります。
+使用するためには .vimrc に `g:pukiwiki_config` を設定する必要があります。
 
-Example >
+```vim
 	" PukiWiki のサイト情報 "
 	let g:pukiwiki_config = {
 	\	"LocalWiki" : {
@@ -25,23 +25,23 @@ Example >
 	\		"encode" : "euc-jp",
 	\	},
 	\}
-<
+```
 
-|:PukiWiki|
+`:PukiWiki`
 
-として起動し、|g:pukiwiki_config| で指定したサイト名を入力するか、
+として起動し、`g:pukiwiki_config` で指定したサイト名を入力するか、
 
-:PukiWiki "サイト名"
-(:PukiWiki LocalWiki)
+`:PukiWiki "サイト名"`
+(`:PukiWiki LocalWiki`)
 
 などとして起動します。
 
 あとは、
-  <CR> でページの移動
-  :w でページ更新
-  <TAB> で [[ ]] 間をジャンプ
+  `<CR>` でページの移動
+  `:w` でページ更新
+  `<TAB>` で [[ ]] 間をジャンプ
 
-  現在 <CR> でページ遷移出来るのは
+  現在 `<CR>` でページ遷移出来るのは
         BracketName
         BracketNameのエイリアス
   だけです。InterWikiNameや外部URLには現在対応していません。
@@ -57,7 +57,8 @@ TODO:
 
 BUG:
   - S-TAB のキーマップが動作しない.
-  - pukiwiki#fileupload() 後に保存が成功しないことがある
+  - `pukiwiki#fileupload()` 後に保存が成功しないことがある
+  - バイナリファイルの添付はファイルが壊れることがあります.
 
 オリジナル
   http://vimwiki.net/?scripts%2F10

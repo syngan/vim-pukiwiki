@@ -162,6 +162,9 @@ pukiwiki#fileupload() range
 			編集を継続する場合には reload (更新)により digest
 			の再読み込みをおこなってください
 
+			バイナリファイルの場合には正常に動作しない可能性があります。
+			(\x00 を含むファイルは壊れます)
+
 pukiwiki#jump() 
 			カーソル位置にあるページを開きます。
 
@@ -207,12 +210,6 @@ pukiwiki#info_attach_file(site, page, file)
 
 pukiwiki#download_attach_file(site, page, file, save_file)
 			指定したページの添付ファイル情報をダウンロードします。
-			バイナリファイルの場合には正常に動作しない可能性があり
-			ます。
-			(0x00 を含むファイルは壊れる可能性があります。これは,
-			vital.vim の Web.Http.request()
-			がバイナリファイルの場合にも join(readfile(file, "b"), "\n")
-			してしまう影響です。）
 
 ==============================================================================
 カスタマイズ					*pukiwiki-customizing*
