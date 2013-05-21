@@ -227,6 +227,7 @@ function! s:PW_gen_multipart(settings, param) " {{{
 			let ret .= 'Content-Disposition: form-data; name="attach_file"; filename="' . a:param[key] . '"' . CRLF
 			let ret .= 'Content-Type: application/octet-stream' . CRLF
 
+			" ここでバイナリファイルが壊れる.
 			let attach_body = readfile(a:param[key], 'b')
 			let buf = join(attach_body, "\n")
 "			let ret .= 'Content-Length: ' . len(buf) . CRLF
@@ -241,7 +242,7 @@ function! s:PW_gen_multipart(settings, param) " {{{
 	return ret
 endfunction " }}}
 
-function! s:PW_request(funcname, param, info, method) " {{{
+function! s:PW_request(funcname, param, info, method, defset) " {{{
 " Web サーバにリクエストを送り、結果を受け取る.
 " @return success をキーに持つ辞書
 
@@ -256,7 +257,7 @@ function! s:PW_request(funcname, param, info, method) " {{{
 	let url = sitedict['url']
 	let enc = sitedict['encode']
 
-	let settings = {}
+	let settings = a:defset
 "	let settings['client'] = 'wget'
 	let settings['url'] = url
 	let settings['method'] = a:method
@@ -314,7 +315,6 @@ function! s:PW_request(funcname, param, info, method) " {{{
 	endif
 
 	let retdic['content'] = s:PW_iconv_s(retdic['content'], enc)
-
 
 	return retdic
 endfunction "}}}
@@ -383,7 +383,7 @@ function! pukiwiki#update_digest() "{{{
 
 	let param = {}
 	let param['cmd'] = "edit"
-	let retdic = s:PW_request('update_digest', param, b:pukiwiki_info, 'GET')
+	let retdic = s:PW_request('update_digest', param, b:pukiwiki_info, 'GET', {})
 	if !retdic['success']
 		return 0
 	endif
@@ -434,7 +434,7 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 		\ "site" : a:site_name,
 		\ "page" : a:page,
 	\}
-	let retdic = s:PW_request('get_page', param, info, 'GET')
+	let retdic = s:PW_request('get_page', param, info, 'GET', {})
 	if !retdic['success']
 		return 0
 	endif
@@ -563,7 +563,7 @@ function! s:PW_write() "{{{
 	let param["original"] = ''
 	let param["msg"] = join(body, "\n")
 
-	let retdic = s:PW_request('write', param, b:pukiwiki_info, 'POST')
+	let retdic = s:PW_request('write', param, b:pukiwiki_info, 'POST', {})
 	if !retdic['success']
 		return 0
 	endif
@@ -704,7 +704,7 @@ function! pukiwiki#info_attach_file(site_name, page, file) " {{{
 		\ "site" : a:site_name,
 		\ "page" : a:page,
 	\}
-	let retdic = s:PW_request('info_attach_file', param, info, 'POST')
+	let retdic = s:PW_request('info_attach_file', param, info, 'POST', {})
 	if !retdic['success']
 		ret['errmsg'] = 'get infomation of attach file ' . a:file . ' failed'
 		return ret
@@ -748,11 +748,15 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 	let pass = s:get_password(sitedict)
 	let attach_info['pass'] = pass
 
+	" 本当は必要なものを取り出す形式にすべき
+"	call remove(attach_info, 'data')
+"	call remove(attach_info, 'success')
+
 	let info = {
 		\ "site" : a:site_name,
 		\ "page" : a:page,
 	\}
-	let retdic = s:PW_request('delete_attach_file', attach_info, info, 'POST')
+	let retdic = s:PW_request('delete_attach_file', attach_info, info, 'POST', {})
 	if !retdic['success']
 		call s:VITAL.print_error('delete the attach file filed: ' . a:file)
 		return -1
@@ -762,6 +766,7 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 	let title = substitute(retdic['content'], '^.*<title>\([^\n]*\)</title>.*$', '\1', '')
 
 	" @JPMES
+	echo body
 	if title =~ ".*添付ファイルの情報.*"
 
 		" パスワード間違いなどによるエラー.
@@ -782,7 +787,7 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 		call s:set_password(sitedict, pass)
 		return 0
 	else
-		call s:VITAL.print_error(title)
+		call s:VITAL.print_error("delete failed: " . title)
 		return -1
 	endif
 
@@ -810,7 +815,7 @@ function! pukiwiki#get_attach_files() "{{{
 	let param['pcmd'] = 'list'
 	let param['refer'] = page
 
-	let retdic = s:PW_request('show_attach', param, b:pukiwiki_info, 'GET')
+	let retdic = s:PW_request('show_attach', param, b:pukiwiki_info, 'GET', {})
 	if !retdic['success']
 		return 0
 	endif
@@ -849,11 +854,13 @@ function! pukiwiki#download_attach_file(site_name, page, file, ofile)
 		\ "site" : a:site_name,
 		\ "page" : a:page,
 	\}
-	let retdic = s:PW_request('download_attach_file', param, info, 'GET')
+
+	let settings = {}
+	let settings.outputFile = a:ofile
+	let retdic = s:PW_request('download_attach_file', param, info, 'GET', settings)
 	if !retdic.success
 		return -1
 	endif
-	call writefile(split(retdic.content, "\n", 1), a:ofile, "b")
 	return 0
 endfunction
 " }}}
@@ -926,7 +933,7 @@ function! s:PW_show_page_list() "{{{
 	let info = {
 	\	"site" : b:pukiwiki_info["site"],
 	\}
-	let retdic = s:PW_request('show_page_list', param, info, 'GET')
+	let retdic = s:PW_request('show_page_list', param, info, 'GET', {})
 	if !retdic['success']
 		return
 	endif
@@ -977,7 +984,7 @@ function! s:PW_show_search() "{{{
 	let info = {
 		\ "site" : site,
 	\}
-	let retdic = s:PW_request('show_search', param, info, 'POST')
+	let retdic = s:PW_request('show_search', param, info, 'POST', {})
 	if !retdic['success']
 		return
 	endif
@@ -1060,7 +1067,7 @@ function! pukiwiki#fileupload() range "{{{
 		endif
 
 		let param['attach_file'] = curr_line
-		let retdic = s:PW_request('get_page', param, b:pukiwiki_info, 'MULT')
+		let retdic = s:PW_request('get_page', param, b:pukiwiki_info, 'MULT', {})
 		if !retdic['success']
 			return 0
 		endif
@@ -1202,6 +1209,10 @@ endfunction "}}}
 function! s:PW_joindictstr(dict, enc) " {{{
 	let ret = ''
 	for key in keys(a:dict)
+		if !s:VITAL.is_string(a:dict[key])
+			echo a:dict[key]
+			throw "dict[" . key . "] is not a string"
+		endif
 		if strlen(ret) | let ret .= "&" | endif
 		let ret .= key . "=" . s:PW_urlencode(s:PW_iconv_u(a:dict[key], a:enc))
 	endfor

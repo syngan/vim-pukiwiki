@@ -1,6 +1,6 @@
 *pukiwiki.txt*	A vim client for the PukiWiki 1.4.7 for Japanese
 
-Version: 0.21
+Version: 0.22
 Author : syngan
 License: MIT license  {{{
     Permission is hereby granted, free of charge, to any person obtaining
@@ -269,6 +269,10 @@ g:pukiwiki_no_default_key_mappings
 
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
+
+2013-05-13 syngan  v0.22
+
+	* バイナリ添付ファイルのダウンロードサポート
 
 2013-05-12 syngan  v0.21
 
