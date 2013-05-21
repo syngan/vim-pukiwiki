@@ -756,6 +756,7 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 		\ "site" : a:site_name,
 		\ "page" : a:page,
 	\}
+	echo attach_info
 	let retdic = s:PW_request('delete_attach_file', attach_info, info, 'POST', {})
 	if !retdic['success']
 		call s:VITAL.print_error('delete the attach file filed: ' . a:file)
@@ -766,7 +767,7 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 	let title = substitute(retdic['content'], '^.*<title>\([^\n]*\)</title>.*$', '\1', '')
 
 	" @JPMES
-	echo body
+"	echo body
 	if title =~ ".*添付ファイルの情報.*"
 
 		" パスワード間違いなどによるエラー.
