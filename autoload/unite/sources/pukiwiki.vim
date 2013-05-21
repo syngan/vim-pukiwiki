@@ -266,7 +266,6 @@ function! s:uni_attach.hooks.on_init(args, context) "{{{
 	endif
 endfunction "}}}
 
-
 function! s:uni_attach.gather_candidates(args, context) "{{{
 	if !has_key(a:context, 'source__pw_info')
 		return []
@@ -359,6 +358,7 @@ let s:uni_ai = {
 	\ 'default_action' : 'yank',
 	\ 'action_table' : {},
 	\ 'default_kind' : 'command',
+	\ 'is_listed' : 0,
 \}
 
 function! s:uni_ai.gather_candidates(args, context) "{{{

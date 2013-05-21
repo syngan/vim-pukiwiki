@@ -742,22 +742,21 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 		return -1
 	endif
 
-	let attach_info['pcmd'] = 'delete'
-
 	let sitedict = g:pukiwiki_config[a:site_name]
 	let pass = s:get_password(sitedict)
-	let attach_info['pass'] = pass
 
-	" 本当は必要なものを取り出す形式にすべき
-"	call remove(attach_info, 'data')
-"	call remove(attach_info, 'success')
+	let param = {}
+	let param['plugin'] = 'attach'
+	let param['pcmd'] = 'delete'
+	let param['pass'] = pass
+	let param['refer'] = a:page
+	let param['file'] = a:file
 
 	let info = {
 		\ "site" : a:site_name,
 		\ "page" : a:page,
 	\}
-	echo attach_info
-	let retdic = s:PW_request('delete_attach_file', attach_info, info, 'POST', {})
+	let retdic = s:PW_request('delete_attach_file', param, info, 'POST', {})
 	if !retdic['success']
 		call s:VITAL.print_error('delete the attach file filed: ' . a:file)
 		return -1
@@ -767,7 +766,6 @@ function! pukiwiki#delete_attach_file(site_name, page, file) " {{{
 	let title = substitute(retdic['content'], '^.*<title>\([^\n]*\)</title>.*$', '\1', '')
 
 	" @JPMES
-"	echo body
 	if title =~ ".*添付ファイルの情報.*"
 
 		" パスワード間違いなどによるエラー.
