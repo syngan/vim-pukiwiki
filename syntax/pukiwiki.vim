@@ -38,7 +38,7 @@ syntax match pukiwikiBodyDelim display "^-\{3,}.*--$"
 syntax match pukiwikiBlockElement   "^#[A-Za-z0-9_]*"
 syntax match pukiwikiInlineElement	"&[A-Za-z0-9_]*"
 syntax match pukiwikiPre            "^ .*$"
-syntax match pukiwikiHeading        "^\*\{1,3}[^\*]*$"
+syntax match pukiwikiHeading        "^\*\{1,3}[^\*].*$"
 syntax match pukiwikiComment        "^\/\/.*$"
 syntax match pukiwikiLinkURL        +https\=://[-!#$%&*+,./:;=?@0-9a-zA-Z_~]\++
 syntax match pukiwikiList           +^[+-]\++
