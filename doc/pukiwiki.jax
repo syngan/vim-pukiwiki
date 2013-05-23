@@ -1,4 +1,5 @@
-*pukiwiki.txt*	A vim client for the PukiWiki 1.4.7 for Japanese
+*pukiwiki.txt*	Pukiwiki 1.4.7 用 vim クライアント
+	A vim client for the PukiWiki 1.4.7 for Japanese
 
 Version: 0.22
 Author : syngan
@@ -270,6 +271,7 @@ g:pukiwiki_no_default_key_mappings
 2013-05-13 syngan  v0.22
 
 	* バイナリ添付ファイルのダウンロードサポート
+	* fixed E670: *.jax の 1 行目に日本語が必要
 
 2013-05-12 syngan  v0.21
 
