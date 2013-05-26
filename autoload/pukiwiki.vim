@@ -95,6 +95,14 @@ function! pukiwiki#PukiWiki(...) "{{{
 	endif
 endfunction "}}}
 
+function! pukiwiki#sitename_list(arglead, cmdline, cursorpos) "{{{
+	echo keys(g:pukiwiki_config)
+	echo a:arglead
+	echo a:cmdline
+	echo a:cursorpos
+	return keys(g:pukiwiki_config)
+endfunction "}}}
+
 function! s:PW_read_pukiwiki_list(...) "{{{
 " bookmark
 " PukiVim [ SiteName [ PageName ]]
@@ -117,7 +125,7 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 
 	if a:0 == 0
 		" 問い合わせ
-		let site_name = input('site name: ')
+		let site_name = input('site name: ', '', 'customlist,pukiwiki#sitename_list')
 	else
 		let site_name = a:1
 	endif
@@ -173,8 +181,11 @@ function! s:PW_valid_config(site_name) "{{{
 	if !s:VITAL.is_dict(g:pukiwiki_config)
 		return 'g:pukiwiki_config is not a dictionary.'
 	endif
+	if a:site_name == ''
+		return ('site name is not defined.')
+	endif
 	if !has_key(g:pukiwiki_config, a:site_name)
-		return ('site "' . site_name . '" is not defined.')
+		return ('site "' . a:site_name . '" is not defined.')
 	endif
 
 	let sitedict = g:pukiwiki_config[a:site_name]
