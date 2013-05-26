@@ -194,7 +194,7 @@ function! s:PW_valid_config(site_name) "{{{
 	endif
 
 	if (!has_key(sitedict, 'url'))
-		return .print_error('g:pukiwiki_config[' . a:site_name . '].url is not defined.')
+		return s:VITAL.print_error('g:pukiwiki_config[' . a:site_name . '].url is not defined.')
 	endif
 
 	return ""
