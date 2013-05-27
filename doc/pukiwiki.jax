@@ -97,7 +97,6 @@ Example >
 	\	"LocalWiki" : {
 	\		"url" : "http://127.0.0.1/pukiwiki/",
 	\		"top" : 'FrontPage',
-	\		"encode" : "euc-jp",
 	\	},
 	\}
 <
@@ -228,7 +227,6 @@ g:pukiwiki_config				*g:pukiwiki_config*
 	値はサイト情報を保持する辞書を指定します。
 		"url"		Required
 		"top"		Defult: 'FrontPage'
-		"encode"	Defult: 'euc-jp'
 
 	Example >
 		" PukiWiki のサイト情報
@@ -236,7 +234,6 @@ g:pukiwiki_config				*g:pukiwiki_config*
 		\	"LocalWiki" : {
 		\		"url" : "http://127.0.0.1/pukiwiki/",
 		\		"top" : 'FrontPage',
-		\		"encode" : "euc-jp",
 		\	},
 		\}
 	<

@@ -138,9 +138,6 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 
 	let dict = g:pukiwiki_config[site_name]
 
-	if (!has_key(dict, 'encode'))
-		let dict['encode'] = 'euc-jp'
-	endif
 	if (has_key(dict, 'top'))
 		let top = dict['top']
 	else
@@ -253,6 +250,13 @@ function! s:PW_gen_multipart(settings, param) " {{{
 	return ret
 endfunction " }}}
 
+function! s:PW_get_encode(str) " {{{
+	" @param str join された文字列
+	let meta = matchstr(a:str, "<meta http-equiv[^>]*charset=[^>]*\" />")
+	let meta = substitute(meta, '.*charset=\(.*\). />', '\1', "")
+	return meta
+endfunction " }}}
+
 function! s:PW_request(funcname, param, info, method, defset) " {{{
 " Web サーバにリクエストを送り、結果を受け取る.
 " @return success をキーに持つ辞書
@@ -266,7 +270,6 @@ function! s:PW_request(funcname, param, info, method, defset) " {{{
 
 	let sitedict = g:pukiwiki_config[site]
 	let url = sitedict['url']
-	let enc = sitedict['encode']
 
 	let settings = a:defset
 "	let settings['client'] = 'wget'
@@ -286,13 +289,13 @@ function! s:PW_request(funcname, param, info, method, defset) " {{{
 	" @JPMES
 	let a:param["encode_hint"] = "ぷ"
 	if a:method == 'POST'
-		let pm = s:PW_joindictstr(a:param, enc)
+		let pm = s:PW_joindictstr(a:param)
 		let settings['data'] = pm
 		if g:pukiwiki_debug >= 5
 			echo pm
 		endif
 	elseif a:method == 'GET'
-		let pm = s:PW_joindictstr(a:param, enc)
+		let pm = s:PW_joindictstr(a:param)
 		let settings['param'] = pm
 		if g:pukiwiki_debug >= 5
 			echo pm
@@ -325,6 +328,7 @@ function! s:PW_request(funcname, param, info, method, defset) " {{{
 		endif
 	endif
 
+	let enc = s:PW_get_encode(retdic['content'])
 	let retdic['content'] = s:PW_iconv_s(retdic['content'], enc)
 
 	return retdic
@@ -530,7 +534,6 @@ function! s:PW_write() "{{{
 	let site = b:pukiwiki_info["site"]
 	let page = b:pukiwiki_info["page"]
 	let sitedict = g:pukiwiki_config[site]
-	let enc = sitedict['encode']
 
 	let row = line('.')
 	let col = col('.')
@@ -1216,7 +1219,7 @@ endfunction "}}}
 
 " s:alice.vim {{{
 
-function! s:PW_joindictstr(dict, enc) " {{{
+function! s:PW_joindictstr(dict) " {{{
 	let ret = ''
 	for key in keys(a:dict)
 		if !s:VITAL.is_string(a:dict[key])
@@ -1224,7 +1227,7 @@ function! s:PW_joindictstr(dict, enc) " {{{
 			throw "dict[" . key . "] is not a string"
 		endif
 		if strlen(ret) | let ret .= "&" | endif
-		let ret .= key . "=" . s:PW_urlencode(s:PW_iconv_u(a:dict[key], a:enc))
+		let ret .= key . "=" . s:PW_urlencode(a:dict[key])
 	endfor
 	return ret
 endfunction " }}}
@@ -1262,13 +1265,6 @@ function! s:PW_matchstr_undercursor(mx) "{{{
   let mx = '\m\%<'.(column + 1).'c'.a:mx.'\%>'.column.'c'
   return matchstr(getline('.'), mx)
 endfunction "}}}
-
-" local を サーバ向けに変更
-" サーバは encode_hint を送っているため変換する必要がない
-function! s:PW_iconv_u(val, toenc) " {{{
-	return a:val
-"	return s:VITAL.iconv(a:val, &enc, a:toenc)
-endfunction " }}}
 
 " サーバからの文字列をローカルに変更
 function! s:PW_iconv_s(val, fromenc) " {{{
