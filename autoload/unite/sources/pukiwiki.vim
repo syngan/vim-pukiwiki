@@ -368,6 +368,7 @@ function! s:uni_ai.gather_candidates(args, context) "{{{
 
 	let info = pukiwiki#info_attach_file(a:args[0], a:args[1], a:args[2])
 	if info.success == 0
+		echomsg info.errmsg
 		return []
 	endif
 	let k = info.data

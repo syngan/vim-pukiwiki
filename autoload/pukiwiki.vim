@@ -34,7 +34,7 @@ scriptencoding utf-8
 " variables {{{
 let s:pukiwiki_history = []
 
-let s:pukiwiki_header_row = 3
+let s:pukiwiki_header_row = 4
 lockvar s:pukiwiki_header_row
 
 "let s:pukiwiki_bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
@@ -98,7 +98,7 @@ function! pukiwiki#PukiWiki(...) "{{{
 	endif
 endfunction "}}}
 
-function! pukiwiki#sitename_list(arglead, cmdline, cursorpos) "{{{
+function! pukiwiki#site_comletion(arglead, cmdline, cursorpos) "{{{
 	echo keys(g:pukiwiki_config)
 	echo a:arglead
 	echo a:cmdline
@@ -128,7 +128,7 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 
 	if a:0 == 0
 		" 問い合わせ
-		let site_name = input('site name: ', '', 'customlist,pukiwiki#sitename_list')
+		let site_name = input('site name: ', '', 'customlist,pukiwiki#site_comletion')
 	else
 		let site_name = a:1
 	endif
@@ -182,10 +182,10 @@ function! s:PW_valid_config(site_name) "{{{
 
 	let sitedict = g:pukiwiki_config[a:site_name]
 	if !s:VITAL.is_dict(sitedict)
-		return 'g:pukiwiki_config[' . a:site_name . '] is not a dictionary.'
+		return 'g:pukiwiki_config.' . a:site_name . ' is not a dictionary.'
 	endif
 
-	if (!has_key(sitedict, 'url'))
+	if !has_key(sitedict, 'url')
 		return 'g:pukiwiki_config.' . a:site_name . '.url is not defined.'
 	endif
 
@@ -321,16 +321,8 @@ endfunction "}}}
 
 function! s:PW_newpage(site_name, page, pagetype) "{{{
 
-"	let sitedict = g:pukiwiki_config[a:site_name]
-"	let enc = sitedict['encode']
-
-"	silent execute ":e ++enc=" . enc . " " . tempname()
 	silent execute ":e " . tempname()
 	execute ":setlocal modifiable"
-"	execute ":setlocal indentexpr="
-"	execute ":setlocal noautoindent"
-"	execute ':setlocal nobuflisted'
-
 	execute ":setlocal filetype=pukiwiki"
 
 	" nnoremap {{{
@@ -410,7 +402,7 @@ function! s:PW_insert_header(site_name, page) " {{{
 		call setline(1, a:site_name . " " . a:page)
 		call setline(2, "[[トップ]] [[添付]] [[リロード]] [[新規]] [[一覧]] [[単語検索]] [[最終更新]] [[ヘルプ]]")
 		call setline(3, "---------------------------------------------------------------------------------------")
-		return s:pukiwiki_header_row + 1
+		return s:pukiwiki_header_row
 	else
 		return 1
 	endif
@@ -528,7 +520,7 @@ function! s:PW_write() "{{{
 "		let regbak = @"
 "		silent! execute "normal! gg" . s:pukiwiki_header_row . "D"
 "		let @" = regbak
-		let body = getline(1 + s:pukiwiki_header_row, line('$'))
+		let body = getline(s:pukiwiki_header_row, line('$'))
 	else
 		let body = getline(1, line('$'))
 	endif
@@ -703,9 +695,11 @@ function! pukiwiki#info_attach_file(site_name, page, file) " {{{
 	if title[0] !~ ".*添付ファイルの情報.*"
 	" @JPMES
 		if title[0] =~ ".*そのファイルは見つかりません.*"
-			let ret['errmsg'] = 'the file is not attached: ' . a:file
+			let ret['errmsg'] = 'info_attach_file() the file is not attached: ' . a:file
 		else
-			let ret['errmsg'] = 'title is not attach file info: ' . title[0]
+			echo a:000
+			echo body
+			let ret['errmsg'] = 'info_attach_file() failed: ' . title[0]
 		endif
 		return ret
 	endif
@@ -948,11 +942,8 @@ function! s:PW_show_search() "{{{
 	if word == ''
 		return
 	endif
-	let type = 'AND'
 	let andor = input('(And/or): ')
-	if andor =~? 'o\%[r]'
-		let type = 'OR'
-	endif
+	let type =  (andor =~? 'o\%[r]') ? 'OR' : 'AND'
 
 	let param = {}
 	let param['word'] = word
@@ -1050,7 +1041,6 @@ function! pukiwiki#fileupload() range "{{{
 			return 0
 		endif
 
-
 		let body = retdic['content']
 		let body = substitute(body, '^.*<h1 class="title">\(.*\)</h1>.*$', '\1', '')
 		let body = substitute(body, '<a href=".*">\(.*\)</a>', '[[\1]]', '')
@@ -1128,7 +1118,7 @@ function! pukiwiki#jump()  "{{{
 	endif
 
 	let has_header = b:pukiwiki_info["header"]
-	if has_header && line('.') <= s:pukiwiki_header_row
+	if has_header && line('.') < s:pukiwiki_header_row
 		" ヘッダ部分
 		let cur = s:PW_matchstr_undercursor('\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]')
 	else
@@ -1150,13 +1140,12 @@ function! pukiwiki#jump()  "{{{
 	endif
 
 	let cur = cur[2:-3]
-	if has_header && line('.') <= s:pukiwiki_header_row
+	if has_header && line('.') < s:pukiwiki_header_row
 		return pukiwiki#jump_menu(cur)
 	endif
 
 	" エイリアスはとにかく削除
 	let cur = substitute(cur, '.*>', '', '')
-
 	let anchor = substitute(cur, '^.*#', '#', '')
 	let cur = substitute(cur, '#.*', '', '')
 
@@ -1167,7 +1156,6 @@ function! pukiwiki#jump()  "{{{
 			" &anchor() を探す.
 			let p = search('&aname(' . anchor[1:] . ')', 'c')
 		endif
-
 	endif
 endfunction "}}}
 

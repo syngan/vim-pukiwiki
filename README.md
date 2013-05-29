@@ -22,7 +22,6 @@ vim-pukiwiki ? A vim client for the PukiWiki 1.4.7 for Japanese.
 	\	"LocalWiki" : {
 	\		"url" : "http://127.0.0.1/pukiwiki/",
 	\		"top" : "FrontPage",
-	\		"encode" : "euc-jp",
 	\	},
 	\}
 ```
