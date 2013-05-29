@@ -169,8 +169,6 @@ pukiwiki#fileupload() range
 			編集を継続する場合には reload (更新)により digest
 			の再読み込みをおこなってください
 
-			バイナリファイルの場合には正常に動作しない可能性があります。
-			(\x00 を含むファイルは壊れます)
 
 pukiwiki#jump() 
 			カーソル位置にあるページを開きます。
@@ -272,11 +270,15 @@ g:pukiwiki_no_default_key_mappings
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
 
+2013-05-29 syngan  v0.24
+
+	* fileupload() のバイナリファイル対応
+	  Vital.Data.List を追加
+
 2013-05-27 syngan  v0.23
 
 	* g:pukiwiki_config から "encode" を削除
 	  HTTP のヘッダ部を解析して encode を取得するようにした
-
 
 2013-05-13 syngan  v0.22
 

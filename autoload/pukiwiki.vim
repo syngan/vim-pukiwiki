@@ -67,6 +67,7 @@ lockvar s:pukiwiki_bracket_name
 let s:VITAL = vital#of('vim-pukiwiki')
 let s:HTML = s:VITAL.import('Web.Html')
 let s:HTTP = s:VITAL.import('Web.Http')
+let s:LIST = s:VITAL.import('Data.List')
 " }}}
 
 " debug {{{
@@ -216,7 +217,6 @@ function! s:PW_gen_multipart(settings, param) " {{{
 		throw "invalid argument"
 	endif
 
-
 	" @TODO 本当はファイル内に同じ文字列がないこと、を確認する必要があるが...
 	let b = "---------------------11285676"
 	if has('reltime')
@@ -226,27 +226,29 @@ function! s:PW_gen_multipart(settings, param) " {{{
 		let b .= substitute(localtime(), "[^[:alnum:]]", '', 'g')
 	endif
 	let a:settings.contentType = "multipart/form-data; boundary=" . b
-	let ret = ""
-	let CRLF = "\r\n"
+	let ret = []
+	let CRLF = "\r"
 	let b = "--" . b
 	for key in keys(a:param)
-		let ret .= b . CRLF
+		call add(ret, b . CRLF)
 		if key == "attach_file"
-			let ret .= 'Content-Disposition: form-data; name="attach_file"; filename="' . a:param[key] . '"' . CRLF
-			let ret .= 'Content-Type: application/octet-stream' . CRLF
+			call add(ret, 'Content-Disposition: form-data; name="attach_file"; filename="' . a:param[key] . '"' . CRLF)
+			call add(ret, 'Content-Type: application/octet-stream' . CRLF)
+			call add(ret, CRLF)
 
 			" ここでバイナリファイルが壊れる.
 			let attach_body = readfile(a:param[key], 'b')
-			let buf = join(attach_body, "\n")
+			let attach_body[-1] = attach_body[-1] . CRLF
+			let ret = s:LIST.concat([ret, attach_body])
 "			let ret .= 'Content-Length: ' . len(buf) . CRLF
-			let ret .= CRLF . buf . CRLF
 		else
-			let ret .= 'Content-Disposition: form-data; name="' . key . '"' . CRLF
-			let ret .= CRLF . a:param[key] . CRLF
+			call add(ret,'Content-Disposition: form-data; name="' . key . '"' . CRLF)
+			call add(ret, CRLF)
+			call add(ret, a:param[key] . CRLF)
 		endif
 	endfor
 
-	let ret .= b . '--' . CRLF
+	call add(ret, b . '--' . CRLF)
 	return ret
 endfunction " }}}
 

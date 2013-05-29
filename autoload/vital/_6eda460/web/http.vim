@@ -90,6 +90,8 @@ let s:default_settings = {
 \   'headers': {},
 \   'client': executable('curl') ? 'curl' :
 \             executable('wget') ? 'wget' : '',
+\   'maxRedirect': 20,
+\   'retry': 1,
 \ }
 function! s:request(...)
   let settings = {}
@@ -128,12 +130,14 @@ function! s:request(...)
   let settings._file = {}
   if has_key(settings, 'data')
     if s:Prelude.is_dict(settings.data)
-      let postdatastr = s:encodeURI(settings.data)
+      let postdata = [s:encodeURI(settings.data)]
+    elseif s:Prelude.is_list(settings.data)
+      let postdata = settings.data
     else
-      let postdatastr = settings.data
+      let postdata = split(settings.data, "\n")
     endif
     let settings._file.post = tempname()
-    call writefile(split(postdatastr, "\n"), settings._file.post, "b")
+    call writefile(postdata, settings._file.post, "b")
   endif
 
   let quote = &shellxquote == '"' ?  "'" : '"'
@@ -161,21 +165,15 @@ function! s:clients.curl(settings, quote)
   endif
   let command .= ' --output ' . a:quote . output_file . a:quote
   let command .= ' -L -s -k -X ' . a:settings.method
-  if has_key(a:settings, 'maxRedirect')
-    let command .= ' --max-redirs ' . a:settings.maxRedirect
-  else
-    let command .= ' --max-redirs 20'
-  endif
+  let command .= ' --max-redirs ' . a:settings.maxRedirect
   let command .= s:_make_header_args(a:settings.headers, '-H ', a:quote)
   let timeout = get(a:settings, 'timeout', '')
+  let command .= ' --retry ' . a:settings.retry
   if timeout =~# '^\d\+$'
     let command .= ' --max-time ' . timeout
   endif
   if has_key(a:settings, 'username')
-    let auth = a:settings.username
-    if has_key(a:settings, 'password')
-      let auth .= ':' . a:settings.password
-    endif
+    let auth = a:settings.username . ':' . get(a:settings, 'password', '')
     let command .= ' --anyauth --user ' . a:quote . auth . a:quote
   endif
   let command .= ' ' . a:quote . a:settings.url . a:quote
@@ -188,7 +186,7 @@ function! s:clients.curl(settings, quote)
 
   let headerstr = s:_readfile(a:settings._file.header)
   let header_chunks = split(headerstr, "\r\n\r\n")
-  let header = empty(header_chunks) ? [] : split(header_chunks[-1], "\r\n")
+  let header = split(get(header_chunks, -1, ''), "\r\n")
   if has_output_file
     let content = ''
   else
@@ -215,13 +213,10 @@ function! s:clients.wget(settings, quote)
   endif
   let command .= ' -O ' . a:quote . output_file . a:quote
   let command .= ' --server-response -q -L '
-  if has_key(a:settings, 'maxRedirect')
-    let command .= ' --max-redirect=' . a:settings.maxRedirect
-  else
-    let command .= ' --max-redirect=20'
-  endif
+  let command .= ' --max-redirect=' . a:settings.maxRedirect
   let command .= s:_make_header_args(a:settings.headers, '--header=', a:quote)
   let timeout = get(a:settings, 'timeout', '')
+  let command .= ' --tries=' . a:settings.retry
   if timeout =~# '^\d\+$'
     let command .= ' --timeout=' . timeout
   endif
@@ -243,7 +238,8 @@ function! s:clients.wget(settings, quote)
     let header_lines = readfile(a:settings._file.header, 'b')
     call map(header_lines, 'matchstr(v:val, "^\\s*\\zs.*")')
     let headerstr = join(header_lines, "\n")
-    let header = split(split(headerstr, '\n\zeHTTP/1\.\d')[-1], "\n")
+    let header_chunks = split(headerstr, '\n\zeHTTP/1\.\d')
+    let header = split(get(header_chunks, -1, ''), "\n")
   else
     let header = []
   endif
