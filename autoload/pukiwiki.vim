@@ -1,5 +1,4 @@
 "=============================================================================
-"echomsg cuner
 " @AUTHOR: syngan
 " @License: MIT license  {{{
 "     Permission is hereby granted, free of charge, to any person obtaining
@@ -59,6 +58,9 @@ let s:pukiwiki_bracket_name = '\m\[\[\(' . s:regexp_alias . '>\)\=' . s:regexp_p
 "  \@!  nothing, requires NO match
 "  \@<! nothing, requires NO match behind /zero-width
 "
+unlet s:regexp_alias
+unlet s:regexp_page
+unlet s:regexp_anchor
 lockvar s:pukiwiki_bracket_name
 
 " }}}
@@ -139,17 +141,8 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 
 	let dict = g:pukiwiki_config[site_name]
 
-	if (has_key(dict, 'top'))
-		let top = dict['top']
-	else
-		let top	= 'FrontPage'
-	endif
-
-	if a:0 > 1
-		let page  = a:2
-	else
-		let page  = top
-	endif
+	let top = get(dict, 'top', 'FrontPage')
+	let page = (a:0 > 1) ? a:2 : top
 
 	" 最初に一度だけ空ファイルを開く
 	if page == 'RecentChanges'
@@ -173,6 +166,7 @@ function! s:PW_env_check() "{{{
 endfunction "}}}
 
 function! s:PW_valid_config(site_name) "{{{
+	" g:pukiwiki_config の正当性チェック
 	if !exists('g:pukiwiki_config')
 		return 'g:pukiwiki_config is not defined.'
 	endif
@@ -188,11 +182,11 @@ function! s:PW_valid_config(site_name) "{{{
 
 	let sitedict = g:pukiwiki_config[a:site_name]
 	if !s:VITAL.is_dict(sitedict)
-		return ('g:pukiwiki_config[' . a:site_name . '] is not a dictionary.')
+		return 'g:pukiwiki_config[' . a:site_name . '] is not a dictionary.'
 	endif
 
 	if (!has_key(sitedict, 'url'))
-		return s:VITAL.print_error('g:pukiwiki_config[' . a:site_name . '].url is not defined.')
+		return 'g:pukiwiki_config.' . a:site_name . '.url is not defined.'
 	endif
 
 	return ""
@@ -200,19 +194,15 @@ function! s:PW_valid_config(site_name) "{{{
 endfunction "}}}
 
 function! s:PW_is_init() " {{{
-	if !exists('b:pukiwiki_info')
-		return 0
-	endif
-
-	if !has_key(b:pukiwiki_info, "site")
-		return 0
-	endif
-
-	return 1
+	return exists('b:pukiwiki_info') && 
+		\ s:VITAL.is_dict(b:pukiwiki_info) &&
+		\ has_key(b:pukiwiki_info, 'site')
 endfunction "}}}
 
 function! s:PW_gen_multipart(settings, param) " {{{
-	 " multipart-form を生成する
+	" multipart-form を生成する
+	" param.attach_file は添付するファイル名として扱う
+	" それ以外は通常の POST data として扱う
 	if !s:VITAL.is_dict(a:param)
 		throw "invalid argument"
 	endif
@@ -254,6 +244,7 @@ endfunction " }}}
 
 function! s:PW_get_encode(str) " {{{
 	" @param str join された文字列
+	" pukiwiki が対象なので必ず入っていると仮定して良いはず.
 	let meta = matchstr(a:str, "<meta http-equiv[^>]*charset=[^>]*\" />")
 	let meta = substitute(meta, '.*charset=\(.*\). />', '\1', "")
 	return meta
@@ -264,12 +255,7 @@ function! s:PW_request(funcname, param, info, method, defset) " {{{
 " @return success をキーに持つ辞書
 
 	let site = a:info["site"]
-	if has_key(a:info, "page")
-		let page = a:info["page"]
-	else
-		let page = ""
-	endif
-
+	let page = get(a:info, 'page', '')
 	let sitedict = g:pukiwiki_config[site]
 	let url = sitedict['url']
 
@@ -291,21 +277,18 @@ function! s:PW_request(funcname, param, info, method, defset) " {{{
 	" @JPMES
 	let a:param["encode_hint"] = "ぷ"
 	if a:method == 'POST'
-		let pm = s:PW_joindictstr(a:param)
-		let settings['data'] = pm
+		let settings['data'] = a:param
 		if g:pukiwiki_debug >= 5
 			echo pm
 		endif
 	elseif a:method == 'GET'
-		let pm = s:PW_joindictstr(a:param)
-		let settings['param'] = pm
+		let settings['param'] = a:param
 		if g:pukiwiki_debug >= 5
 			echo pm
 		endif
 	elseif a:method == 'MULT'
 		" multipart/form-data
-		let pm = a:param
-		let settings['data'] = s:PW_gen_multipart(settings, pm)
+		let settings['data'] = s:PW_gen_multipart(settings, a:param)
 		let settings['method'] = 'POST'
 	else
 		throw 'invalid argument: method: ' . a:method
@@ -379,15 +362,9 @@ function! s:PW_endpage(site_name, page, readonly) "{{{
 	silent! execute ":redraws!"
 endfunction "}}}
 
-function! s:PW_gen_statusline_str(site_name, page) "{{{
-	let status_line = a:page . ' ' . a:site_name
-"	let status_line = a:page
-	let status_line = escape(status_line, ' ')
-	return status_line
-endfunction "}}}
-
 function! s:PW_set_statusline(site_name, page) "{{{
-	let status_line = s:PW_gen_statusline_str(a:site_name, a:page)
+	let status_line = a:page . ' ' . a:site_name
+	let status_line = escape(status_line, ' ')
 	silent! execute ":f " . status_line
 	return status_line
 endfunction "}}}
@@ -415,9 +392,8 @@ endfunction "}}}
 
 function! s:PW_get_digest(str) "{{{
 	" [[編集]] 画面から digest を取得する
-	let s = matchstr(a:str,
+	return matchstr(a:str,
 	\     '<input type="hidden" name="digest" value="\zs.\{-}\ze" />')
-	return s
 endfunction "}}}
 
 function! s:PW_get_edit_page(site_name, page, opennew) "{{{
@@ -502,12 +478,8 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 
 	let status_line = s:PW_set_statusline(a:site_name, a:page)
 
-	" undo 履歴を消去する, @see *clear-undo*
-	let oldundolevel = &undolevels
-	execute ":setlocal undolevels=-1"
-	execute "normal a \<BS>\<Esc>"
-	execute ":setlocal undolevels=" . oldundolevel
-	unlet oldundolevel
+	" undo 履歴を消去する
+	call s:clear_undo()
 
 	if a:pwcmd == 'edit'
 		augroup PukiWikiEdit
@@ -537,8 +509,7 @@ function! s:PW_write() "{{{
 	let page = b:pukiwiki_info["page"]
 	let sitedict = g:pukiwiki_config[site]
 
-	let row = line('.')
-	let col = col('.')
+	let save_cursol = getpos(".")
 
 	if g:pukiwiki_timestamp_update == 1
 	  let notimestamp = ''
@@ -546,11 +517,7 @@ function! s:PW_write() "{{{
 		let notimestamp = 'true'
 	else
 		let last_confirm = s:PW_yesno('update timestamp?: ', 'y')
-		if !last_confirm
-			let notimestamp = 'true'
-		else
-			let notimestamp = ''
-		endif
+		let notimestamp = last_confirm ? '' : 'true'
 		unlet last_confirm
 	endif
 
@@ -597,7 +564,7 @@ function! s:PW_write() "{{{
 		call s:PW_get_edit_page(site, page, 0)
 
 		" 元いた行に移動
-		call setpos(".", [0, row, col, 0])
+		call setpos('.', save_cursol)
 
 		echo 'update ' . page . ' @ ' . site
 		return 0
@@ -619,7 +586,7 @@ function! s:PW_write() "{{{
 		return
 	endif
 
-	if g:pukiwiki_debug < 3
+	if g:pukiwiki_debug > 0 && g:pukiwiki_debug < 3 
 		echo param
 		echo retdic
 	endif
@@ -903,18 +870,14 @@ function! pukiwiki#bookmark() " {{{
 	let page = b:pukiwiki_info.page
 	call add(lines, site . "," . page)
 	call writefile(lines, g:pukiwiki_bookmark)
-	echo "success"
+	echo "success: add bookmark"
 endfunction " }}}
 
 " page open s:[top/attach/list/search] {{{
 function! s:PW_get_top_page(site_name) "{{{
 
 	let sitedict = g:pukiwiki_config[a:site_name]
-	if has_key(sitedict, 'top')
-		let top = sitedict['top']
-	else
-		let top = "FrontPage"
-	endif
+	let top = get(sitedict, 'top','FrontPage')
 
 	return s:PW_get_edit_page(a:site_name, top, 1)
 
@@ -1220,40 +1183,14 @@ endfunction "}}}
 " }}}
 
 " s:alice.vim {{{
-
-function! s:PW_joindictstr(dict) " {{{
-	let ret = ''
-	for key in keys(a:dict)
-		if !s:VITAL.is_string(a:dict[key])
-			echo a:dict[key]
-			throw "dict[" . key . "] is not a string"
-		endif
-		if strlen(ret) | let ret .= "&" | endif
-		let ret .= key . "=" . s:PW_urlencode(a:dict[key])
-	endfor
-	return ret
+function! s:clear_undo() " {{{
+	" undo 履歴を消去する, @see *clear-undo*
+	let oldundolevel = &undolevels
+	execute ":setlocal undolevels=-1"
+	execute "normal a \<BS>\<Esc>"
+	execute ":setlocal undolevels=" . oldundolevel
+	unlet oldundolevel
 endfunction " }}}
-
-function! s:PW_urlencode(str) "{{{
-" 1) [._-] はそのまま
-" 2) [A-Za-z0-9] もそのまま。
-" 3) 0x20[ ] ==> 0x2B[+]
-"    以上の3つの規則に当てはまらない文字は、 全て、 "%16進数表記"に変換する。
-  " Return URL encoded string
-
-  let result = ''
-  let i = 0
-  while i < strlen(a:str)
-    let ch = a:str[i]
-    let i = i + 1
-    if ch =~ '[-_.0-9A-Za-z]'
-      let result .= ch
-    else
-      let result .= printf("%%%02X", char2nr(ch))
-    endif
-  endwhile
-  return result
-endfunction "}}}
 
 function! s:PW_echokv(key, value)  " {{{
 	echohl String | echo a:key | echohl None
