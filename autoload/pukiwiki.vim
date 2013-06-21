@@ -35,7 +35,7 @@ scriptencoding utf-8
 let s:pukiwiki_history = []
 
 let s:pukiwiki_header_row = 4
-lockvar s:pukiwiki_header_row
+"lockvar s:pukiwiki_header_row
 
 "let s:pukiwiki_bracket_name = '\[\[\%(\s\)\@!:\=[^\r\n\t[\]<>#&":]\+:\=\%(\s\)\@<!\]\]'
 "let s:pukiwiki_bracket_name = '\[\[\_.\{-}\]\]'
@@ -61,7 +61,7 @@ let s:pukiwiki_bracket_name = '\m\[\[\(' . s:regexp_alias . '>\)\=' . s:regexp_p
 unlet s:regexp_alias
 unlet s:regexp_page
 unlet s:regexp_anchor
-lockvar s:pukiwiki_bracket_name
+"lockvar s:pukiwiki_bracket_name
 
 " }}}
 
@@ -84,6 +84,7 @@ function! pukiwiki#buf_vars() "{{{
 			call s:PW_echokv(key , sitedict[key])
 		endfor
 	endif
+	call s:PW_echokv('debug', g:pukiwiki_debug)
 endfunction "}}}
 "}}}
 
