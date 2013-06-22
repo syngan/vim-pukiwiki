@@ -56,7 +56,6 @@ vim-pukiwiki ? A vim client for the PukiWiki 1.4.7 for Japanese.
 
 * BUG:
   - S-TAB のキーマップが動作しない.
-  - `pukiwiki#fileupload()` 後に保存が成功しないことがある
 
 * オリジナル
   http://vimwiki.net/?scripts%2F10
