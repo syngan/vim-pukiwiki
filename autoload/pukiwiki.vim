@@ -262,11 +262,11 @@ function! s:PW_request(funcname, param, info, method, defset) " {{{
 
 	let settings = a:defset
 "	let settings['client'] = 'wget'
+"	let settings['client'] = ['curl', 'wget']
 	let settings['url'] = url
 	let settings['method'] = a:method
 	" if_python は maxRedirect に対応していないため使えない
 	let settings['maxRedirect'] = 0
-	let settings['client'] = ['curl', 'wget']
 "	let a:param['page'] = s:PW_urlencode(enc_page)
 	if page != '' && !has_key(a:param, "refer")
 		let a:param['page'] = page
