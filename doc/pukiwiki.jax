@@ -216,6 +216,21 @@ pukiwiki#info_attach_file(site, page, file)
 pukiwiki#download_attach_file(site, page, file, save_file)
 			指定したページの添付ファイル情報をダウンロードします。
 
+pukiwiki#jumpdict_register(dict)
+			enter 押下時に実行する仕様の定義を行います。
+			例えば, &ref() で画像を開く, &math()
+			で数式を表示するなどに利用できます。
+			dict は辞書型で以下のキーを持ちます。
+			'name'  : ユーザが自由につける名前 (文字列, 必須)
+			'format': マッチするかの評価に利用する文字列 (文字列, 必須)
+			'func'  : 実行する関数 (関数, 必須)
+			引数として, {cur} と {info} を持つ。
+			{cur} は 'format' で評価し、マッチした文字列。
+			{info} は辞書型で、"site", "page", "enc"
+			をキーとして保持する。
+
+pukiwiki#jumpdict_unregister(name)
+
 ==============================================================================
 カスタマイズ					*pukiwiki-customizing*
 
@@ -273,6 +288,7 @@ g:pukiwiki_no_default_key_mappings
 2013-07-03 syngan  v0.25
 
 	* display コマンドで画像ファイルを開く
+	* pukiwiki#jumpdict_register(dict) を追加
 
 2013-05-29 syngan  v0.24
 

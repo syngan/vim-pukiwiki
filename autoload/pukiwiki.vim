@@ -63,6 +63,8 @@ unlet s:regexp_page
 unlet s:regexp_anchor
 "lockvar s:pukiwiki_bracket_name
 
+let s:pukiwiki_jumpdicts = []
+
 " }}}
 
 " vital.vim {{{
@@ -1117,34 +1119,39 @@ function! pukiwiki#jump_menu(pname) " {{{
 	return
 endfunction " }}}
 
+" jumpdicts {{{
+
+function! pukiwiki#jumpdict_register(dict) " {{{
+	call pukiwiki#jumpdict_unregister(a:dict.name)
+	call add(s:pukiwiki_jumpdicts, a:dict)
+endfunction " }}}
+function! pukiwiki#jumpdict_unregister(name) " {{{
+	call filter(s:pukiwiki_jumpdicts, 'v:val.name !=#' . string(a:name))
+endfunction " }}}
+" {{{ doc_openimage
+let s:doc_openimage = {
+\  'name' : 'image',
+\  'format' : '[&#]ref(\([^,)]*\)'}
 
 " 画像ファイルを開く.
-function! s:jump_ref() "{{{
-	let cur = s:PW_matchstr_undercursor('[&#]ref(\([^,)]*\)')
-	if g:pukiwiki_debug > 3
-		echomsg "[&#]ref1: " . cur
-	endif
-	if cur == ''
-		return
-	endif
-
-	let site = b:pukiwiki_info["site"]
-	let page = b:pukiwiki_info["page"]
-	let enc = b:pukiwiki_info["enc"]
+function! s:doc_openimage.func(cur, info) "{{{
+	let site = a:info["site"]
+	let page = a:info["page"]
+	let enc = a:info["enc"]
 	let sitedict = g:pukiwiki_config[site]
 	let url = sitedict['url']
-
 
 	let page = s:VITAL.iconv(page, &enc, enc)
 	let page = s:PW_urlencode(page)
 
-	let filename = cur[5:]
+	let filename = a:cur[5:]
 	let filename = substitute(filename, './', '', '')
 	let filename = s:VITAL.iconv(filename, &enc, enc)
 	let filename = s:PW_urlencode(filename)
 
-	let cmd = "display \"" . url . "/index.php?plugin=attach&refer=" .
-\		page . "&openfile=" . filename . "\""
+	let url2 = printf("%s/index.php?plugin=attach&refer=%s&openfile=%s",
+\		 url, page, filename)
+	let cmd = printf("display \"%s\"", url2)
 
 	if g:pukiwiki_debug > 3
 		echomsg "[&#]ref2: " . cmd
@@ -1153,6 +1160,15 @@ function! s:jump_ref() "{{{
 	call vimproc#system_bg(cmd)
 	return
 endfunction "}}}
+
+call pukiwiki#jumpdict_register(s:doc_openimage)
+
+unlet s:doc_openimage
+" }}}
+
+" 数式を開く
+
+
 
 function! pukiwiki#jump()  "{{{
 	if !s:PW_is_init()
@@ -1174,7 +1190,15 @@ function! pukiwiki#jump()  "{{{
 			return
 		endif
 
-		return s:jump_ref()
+		for jumpdict in s:pukiwiki_jumpdicts
+			let cur = s:PW_matchstr_undercursor(jumpdict.format)
+			if cur != ''
+				call jumpdict.func(cur, copy(b:pukiwiki_info))
+				return
+			endif
+		endfor
+
+		return
 	endif
 
 	if &modified
