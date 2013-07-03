@@ -195,7 +195,7 @@ function! s:PW_valid_config(site_name) "{{{
 endfunction "}}}
 
 function! s:PW_is_init() " {{{
-	return exists('b:pukiwiki_info') && 
+	return exists('b:pukiwiki_info') &&
 		\ s:VITAL.is_dict(b:pukiwiki_info) &&
 		\ has_key(b:pukiwiki_info, 'site')
 endfunction "}}}
@@ -318,6 +318,7 @@ function! s:PW_request(funcname, param, info, method, defset) " {{{
 
 	let enc = s:PW_get_encode(retdic['content'])
 	let retdic['content'] = s:PW_iconv_s(retdic['content'], enc)
+	let retdic['enc'] = enc
 
 	return retdic
 endfunction "}}}
@@ -470,6 +471,7 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 
 	let b:pukiwiki_info.digest = digest
 	let b:pukiwiki_info.page = a:page
+	let b:pukiwiki_info.enc = retdic['enc']
 
 	let status_line = s:PW_set_statusline(a:site_name, a:page)
 
@@ -581,7 +583,7 @@ function! s:PW_write() "{{{
 		return
 	endif
 
-	if g:pukiwiki_debug > 0 && g:pukiwiki_debug < 3 
+	if g:pukiwiki_debug > 0 && g:pukiwiki_debug < 3
 		echo param
 		echo retdic
 	endif
@@ -1115,6 +1117,43 @@ function! pukiwiki#jump_menu(pname) " {{{
 	return
 endfunction " }}}
 
+
+" 画像ファイルを開く.
+function! s:jump_ref() "{{{
+	let cur = s:PW_matchstr_undercursor('[&#]ref(\([^,)]*\)')
+	if g:pukiwiki_debug > 3
+		echomsg "[&#]ref1: " . cur
+	endif
+	if cur == ''
+		return
+	endif
+
+	let site = b:pukiwiki_info["site"]
+	let page = b:pukiwiki_info["page"]
+	let enc = b:pukiwiki_info["enc"]
+	let sitedict = g:pukiwiki_config[site]
+	let url = sitedict['url']
+
+
+	let page = s:VITAL.iconv(page, &enc, enc)
+	let page = s:PW_urlencode(page)
+
+	let filename = cur[5:]
+	let filename = substitute(filename, './', '', '')
+	let filename = s:VITAL.iconv(filename, &enc, enc)
+	let filename = s:PW_urlencode(filename)
+
+	let cmd = "display \"" . url . "/index.php?plugin=attach&refer=" .
+\		page . "&openfile=" . filename . "\""
+
+	if g:pukiwiki_debug > 3
+		echomsg "[&#]ref2: " . cmd
+	endif
+
+	call vimproc#system_bg(cmd)
+	return
+endfunction "}}}
+
 function! pukiwiki#jump()  "{{{
 	if !s:PW_is_init()
 		return
@@ -1134,7 +1173,8 @@ function! pukiwiki#jump()  "{{{
 			setlocal foldmethod=expr foldexpr=getline(v:lnum)=~'^*'?'>1':'='
 			return
 		endif
-		return
+
+		return s:jump_ref()
 	endif
 
 	if &modified
@@ -1182,6 +1222,27 @@ function! s:clear_undo() " {{{
 	execute ":setlocal undolevels=" . oldundolevel
 	unlet oldundolevel
 endfunction " }}}
+
+function! s:PW_urlencode(str) "{{{
+" 1) [._-] はそのまま
+" 2) [A-Za-z0-9] もそのまま。
+" 3) 0x20[ ] ==> 0x2B[+]
+" 以上の3つの規則に当てはまらない文字は、 全て、 "%16進数表記"に変換する。
+" Return URL encoded string
+
+  let result = ''
+  let i = 0
+  while i < strlen(a:str)
+    let ch = a:str[i]
+    let i = i + 1
+    if ch =~ '[-_.0-9A-Za-z]'
+      let result .= ch
+    else
+      let result .= printf("%%%02X", char2nr(ch))
+    endif
+  endwhile
+  return result
+endfunction "}}}
 
 function! s:PW_echokv(key, value)  " {{{
 	echohl String | echo a:key | echohl None

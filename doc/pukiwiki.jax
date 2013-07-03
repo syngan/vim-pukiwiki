@@ -1,7 +1,7 @@
 *pukiwiki.txt*	Pukiwiki 1.4.7 用 vim クライアント
 	A vim client for the PukiWiki 1.4.7 for Japanese
 
-Version: 0.23
+Version: 0.25
 Author : syngan
 License: MIT license  {{{
     Permission is hereby granted, free of charge, to any person obtaining
@@ -269,6 +269,10 @@ g:pukiwiki_no_default_key_mappings
 
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
+
+2013-07-03 syngan  v0.25
+
+	* display コマンドで画像ファイルを開く
 
 2013-05-29 syngan  v0.24
 
