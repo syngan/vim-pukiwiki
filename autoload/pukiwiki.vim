@@ -1173,7 +1173,8 @@ function! s:doc_openimage.func(cur, info) "{{{
 
 	let url2 = printf("%s/index.php?plugin=attach&refer=%s&openfile=%s",
 \		 url, page, filename)
-	let cmd = printf("display \"%s\"", url2)
+	" @TODO コマンドを変更できるようにする.
+	let cmd = printf("eog -w \"%s\"", url2)
 
 	if g:pukiwiki_debug > 3
 		echomsg "[&#]ref2: " . cmd
@@ -1184,7 +1185,7 @@ function! s:doc_openimage.func(cur, info) "{{{
 endfunction "}}}
 
 function! s:doc_openimage.available() " {{{
-	return executable('display')
+	return executable('eog')
 endfunction " }}}
 
 call pukiwiki#jumpdict_register(s:doc_openimage)
@@ -1242,6 +1243,7 @@ function! s:doc_openmath.func(cur, info) "{{{
 			return
 		endif
 
+		" ゴミ掃除が必要なので bg にしない
 		call s:VITAL.system("display " . tmpfile . ".png")
 	finally
 		execute ":lcd " . nowdir
