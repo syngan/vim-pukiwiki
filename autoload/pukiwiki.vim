@@ -1122,18 +1122,40 @@ endfunction " }}}
 " jumpdicts {{{
 
 function! pukiwiki#jumpdict_register(dict) " {{{
+
+	if !s:VITAL.is_dict(a:dict)
+		s:VITAL.print_error("pukiwiki#jumpdict_register(): invalid parameter")
+		return
+	endif
+
+	if !has_key(a:dict, 'name') ||
+	\  !has_key(a:dict, 'format') ||
+	\  !has_key(a:dict, 'func')
+		s:VITAL.print_error("pukiwiki#jumpdict_register(): invalid parameter")
+		return
+	endif
+
+	if !s:VITAL.is_string(a:dict.name) ||
+	\  !s:VITAL.is_string(a:dict.format) ||
+	\  !s:VITAL.is_funcref(a:dict.func)
+		s:VITAL.print_error("pukiwiki#jumpdict_register(): invalid parameter")
+		return
+	endif
+
+	if has_key(a:dict, 'available') && !a:dict.available()
+		return
+	endif
 	call pukiwiki#jumpdict_unregister(a:dict.name)
 	call add(s:pukiwiki_jumpdicts, a:dict)
 endfunction " }}}
 function! pukiwiki#jumpdict_unregister(name) " {{{
 	call filter(s:pukiwiki_jumpdicts, 'v:val.name !=#' . string(a:name))
 endfunction " }}}
-" {{{ doc_openimage
+" {{{ 画像ファイルを開く. &ref(), #ref()
 let s:doc_openimage = {
 \  'name' : 'image',
 \  'format' : '[&#]ref(\([^,)]*\)'}
 
-" 画像ファイルを開く.
 function! s:doc_openimage.func(cur, info) "{{{
 	let site = a:info["site"]
 	let page = a:info["page"]
@@ -1161,13 +1183,81 @@ function! s:doc_openimage.func(cur, info) "{{{
 	return
 endfunction "}}}
 
+function! s:doc_openimage.available() " {{{
+	return executable('display')
+endfunction " }}}
+
 call pukiwiki#jumpdict_register(s:doc_openimage)
 
 unlet s:doc_openimage
 " }}}
 
-" 数式を開く
 
+" {{{ 数式を開く
+let s:doc_openmath = {
+\  'name' : 'math',
+\  'format' : '[&#]math(.*);'}
+
+function! s:doc_openmath.available() " {{{
+	return executable('display')
+\		&& executable('dvipng')
+\		&& executable('platex')
+endfunction " }}}
+
+" 数式ファイル生成して開く.
+function! s:doc_openmath.func(cur, info) "{{{
+	let tmpfile = tempname()
+	let str = a:cur[6:-3]
+	let lines = [
+\		'\documentclass[12pt]{article}',
+\		'\usepackage{amsmath}',
+\		'\usepackage{amsfonts}',
+\		'\oddsidemargin=0in',
+\		'\textwidth=6.5in',
+\		'\topmargin=0in',
+\		'\textheight=609pt',
+\		'\pagestyle{empty}',
+\		'\begin{document}',
+\		'{\large',
+\		'\[',
+\		str,
+\		'\]',
+\		'}',
+\		'\end{document}',
+\	]
+
+	let nowdir = getcwd()
+	execute ":lcd " . s:dirname(tmpfile)
+	try
+		call writefile(lines, tmpfile . ".tex")
+		call s:VITAL.system("platex " . tmpfile)
+		if !filereadable(tmpfile . ".dvi")
+			call s:VITAL.print_error("platex failed")
+			return
+		endif
+
+		call s:VITAL.system("dvipng -T tight -o " . tmpfile . ".png " . tmpfile . ".dvi")
+		if !filereadable(tmpfile . ".png")
+			call s:VITAL.print_error("dvipng failed")
+			return
+		endif
+
+		call s:VITAL.system("display " . tmpfile . ".png")
+	finally
+		execute ":lcd " . nowdir
+
+		call delete(tmpfile . ".tex")
+		call delete(tmpfile . ".dvi")
+		call delete(tmpfile . ".png")
+		call delete(tmpfile . ".aux")
+		call delete(tmpfile . ".log")
+	endtry
+endfunction "}}}
+
+call pukiwiki#jumpdict_register(s:doc_openmath)
+
+unlet s:doc_openmath
+" }}}
 
 
 function! pukiwiki#jump()  "{{{
@@ -1285,6 +1375,34 @@ endfunction "}}}
 function! s:PW_iconv_s(val, fromenc) " {{{
 	return s:VITAL.iconv(a:val, a:fromenc, &enc)
 endfunction " }}}
+
+" vital.vim system/filepath.vim
+
+function! s:dirname(path)
+  let path = a:path
+  let orig = a:path
+
+  let path = s:remove_last_separator(path)
+  if path == ''
+    return orig    " root directory
+  endif
+
+  let path = fnamemodify(path, ':h')
+  return path
+endfunction
+
+" Remove the separator at the end of a:path.
+function! s:remove_last_separator(path)
+  let sep = s:separator()
+  let pat = (sep == '\' ? '\\' : '/') . '\+$'
+  return substitute(a:path, pat, '', '')
+endfunction
+
+" Get the directory separator.
+function! s:separator()
+  return fnamemodify('.', ':p')[-1 :]
+endfunction
+
 
 "}}}
 

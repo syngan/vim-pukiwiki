@@ -1,7 +1,7 @@
 *pukiwiki.txt*	Pukiwiki 1.4.7 用 vim クライアント
 	A vim client for the PukiWiki 1.4.7 for Japanese
 
-Version: 0.25
+Version: 0.26
 Author : syngan
 License: MIT license  {{{
     Permission is hereby granted, free of charge, to any person obtaining
@@ -108,7 +108,7 @@ Example >
 
 として起動し、|g:pukiwiki_config| で指定したサイト名を入力するか、
 
-:PukiWiki "サイト名" 
+:PukiWiki "サイト名"
 (:PukiWiki LocalWiki)
 
 などとして起動します。
@@ -159,7 +159,7 @@ Example >
 pukiwiki#PukiWiki([{site-name} [, {page-name}]])
 			|:PukiWiki| の関数版です。
 
-pukiwiki#get_back_page() 
+pukiwiki#get_back_page()
 			戻る
 
 pukiwiki#fileupload() range
@@ -170,10 +170,10 @@ pukiwiki#fileupload() range
 			の再読み込みをおこなってください
 
 
-pukiwiki#jump() 
+pukiwiki#jump()
 			カーソル位置にあるページを開きます。
 
-pukiwiki#jump_menu(menu) 
+pukiwiki#jump_menu(menu)
 			メニュー
 			以下のうちいずれかを指定します。
 			"top"		トップページを開く
@@ -198,7 +198,7 @@ pukiwiki#bookmark()
 pukiwiki#get_attach_files()
 			指定したページの添付ファイル名一覧を取得します。
 			文字列のリストを復帰します。
-			
+
 pukiwiki#delete_attach_file(site, page, file)
 			指定したページの添付ファイルを削除します。
 			正常終了時には 0, 異常終了時には -1 を復帰します。
@@ -216,7 +216,7 @@ pukiwiki#info_attach_file(site, page, file)
 pukiwiki#download_attach_file(site, page, file, save_file)
 			指定したページの添付ファイル情報をダウンロードします。
 
-pukiwiki#jumpdict_register(dict)
+pukiwiki#jumpdict_register({dict})
 			enter 押下時に実行する仕様の定義を行います。
 			例えば, &ref() で画像を開く, &math()
 			で数式を表示するなどに利用できます。
@@ -228,6 +228,9 @@ pukiwiki#jumpdict_register(dict)
 			{cur} は 'format' で評価し、マッチした文字列。
 			{info} は辞書型で、"site", "page", "enc"
 			をキーとして保持する。
+			'available'  : 登録するか判断する関数 (関数, 任意)
+			引数は持たない。{dict} が本キーを保持する場合には，
+			関数が真を返す場合のみ登録する。
 
 pukiwiki#jumpdict_unregister(name)
 
@@ -284,6 +287,10 @@ g:pukiwiki_no_default_key_mappings
 
 ==============================================================================
 更新履歴					*pukiwiki-changelog*
+
+2013-07-04 syngan  v0.26
+
+	* &math() 対応
 
 2013-07-03 syngan  v0.25
 
@@ -378,7 +385,7 @@ g:pukiwiki_no_default_key_mappings
 
 2012-11-09 syngan  v0.8
 
-	* alice.vim (AL_xxx) を廃止. 
+	* alice.vim (AL_xxx) を廃止.
 	* vital.vim を導入
 
 2012-11-07 syngan  v0.7
@@ -426,7 +433,7 @@ g:pukiwiki_no_default_key_mappings
 	* 添付ファイル対応
 	   - メニューに [[添付]] を追加し、添付ファイル一覧を表示
 	   - 各ページの編集画面で、ファイル名だけを書いた行で
-	      :call PW_fileupload() 
+	      :call PW_fileupload()
 		 とすればファイルを添付できるようにした.
 		 複数行指定可能
 
@@ -435,7 +442,7 @@ g:pukiwiki_no_default_key_mappings
 	* 起動時に引数をとるようにして, ブックマークをとばせるようにした
 	   :PukiWiki [ SiteName [ PageName ]]
 
-	* :w されたとき，ファイルが変更されていない場合には 
+	* :w されたとき，ファイルが変更されていない場合には
 	  Pukiwiki と接続しないようにした
 
 	* g:pukiwiki_check_snapshot のデフォルト値を変更した
