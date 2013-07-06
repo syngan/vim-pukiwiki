@@ -1151,10 +1151,19 @@ endfunction " }}}
 function! pukiwiki#jumpdict_unregister(name) " {{{
 	call filter(s:pukiwiki_jumpdicts, 'v:val.name !=#' . string(a:name))
 endfunction " }}}
+
 " {{{ 画像ファイルを開く. &ref(), #ref()
 let s:doc_openimage = {
 \  'name' : 'image',
-\  'format' : '[&#]ref(\([^,)]*\)'}
+\  'format' : '[&#]ref(\([^,)]*\)',
+\  'viewer' : [{
+\		'name' : 'eog',
+\		'exec' : 'eog -w "%s"'
+\	}, {
+\		'name' : 'display',
+\		'exec' : 'display "%s"'
+\	}],
+\}
 
 function! s:doc_openimage.func(cur, info) "{{{
 	let site = a:info["site"]
@@ -1173,26 +1182,40 @@ function! s:doc_openimage.func(cur, info) "{{{
 
 	let url2 = printf("%s/index.php?plugin=attach&refer=%s&openfile=%s",
 \		 url, page, filename)
-	" @TODO コマンドを変更できるようにする.
-	let cmd = printf("eog -w \"%s\"", url2)
 
-	if g:pukiwiki_debug > 3
-		echomsg "[&#]ref2: " . cmd
+	" @TODO コマンドを変更できるようにする.
+	let cmdl = ""
+	for cmd in s:doc_openimage.viewer
+		if executable(cmd.name)
+			let cmdl = printf(cmd.exec, url2)
+			break
+		endif
+	endfor
+
+	if cmdl == ""
+		return
 	endif
 
-	call vimproc#system_bg(cmd)
+	if g:pukiwiki_debug > 3
+		echomsg "[&#]ref2: " . cmdl
+	endif
+
+	call vimproc#system_bg(cmdl)
 	return
 endfunction "}}}
 
 function! s:doc_openimage.available() " {{{
-	return executable('eog')
+	for cmd in s:doc_openimage.viewer
+		if executable(cmd.name)
+			return 1
+		endif
+	endfor
+	return 0
 endfunction " }}}
 
 call pukiwiki#jumpdict_register(s:doc_openimage)
 
-unlet s:doc_openimage
 " }}}
-
 
 " {{{ 数式を開く
 let s:doc_openmath = {
@@ -1260,7 +1283,6 @@ call pukiwiki#jumpdict_register(s:doc_openmath)
 
 unlet s:doc_openmath
 " }}}
-
 
 function! pukiwiki#jump()  "{{{
 	if !s:PW_is_init()
