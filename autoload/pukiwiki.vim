@@ -90,6 +90,10 @@ function! pukiwiki#buf_vars() "{{{
 endfunction "}}}
 "}}}
 
+function! pukiwiki#version() "{{{
+  return str2nr(printf('%02d%02d', 0, 26))
+endfunction"}}}
+
 function! pukiwiki#PukiWiki(...) "{{{
 	if !s:PW_env_check()
 		return
