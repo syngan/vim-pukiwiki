@@ -119,6 +119,7 @@ function! s:PW_read_pukiwiki_list(...) "{{{
 "
 	if &modified
 		" @TODO 複数の同じ window を開いているときは skip したい.
+		" autocmd BufWriteCmd を使っている限り無理なのか?
 		call s:VITAL.print_error('変更が保存されていません。')
 		return 0
 	endif
@@ -1373,16 +1374,14 @@ function! s:PW_urlencode(str) "{{{
 " Return URL encoded string
 
   let result = ''
-  let i = 0
-  while i < strlen(a:str)
+  for i in range(strlen(a:str))
     let ch = a:str[i]
-    let i = i + 1
     if ch =~ '[-_.0-9A-Za-z]'
       let result .= ch
     else
       let result .= printf("%%%02X", char2nr(ch))
     endif
-  endwhile
+endfor
   return result
 endfunction "}}}
 
