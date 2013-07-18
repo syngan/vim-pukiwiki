@@ -366,7 +366,7 @@ function! s:PW_endpage(site_name, page, readonly) "{{{
 endfunction "}}}
 
 function! s:PW_set_statusline(site_name, page) "{{{
-	let status_line = a:page . ' ' . a:site_name
+	let status_line = a:page . ' ' . a:site_name . '.pukiwiki'
 	let status_line = escape(status_line, ' ')
 	silent! execute ":f " . status_line
 	return status_line
@@ -487,8 +487,8 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 
 	if a:pwcmd == 'edit'
 		augroup PukiWikiEdit
-			" 不要な autocmd は消去したい @TODO
-			execute "autocmd BufWriteCmd " . status_line . " call s:PW_write()"
+			execute "autocmd!"
+			execute "autocmd BufWriteCmd *.pukiwiki call s:PW_write()"
 		augroup END
 		call s:PW_endpage(a:site_name, a:page, 0)
 	endif
@@ -1404,8 +1404,7 @@ function! s:PW_iconv_s(val, fromenc) " {{{
 endfunction " }}}
 
 " vital.vim system/filepath.vim
-
-function! s:dirname(path)
+function! s:dirname(path) " {{{
   let path = a:path
   let orig = a:path
 
@@ -1416,21 +1415,19 @@ function! s:dirname(path)
 
   let path = fnamemodify(path, ':h')
   return path
-endfunction
+endfunction " }}}
 
 " Remove the separator at the end of a:path.
-function! s:remove_last_separator(path)
+function! s:remove_last_separator(path) " {{{
   let sep = s:separator()
   let pat = (sep == '\' ? '\\' : '/') . '\+$'
   return substitute(a:path, pat, '', '')
-endfunction
+endfunction " }}}
 
 " Get the directory separator.
-function! s:separator()
+function! s:separator() " {{{
   return fnamemodify('.', ':p')[-1 :]
-endfunction
-
-
+endfunction " }}}
 "}}}
 
 let &cpo = s:save_cpo
