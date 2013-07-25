@@ -693,7 +693,7 @@ function! pukiwiki#info_attach_file(site_name, page, file) " {{{
 	\}
 	let retdic = s:PW_request('info_attach_file', param, info, 'POST', {})
 	if !retdic['success']
-		ret['errmsg'] = 'get infomation of attach file ' . a:file . ' failed'
+		let ret['errmsg'] = 'get infomation of attach file ' . a:file . ' failed'
 		return ret
 	endif
 
@@ -1125,25 +1125,24 @@ function! pukiwiki#jump_menu(pname) " {{{
 endfunction " }}}
 
 " jumpdicts {{{
-
 function! pukiwiki#jumpdict_register(dict) " {{{
 
 	if !s:VITAL.is_dict(a:dict)
-		s:VITAL.print_error("pukiwiki#jumpdict_register(): invalid parameter")
+		call s:VITAL.print_error("pukiwiki#jumpdict_register(): invalid parameter")
 		return
 	endif
 
 	if !has_key(a:dict, 'name') ||
 	\  !has_key(a:dict, 'format') ||
 	\  !has_key(a:dict, 'func')
-		s:VITAL.print_error("pukiwiki#jumpdict_register(): invalid parameter")
+		call s:VITAL.print_error("pukiwiki#jumpdict_register(): invalid parameter")
 		return
 	endif
 
 	if !s:VITAL.is_string(a:dict.name) ||
 	\  !s:VITAL.is_string(a:dict.format) ||
 	\  !s:VITAL.is_funcref(a:dict.func)
-		s:VITAL.print_error("pukiwiki#jumpdict_register(): invalid parameter")
+		call s:VITAL.print_error("pukiwiki#jumpdict_register(): invalid parameter")
 		return
 	endif
 
