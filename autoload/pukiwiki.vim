@@ -375,7 +375,6 @@ endfunction "}}}
 function! pukiwiki#update_digest() "{{{
 	if !s:PW_is_init()
 		throw "pukiwiki.vim is not executed."
-		return 0
 	endif
 
 	let param = {}
@@ -423,7 +422,6 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 " ページを開く
 " pwcmd = "edit" or "source"
 
-	let sitedict = g:pukiwiki_config[a:site_name]
 	let param = {}
 	let param['cmd'] = a:pwcmd
 	let info = {
@@ -480,7 +478,7 @@ function! s:PW_get_page(site_name, page, pwcmd, opennew) "{{{
 	let b:pukiwiki_info.page = a:page
 	let b:pukiwiki_info.enc = retdic['enc']
 
-	let status_line = s:PW_set_statusline(a:site_name, a:page)
+	call s:PW_set_statusline(a:site_name, a:page)
 
 	" undo 履歴を消去する
 	call s:clear_undo()
@@ -511,7 +509,6 @@ function! s:PW_write() "{{{
 
 	let site = b:pukiwiki_info["site"]
 	let page = b:pukiwiki_info["page"]
-	let sitedict = g:pukiwiki_config[site]
 
 	let save_cursol = getpos(".")
 
@@ -679,8 +676,6 @@ function! pukiwiki#info_attach_file(site_name, page, file) " {{{
 		return ret
 	endif
 
-	let sitedict = g:pukiwiki_config[a:site_name]
-
 	let param = {}
 	let param['plugin'] = 'attach'
 	let param['pcmd'] = 'info'
@@ -796,7 +791,6 @@ function! pukiwiki#get_attach_files() "{{{
 
 	" 添付ファイルの一覧
 	let page = b:pukiwiki_info.page
-	let sitedict = g:pukiwiki_config[b:pukiwiki_info["site"]]
 
 	let param = {}
 	let param['plugin'] = 'attach'
@@ -829,8 +823,6 @@ function! pukiwiki#download_attach_file(site_name, page, file, ofile)
 		call s:VITAL.print_error(ret)
 		return -1
 	endif
-
-	let sitedict = g:pukiwiki_config[a:site_name]
 
 	let param = {}
 	let param['plugin'] = 'attach'
@@ -948,7 +940,6 @@ endfunction "}}}
 function! s:PW_show_search() "{{{
 
 	let site = b:pukiwiki_info.site
-	let sitedict = g:pukiwiki_config[site]
 
 	let word = input('keyword: ')
 	if word == ''
