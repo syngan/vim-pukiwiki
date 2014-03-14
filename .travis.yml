@@ -1,0 +1,10 @@
+before_script:
+    - uname -a
+    - sudo apt-get install apache2
+    - wget http://sourceforge.jp/projects/pukiwiki/downloads/12957/pukiwiki-1.4.7_notb.tar.gz/
+    - wget -o /tmp/pukiwiki.tar.gz "http://sourceforge.jp/frs/redir.php?m=osdn&f=%2Fpukiwiki%2F12957%2Fpukiwiki-1.4.7_notb.tar.gz"
+    - (cd /tmp; tar xvzf pukiwiki.tar.gz)
+
+after_faulure:
+    - cat /tmp/vimlint_test.log
+ 
