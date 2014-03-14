@@ -2,7 +2,7 @@ before_script:
     - uname -a
     - sudo apt-get install apache2
     - wget -O /tmp/pukiwiki.tar.gz "http://sourceforge.jp/frs/redir.php?m=osdn&f=%2Fpukiwiki%2F12957%2Fpukiwiki-1.4.7_notb.tar.gz"
-    - (cd /tmp; tar xvzf pukiwiki.tar.gz)
+    - (cd /tmp; tar xzf pukiwiki.tar.gz)
     - chmod 777 /tmp/pukiwiki-1.4.7_notb/attach
     - chmod 777 /tmp/pukiwiki-1.4.7_notb/backup
     - chmod 777 /tmp/pukiwiki-1.4.7_notb/cache
@@ -21,7 +21,6 @@ before_script:
     - chmod 644 /tmp/pukiwiki-1.4.7_notb/*.php
     - chmod 644 /tmp/pukiwiki-1.4.7_notb/*/*.php
     - chmod 666 /tmp/pukiwiki-1.4.7_notb/attach/*
-    - chmod 666 /tmp/pukiwiki-1.4.7_notb/backup/*.txt
     - chmod 666 /tmp/pukiwiki-1.4.7_notb/cache/*
     - chmod 666 /tmp/pukiwiki-1.4.7_notb/counter/*
     - chmod 666 /tmp/pukiwiki-1.4.7_notb/diff/*.txt
