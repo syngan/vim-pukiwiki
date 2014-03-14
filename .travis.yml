@@ -23,7 +23,6 @@ before_script:
     - chmod 666 /tmp/pukiwiki-1.4.7_notb/attach/*
     - chmod 666 /tmp/pukiwiki-1.4.7_notb/cache/*
     - chmod 666 /tmp/pukiwiki-1.4.7_notb/counter/*
-    - chmod 666 /tmp/pukiwiki-1.4.7_notb/diff/*.txt
     - chmod 666 /tmp/pukiwiki-1.4.7_notb/wiki/*.txt
     - chmod 644 /tmp/pukiwiki-1.4.7_notb/image/*
     - chmod 755 /tmp/pukiwiki-1.4.7_notb/image/face
