@@ -32,7 +32,9 @@ before_script:
     - chmod 644 /tmp/pukiwiki-1.4.7_notb/skin/*
     - cat /etc/apache2/apache2.conf
     - echo "=="
-    - cat /etc/apache2/httpd.conf
+    - cat /etc/apache2/sites-available/default
+
+
 after_faulure:
     - cat /tmp/vimlint_test.log
  
