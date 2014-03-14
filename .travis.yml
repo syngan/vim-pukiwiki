@@ -1,9 +1,8 @@
 before_script:
     - uname -a
     - sudo apt-get install apache2
-    - wget -O /tmp/pukiwiki2.tar.gz "http://sourceforge.jp/projects/pukiwiki/downloads/12957/pukiwiki-1.4.7_notb.tar.gz/"
     - wget -O /tmp/pukiwiki.tar.gz "http://sourceforge.jp/frs/redir.php?m=osdn&f=%2Fpukiwiki%2F12957%2Fpukiwiki-1.4.7_notb.tar.gz"
-    - (cd /tmp; ls -l; file pukiwiki*.tar.gz; tar xvzf pukiwiki.tar.gz)
+    - (cd /tmp; tar xvzf pukiwiki.tar.gz)
     - chmod 777 /tmp/pukiwiki-1.4.7_notb/attach
     - chmod 777 /tmp/pukiwiki-1.4.7_notb/backup
     - chmod 777 /tmp/pukiwiki-1.4.7_notb/cache
@@ -22,7 +21,6 @@ before_script:
     - chmod 644 /tmp/pukiwiki-1.4.7_notb/*.php
     - chmod 644 /tmp/pukiwiki-1.4.7_notb/*/*.php
     - chmod 666 /tmp/pukiwiki-1.4.7_notb/attach/*
-    - chmod 666 /tmp/pukiwiki-1.4.7_notb/backup/*.gz
     - chmod 666 /tmp/pukiwiki-1.4.7_notb/backup/*.txt
     - chmod 666 /tmp/pukiwiki-1.4.7_notb/cache/*
     - chmod 666 /tmp/pukiwiki-1.4.7_notb/counter/*
@@ -34,6 +32,9 @@ before_script:
     - chmod 644 /tmp/pukiwiki-1.4.7_notb/lib/*
     - chmod 644 /tmp/pukiwiki-1.4.7_notb/plugin/*
     - chmod 644 /tmp/pukiwiki-1.4.7_notb/skin/*
+    - cat /etc/apache2/apache2.conf
+    - echo "=="
+    - cat /etc/apache2/httpd.conf
 after_faulure:
     - cat /tmp/vimlint_test.log
  
