@@ -30,10 +30,11 @@ before_script:
     - chmod 644 /tmp/pukiwiki-1.4.7_notb/lib/*
     - chmod 644 /tmp/pukiwiki-1.4.7_notb/plugin/*
     - chmod 644 /tmp/pukiwiki-1.4.7_notb/skin/*
-    - cat /etc/apache2/apache2.conf
-    - echo "=="
     - cat /etc/apache2/sites-available/default
-
+    - sudo ln -s /tmp/pukiwiki-1.4.7_notb /var/www/pukiwiki
+    - echo "GET /pukiwiki" > /tmp/a
+    - echo "" >> /tmp/a
+    - telnet localhost 80 < /tmp/a
 
 after_faulure:
     - cat /tmp/vimlint_test.log
