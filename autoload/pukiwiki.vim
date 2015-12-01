@@ -306,11 +306,11 @@ function! s:PW_request(funcname, param, info, method, defset) " {{{
 	try
 		let retdic = s:HTTP.request(settings)
 	catch
-		call s:VITAL.print_error(a:funcname . '() failed: ' . v:exception)
+		call s:VITAL.print_error(a:funcname . '(1) failed: ' . v:exception)
 		return {'success' : 0}
 	endtry
 	if !has_key(retdic, 'success')
-		call s:VITAL.print_error(a:funcname . '() failed: ')
+		call s:VITAL.print_error(a:funcname . '(2) failed: ')
 		return {'success' : 0}
 	endif
 	if !retdic['success']
@@ -318,7 +318,7 @@ function! s:PW_request(funcname, param, info, method, defset) " {{{
 			" 書き込み時(PW_write())に成功扱いにする.
 			let retdic['success'] = 1
 		else
-			call s:VITAL.print_error(a:funcname . '() failed: ' . retdic['status'] . ' ' . retdic['statusText'])
+			call s:VITAL.print_error(a:funcname . '(3) failed: status=' . retdic['status'] . ' statusText="' . retdic['statusText'] . '"')
 			return retdic
 		endif
 	endif
