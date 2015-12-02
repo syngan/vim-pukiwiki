@@ -284,6 +284,17 @@ function! s:clients.curl(settings, quote)
 
   return [header, content]
 endfunction
+
+let s:werr = {}
+let s:werr[1] = 'Generic error code.'
+let s:werr[2] = 'Parse error---for instance, when parsing command-line options, the .wgetrc or .netrc...'
+let s:werr[3] = 'File I/O error.'
+let s:werr[4] = 'Network failure.'
+let s:werr[5] = 'SSL verification failure.'
+let s:werr[6] = 'Username/password authentication failure.'
+let s:werr[7] = 'Protocol errors.'
+let s:werr[8] = 'Server issued an error response.'
+
 function! s:clients.wget(settings, quote)
   let command = get(a:settings, 'command', 'wget')
   let method = a:settings.method
@@ -323,6 +334,7 @@ function! s:clients.wget(settings, quote)
   endif
 
   call s:Prelude.system(command)
+  let retcode = s:Prelude.get_last_status()
 
   if filereadable(a:settings._file.header)
     let header_lines = readfile(a:settings._file.header, 'b')
@@ -337,6 +349,10 @@ function! s:clients.wget(settings, quote)
     let content = ''
   else
     let content = s:_readfile(output_file)
+  endif
+
+  if retcode > 1 && has_key(s:werr, retcode)
+    throw 'Vital.Web.Http.request(syngan): wget: ' . s:werr[retcode]
   endif
   return [header, content]
 endfunction
