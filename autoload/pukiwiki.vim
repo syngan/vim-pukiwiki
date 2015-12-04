@@ -94,6 +94,22 @@ function! pukiwiki#version() "{{{
   return str2nr(printf('%02d%02d', 0, 26))
 endfunction"}}}
 
+function! pukiwiki#complete(lead, cmd, ...) " {{{
+  if !exists('g:pukiwiki_config') ||
+  \  !s:VITAL.is_dict(g:pukiwiki_config)
+    return []
+  endif
+  let token = split(a:cmd, '\s\+', 1)
+  let ntoken = len(token)
+  if ntoken <= 1
+	  return keys(g:pukiwiki_config)
+  elseif ntoken == 2
+    return filter(keys(g:pukiwiki_config), 'stridx(v:val, a:lead) == 0')
+  else
+	  return token
+  endif
+endfunction " }}}
+
 function! pukiwiki#PukiWiki(...) "{{{
 	if !s:PW_env_check()
 		return
