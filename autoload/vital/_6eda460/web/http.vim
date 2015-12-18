@@ -275,7 +275,7 @@ function! s:clients.curl(settings, quote)
   else
     let content = s:_readfile(output_file)
   endif
-  if retcode != 0
+  if retcode != 0 && retcode != 47
     if !has_key(s:cerr, retcode)
       let retcode = -1
     endif
