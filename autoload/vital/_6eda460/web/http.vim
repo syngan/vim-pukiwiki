@@ -275,7 +275,7 @@ function! s:clients.curl(settings, quote)
   else
     let content = s:_readfile(output_file)
   endif
-  if retcode != 0 && retcode != 47
+  if retcode != 0 && empty(header)
     if !has_key(s:cerr, retcode)
       let retcode = -1
     endif
@@ -351,7 +351,7 @@ function! s:clients.wget(settings, quote)
     let content = s:_readfile(output_file)
   endif
 
-  if retcode > 1 && has_key(s:werr, retcode)
+  if has_key(s:werr, retcode) && empty(header)
     throw 'Vital.Web.Http.request(syngan): wget: ' . s:werr[retcode]
   endif
   return [header, content]
